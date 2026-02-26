@@ -1,0 +1,91 @@
+from fastapi import APIRouter, Body
+from fastapi.responses import JSONResponse
+from app.database import get_connection
+
+router = APIRouter(prefix="/movimentacoes", tags=["movimentacoes"])
+
+# Rota para listar as movimentações
+@router.get("/")
+def listar_movimentacoes():
+    """Lista todas as movimentações."""
+    conn = get_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM movimentacoes ORDER BY data_hora DESC")
+        movimentacoes = cursor.fetchall()
+        if not movimentacoes:
+            return JSONResponse(status_code=404, content={"message": "Nenhuma movimentação encontrada."})
+        return movimentacoes
+    finally:
+        conn.close()
+
+# Rota para criar uma movimentação com atualização automática de estoque
+@router.post("/", status_code=201)
+def criar_movimentacao(produto_id: int = Body(...), tipo: str = Body(...), quantidade: int = Body(...), motivo: str = Body(...)):
+    """Cria uma nova movimentação e atualiza o saldo do produto."""
+    conn = get_connection()
+    try:
+        cursor = conn.cursor()
+        
+        # Verificar se o produto existe e pegar o saldo atual
+        cursor.execute("SELECT quantidade FROM produtos WHERE id = %s", (produto_id,))
+        resultado = cursor.fetchone()
+        if not resultado:
+            return JSONResponse(status_code=404, content={"message": "Produto não encontrado."})
+        
+        estoque_atual = resultado[0]
+        
+        # Calcular o novo saldo
+        if tipo == 'entrada':
+            novo_estoque = estoque_atual + quantidade
+        elif tipo == 'saida':
+            if estoque_atual < quantidade:
+                return JSONResponse(status_code=400, content={"message": "Estoque insuficiente!"})
+            novo_estoque = estoque_atual - quantidade
+        else:
+            return JSONResponse(status_code=400, content={"message": "Tipo inválido. Use 'entrada' ou 'saida'."})
+
+        # ATUALIZAR O PRODUTO
+        cursor.execute("UPDATE produtos SET quantidade = %s WHERE id = %s", (novo_estoque, produto_id))
+        
+        # Registrar o histórico da movimentação
+        cursor.execute(
+            "INSERT INTO movimentacoes (produto_id, tipo, quantidade, motivo) VALUES (%s, %s, %s, %s)", 
+            (produto_id, tipo, quantidade, motivo)
+        )
+        
+        conn.commit()
+        return {"mensagem": f"Movimentação de {tipo} realizada! Novo saldo: {novo_estoque}"}
+    except Exception as e:
+        conn.rollback()
+        return JSONResponse(status_code=500, content={"message": f"Erro: {str(e)}"})
+    finally:
+        conn.close()
+
+# Rota para buscar uma movimentação pelo ID
+@router.get("/{id}")
+def buscar_movimentacao(id: int):
+    """Busca uma movimentação pelo ID."""
+    conn = get_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM movimentacoes WHERE id = %s", (id,))
+        movimentacao = cursor.fetchone()
+        if not movimentacao:
+            return JSONResponse(status_code=404, content={"message": "Movimentação não encontrada."})
+        return movimentacao
+    finally:
+        conn.close()
+
+# Rota para deletar uma movimentação
+@router.delete("/{id}")
+def deletar_movimentacao(id: int):
+    """Deleta uma movimentação pelo ID."""
+    conn = get_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM movimentacoes WHERE id = %s", (id,))
+        conn.commit()
+        return {"mensagem": "Movimentação deletada com sucesso!"}
+    finally:
+        conn.close()
