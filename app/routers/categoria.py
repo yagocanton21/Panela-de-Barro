@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Body
 from fastapi.responses import JSONResponse
 from app.database import get_connection
+import psycopg2.extras
 
 router = APIRouter()
 
@@ -11,7 +12,7 @@ def listar_categorias():
     """Lista todas as categorias."""
     conn = get_connection()
     try:
-        cursor = conn.cursor()
+        cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
         cursor.execute("SELECT * FROM categorias ORDER BY nome")
         categorias = cursor.fetchall()
         if not categorias:
@@ -27,7 +28,7 @@ def buscar_categoria_por_nome(nome: str):
     """Busca uma categoria pelo nome."""
     conn = get_connection()
     try:
-        cursor = conn.cursor()
+        cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
         cursor.execute("SELECT * FROM categorias WHERE nome = %s", (nome,))
         categoria = cursor.fetchone()
         if not categoria:

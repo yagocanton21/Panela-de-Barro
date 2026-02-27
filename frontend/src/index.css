@@ -1,0 +1,40 @@
+:root {
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  color: #f8f9fa;
+  background-color: #121212;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background-color: #d2cfcf;
+}
+
+/* No seu index.css */
+.card {
+  background: #2a2d31;
+  border-radius: 12px;
+  padding: 1.5rem;
+  border: 1px solid #3e4246;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  min-width: 150px;
+  transition: transform 0.2s ease;
+  color: white;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+  border-color: #c25e34;
+  /* Cor terracota da Panela de Barro */
+}
+
+/* Para organizar os cards lado a lado */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+  margin-bottom: 30px;
+}
