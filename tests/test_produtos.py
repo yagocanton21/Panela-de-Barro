@@ -2,44 +2,46 @@ import httpx
 import pytest
 from app.main import app
 
-# Configuração para o pytest-asyncio
+# Configura o pytest para rodar testes assíncronos
 pytestmark = pytest.mark.asyncio
 
 transport = httpx.ASGITransport(app=app)
 base_url = "http://testserver"
 
 async def test_crud_produto_completo():
+    """Testa o ciclo de vida do produto: criar, listar, buscar, editar e deletar"""
     async with httpx.AsyncClient(transport=transport, base_url=base_url) as client:
+        
         # 1. Criar Produto
         novo_produto = {
             "nome": "Produto Teste CRUD",
-            "categoria": 1, # Usando ID da primeira categoria (Carnes)
+            "categoria": 1,
             "quantidade": 10,
             "unidade_medida": "UN"
         }
         response_post = await client.post("/produtos", json=novo_produto)
         assert response_post.status_code == 201
         
-        # 2. Listar para achar o ID
+        # 2. Listar produtos e achar o ID do novo produto
         response_list = await client.get("/produtos")
         produtos = response_list.json()
-        # No novo retorno (com JOIN), o nome da categoria vem na posição 2
-        produto_criado = next(p for p in produtos if p[1] == "Produto Teste CRUD")
-        produto_id = produto_criado[0]
+        produto_criado = next(p for p in produtos if p['nome'] == "Produto Teste CRUD")
+        produto_id = produto_criado['id']
         
-        # 3. Buscar por ID
+        # 3. Buscar o produto pelo ID
         response_get = await client.get(f"/produtos/{produto_id}")
         assert response_get.status_code == 200
+        assert response_get.json()['nome'] == "Produto Teste CRUD"
         
-        # 4. Editar Produto
+        # 4. Editar o nome do produto
         produto_editado = {**novo_produto, "nome": "Produto Teste Alterado"}
         response_put = await client.put(f"/produtos/{produto_id}", json=produto_editado)
         assert response_put.status_code == 200
         
-        # 5. Deletar Produto
+        # 5. Deletar o produto
         response_delete = await client.delete(f"/produtos/{produto_id}")
         assert response_delete.status_code == 200
         
-        # 6. Verificar se sumiu (deve dar 404 agora)
+        # 6. Confirmar que o produto não existe mais (404)
         response_final = await client.get(f"/produtos/{produto_id}")
         assert response_final.status_code == 404
