@@ -20,8 +20,8 @@ app.add_middleware(
 )
 
 # Cria as tabelas no banco de dados ao iniciar a aplicação
-criar_tabela_produtos()
 criar_tabela_categorias()
+criar_tabela_produtos()
 criar_tabela_movimentacoes()
 
 # Rota de produtos

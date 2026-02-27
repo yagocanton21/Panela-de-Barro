@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
-import { Package, AlertTriangle, PlusCircle } from "lucide-react";
-import { Link } from "react-router-dom"; // Importante para a navegação
+import { Package, AlertTriangle } from "lucide-react";
 
 function Dashboard() {
     const [stats, setStats] = useState({ total: 0, alertas: 0 });
@@ -12,7 +11,6 @@ function Dashboard() {
             .then(dados => {
                 if (Array.isArray(dados)) {
                     setProdutos(dados);
-                    // Usando 15 como limite para o teste
                     const lowStock = dados.filter(p => p.quantidade < 15).length;
                     setStats({ total: dados.length, alertas: lowStock });
                 }
@@ -21,29 +19,8 @@ function Dashboard() {
     }, []);
 
     return (
-        <div style={{ padding: "20px", maxWidth: "1200px", margin: "0 auto" }}>
-            <header style={{ marginBottom: "2.5rem", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <div>
-                    <h1 style={{ color: "#c25e34", margin: 0 }}>Dashboard Panela de Barro</h1>
-                    <p style={{ color: "#9da5ad", marginTop: "0.5rem" }}>Gestão de Estoque e Suprimentos</p>
-                </div>
-
-                {/* BOTÃO DE NAVEGAÇÃO PARA O CADASTRO */}
-                <Link to="/cadastrar" style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "8px",
-                    backgroundColor: "#c25e34",
-                    color: "white",
-                    padding: "10px 20px",
-                    borderRadius: "8px",
-                    textDecoration: "none",
-                    fontWeight: "bold"
-                }}>
-                    <PlusCircle size={20} />
-                    Novo Produto
-                </Link>
-            </header>
+        <div style={{ padding: "20px" }}>
+            <h1>Dashboard Panela de Barro</h1>
 
             <div className="stats-grid">
                 <div className="card">
@@ -73,8 +50,7 @@ function Dashboard() {
                             borderBottom: "1px solid rgba(255,255,255,0.05)"
                         }}>
                             <span style={{ fontWeight: 500 }}>{p.nome}</span>
-                            {/* Ajustado para < 15 para ficar igual ao contador lá de cima */}
-                            <span style={{ color: p.quantidade < 15 ? "#f1c40f" : "#27ae60" }}>
+                            <span style={{ color: p.quantidade < 5 ? "#f1c40f" : "#27ae60" }}>
                                 {p.quantidade} {p.unidade_medida}
                             </span>
                         </li>
