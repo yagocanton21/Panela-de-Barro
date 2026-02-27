@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Body
 from fastapi.responses import JSONResponse
 from app.database import get_connection
+import psycopg2.extras
 
 router = APIRouter(prefix="/movimentacoes", tags=["movimentacoes"])
 
@@ -10,7 +11,7 @@ def listar_movimentacoes():
     """Lista todas as movimentações."""
     conn = get_connection()
     try:
-        cursor = conn.cursor()
+        cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
         cursor.execute("SELECT * FROM movimentacoes ORDER BY data_hora DESC")
         movimentacoes = cursor.fetchall()
         if not movimentacoes:
@@ -20,9 +21,13 @@ def listar_movimentacoes():
         conn.close()
 
 # Rota para criar uma movimentação com atualização automática de estoque
-@router.post("/", status_code=201)
+@router.post("", status_code=201)
 def criar_movimentacao(produto_id: int = Body(...), tipo: str = Body(...), quantidade: int = Body(...), motivo: str = Body(...)):
     """Cria uma nova movimentação e atualiza o saldo do produto."""
+    
+    if quantidade <= 0:
+        return JSONResponse(status_code=400, content={"message": "A quantidade deve ser maior que zero."})
+        
     conn = get_connection()
     try:
         cursor = conn.cursor()
@@ -68,7 +73,7 @@ def buscar_movimentacao(id: int):
     """Busca uma movimentação pelo ID."""
     conn = get_connection()
     try:
-        cursor = conn.cursor()
+        cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
         cursor.execute("SELECT * FROM movimentacoes WHERE id = %s", (id,))
         movimentacao = cursor.fetchone()
         if not movimentacao:

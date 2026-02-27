@@ -13,8 +13,7 @@ async def test_crud_produto_completo():
         # 1. Criar Produto
         novo_produto = {
             "nome": "Produto Teste CRUD",
-            "categoria": "Testes",
-            "preco_custo": 10.5,
+            "categoria": 1, # Usando ID da primeira categoria (Carnes)
             "quantidade": 10,
             "unidade_medida": "UN"
         }
@@ -24,6 +23,7 @@ async def test_crud_produto_completo():
         # 2. Listar para achar o ID
         response_list = await client.get("/produtos")
         produtos = response_list.json()
+        # No novo retorno (com JOIN), o nome da categoria vem na posição 2
         produto_criado = next(p for p in produtos if p[1] == "Produto Teste CRUD")
         produto_id = produto_criado[0]
         
