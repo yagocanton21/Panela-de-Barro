@@ -7,6 +7,7 @@ function Dashboard() {
 
     useEffect(() => {
         fetch("http://127.0.0.1:8000/produtos")
+
             .then(res => res.json())
             .then(dados => {
                 if (Array.isArray(dados)) {
@@ -19,12 +20,12 @@ function Dashboard() {
     }, []);
 
     return (
-        <div style={{ padding: "20px" }}>
+        <div style={{ marginBottom: "2rem", textAlign: "left" }}>
             <h1>Dashboard Panela de Barro</h1>
 
             <div className="stats-grid">
                 <div className="card">
-                    <Package size={28} color="#c25e34" />
+                    <Package size={28} color="#833e20" />
                     <div style={{ textAlign: "center" }}>
                         <span style={{ fontSize: "1.5rem", fontWeight: "bold", display: "block" }}>{stats.total}</span>
                         <span style={{ fontSize: "0.85rem", color: "#9da5ad" }}>Produtos Totais</span>
