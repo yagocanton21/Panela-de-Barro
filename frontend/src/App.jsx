@@ -1,17 +1,21 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Dashboard from "./pages/Dashboard";
-// import CadastrarProduto from "./pages/cadastrar_produto";
+import CadastroProduto from "./pages/CadastroProduto";
+import Layout from "./components/Layout";
 
 function App() {
   return (
     <BrowserRouter>
-      <Routes>
-        {/* Rota principal (Home) */}
-        <Route path="/" element={<Dashboard />} />
+      {/* O Layout envolve todas as rotas para que a Sidebar apareça em todas as telas */}
+      <Layout>
+        <Routes>
+          {/* Rota para a página inicial (Dashboard) */}
+          <Route path="/" element={<Dashboard />} />
 
-        {/* Nova rota para cadastrar produtos */}
-        {/* <Route path="/cadastrar" element={<CadastrarProduto />} /> */}
-      </Routes>
+          {/* Rota para a tela de cadastrar novo produto */}
+          <Route path="/cadastrar" element={<CadastroProduto />} />
+        </Routes>
+      </Layout>
     </BrowserRouter>
   );
 }

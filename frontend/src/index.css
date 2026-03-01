@@ -1,40 +1,84 @@
 :root {
+  --terracota: #833e20;
+  --bg-light: #f5f0e6;
+  /* Bege clássico e suave */
+  --sidebar-bg: #1a1c1e;
+  /* Sidebar escura para destaque */
+  --card-bg: #ffffff;
+  /* Cards brancos como você pediu */
+  --border-light: #e8e0d5;
+  /* Borda sutil que combina com o bege */
+  --text-dark: #3d3d3d;
+  --text-muted: #7d7569;
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
-  color: #f8f9fa;
-  background-color: #121212;
 }
+
+
 
 body {
   margin: 0;
+  background-color: var(--bg-light);
+  color: var(--text-dark);
   min-height: 100vh;
-  background-color: #d2cfcf;
 }
 
-/* No seu index.css */
-.card {
-  background: #2a2d31;
-  border-radius: 12px;
-  padding: 1.5rem;
-  border: 1px solid #3e4246;
+.app-layout {
+  display: flex;
+  min-height: 100vh;
+}
+
+.sidebar {
+  width: 260px;
+  background-color: var(--sidebar-bg);
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  min-width: 150px;
-  transition: transform 0.2s ease;
+  padding: 1.5rem;
+  height: 100vh;
+  position: sticky;
+  top: 0;
   color: white;
 }
 
-.card:hover {
-  transform: translateY(-5px);
-  border-color: #c25e34;
-  /* Cor terracota da Panela de Barro */
+.main-content {
+  flex: 1;
+  padding: 2.5rem;
+  overflow-y: auto;
 }
 
-/* Para organizar os cards lado a lado */
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 24px;
   margin-bottom: 30px;
+}
+
+.card {
+  background: var(--card-bg);
+  border-radius: 16px;
+  padding: 1.5rem;
+  border: 1px solid var(--border-light);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  transition: all 0.3s ease;
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  border-color: var(--terracota);
+  box-shadow: 0 12px 20px rgba(0, 0, 0, 0.05);
+}
+
+/* Ajuste fino para os textos dentro do Dashboard */
+h1,
+h2,
+h3 {
+  color: var(--text-dark);
+}
+
+span {
+  transition: color 0.2s;
 }
