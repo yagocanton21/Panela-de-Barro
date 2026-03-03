@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Body
 from fastapi.responses import JSONResponse
 from app.database import get_connection
+import psycopg2
 import psycopg2.extras
 
 router = APIRouter()
@@ -76,5 +77,12 @@ def deletar_categoria(id: int):
         cursor.execute("DELETE FROM categorias WHERE id = %s", (id,))
         conn.commit()
         return {"mensagem": "Categoria deletada com sucesso!"}
+    except psycopg2.errors.ForeignKeyViolation:
+        return JSONResponse(
+            status_code=400, 
+            content={"message": "Não é possível excluir uma categoria que possui produtos vinculados."}
+        )
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"message": f"Erro interno: {str(e)}"})
     finally:
         conn.close()

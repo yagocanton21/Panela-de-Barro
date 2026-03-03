@@ -9,24 +9,30 @@ function CadastroProduto() {
     const [categorias, setCategorias] = useState([]);
     const [nome, setNome] = useState("");
     const [categoriaId, setCategoriaId] = useState("");
-    const [quantidade, setQuantidade] = useState(0);
+    const [quantidade, setQuantidade] = useState("");
     const [unidade, setUnidade] = useState("un");
 
     // Estados de Controle
     const [loading, setLoading] = useState(false);
     const [success, setSuccess] = useState(false);
+    const [erro, setErro] = useState("");
+    const [loadingCategorias, setLoadingCategorias] = useState(true);
 
     // Carregar categorias do banco
     useEffect(() => {
         fetch("http://127.0.0.1:8000/categorias")
             .then(res => res.json())
-            .then(dados => setCategorias(dados))
-            .catch(err => console.error("Erro ao carregar categorias:", err));
+            .then(dados => {
+                if (Array.isArray(dados)) setCategorias(dados);
+            })
+            .catch(err => console.error("Erro ao carregar categorias:", err))
+            .finally(() => setLoadingCategorias(false));
     }, []);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
+        setErro("");
 
         const novoProduto = {
             nome: nome,
@@ -42,14 +48,16 @@ function CadastroProduto() {
                 body: JSON.stringify(novoProduto)
             });
 
+            const dados = await response.json();
+
             if (response.ok) {
                 setSuccess(true);
-                setTimeout(() => navigate("/"), 2000); // Redireciona após 2 segundos
+                setTimeout(() => navigate("/"), 2000);
             } else {
-                alert("Erro ao cadastrar produto. Verifique os dados.");
+                setErro(dados.message || dados.detail || "Erro ao cadastrar. Verifique os dados.");
             }
         } catch (error) {
-            alert("Erro na conexão com o servidor.");
+            setErro("Erro de conexão com o servidor. Verifique se o backend está rodando.");
         } finally {
             setLoading(false);
         }
@@ -134,17 +142,23 @@ function CadastroProduto() {
                             value={categoriaId}
                             onChange={(e) => setCategoriaId(e.target.value)}
                             required
+                            disabled={loadingCategorias}
                             style={{
                                 width: '100%', padding: '14px', borderRadius: '10px',
                                 border: '1px solid var(--border-light)', outline: 'none',
                                 backgroundColor: '#fdfdfd', fontSize: '1rem', cursor: 'pointer'
                             }}
                         >
-                            <option value="">Selecione...</option>
+                            <option value="">{loadingCategorias ? "Carregando..." : categorias.length === 0 ? "Nenhuma categoria encontrada" : "Selecione..."}</option>
                             {categorias.map(cat => (
                                 <option key={cat.id} value={cat.id}>{cat.nome}</option>
                             ))}
                         </select>
+                        {!loadingCategorias && categorias.length === 0 && (
+                            <span style={{ fontSize: '0.8rem', color: '#e74c3c', marginTop: '5px', display: 'block' }}>
+                                ⚠ Cadastre uma categoria antes de adicionar produtos.
+                            </span>
+                        )}
                     </div>
 
                     <div>
@@ -152,17 +166,30 @@ function CadastroProduto() {
                             UNIDADE
                         </label>
                         <input
+                            list="lista-unidades"
                             type="text"
                             value={unidade}
                             onChange={(e) => setUnidade(e.target.value)}
                             required
-                            placeholder="Ex: un, kg, l"
+                            placeholder="Ex: kg, un, l"
                             style={{
                                 width: '100%', padding: '14px', borderRadius: '10px',
                                 border: '1px solid var(--border-light)', outline: 'none',
                                 backgroundColor: '#fdfdfd', fontSize: '1rem', boxSizing: 'border-box'
                             }}
                         />
+                        <datalist id="lista-unidades">
+                            <option value="kg" />
+                            <option value="g" />
+                            <option value="l" />
+                            <option value="ml" />
+                            <option value="un" />
+                            <option value="cx" />
+                            <option value="pct" />
+                        </datalist>
+                        <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '5px', display: 'block' }}>
+                            Use apenas a sigla: kg, g, l, ml, un, etc.
+                        </span>
                     </div>
                 </div>
 
@@ -175,7 +202,9 @@ function CadastroProduto() {
                         type="number"
                         value={quantidade}
                         onChange={(e) => setQuantidade(e.target.value)}
-                        min="0"
+                        required
+                        min="1"
+                        placeholder="Ex: 10"
                         style={{
                             width: '100%', padding: '14px', borderRadius: '10px',
                             border: '1px solid var(--border-light)', outline: 'none',
@@ -183,6 +212,24 @@ function CadastroProduto() {
                         }}
                     />
                 </div>
+
+                {/* Mensagem de Erro Inline */}
+                {erro && (
+                    <div style={{
+                        backgroundColor: 'rgba(231, 76, 60, 0.08)',
+                        border: '1px solid rgba(231, 76, 60, 0.3)',
+                        borderRadius: '10px',
+                        padding: '12px 16px',
+                        marginBottom: '1.5rem',
+                        color: '#e74c3c',
+                        fontSize: '0.9rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px'
+                    }}>
+                        ⚠ {erro}
+                    </div>
+                )}
 
                 {/* Botão Salvar */}
                 <button

@@ -1,4 +1,4 @@
-import { LayoutGrid, Package, Settings, LogOut } from "lucide-react";
+import { LayoutGrid, Package, Settings, LogOut, Tag, ArrowUpDown, ClipboardList } from "lucide-react";
 import { NavLink } from "react-router-dom";
 
 function Sidebar() {
@@ -21,7 +21,7 @@ function Sidebar() {
             {/* Menu de Navegação */}
             <nav style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
 
-                {/* Link para o Dashboard (Início) */}
+                {/* Dashboard */}
                 <NavLink to="/" style={({ isActive }) => ({
                     display: 'flex',
                     alignItems: 'center',
@@ -37,7 +37,7 @@ function Sidebar() {
                     Dashboard
                 </NavLink>
 
-                {/* Link para a Tela de Cadastro */}
+                {/* Cadastrar Produto */}
                 <NavLink to="/cadastrar" style={({ isActive }) => ({
                     display: 'flex',
                     alignItems: 'center',
@@ -51,6 +51,54 @@ function Sidebar() {
                 })}>
                     <Package size={20} />
                     Cadastrar Produto
+                </NavLink>
+
+                {/* Categorias */}
+                <NavLink to="/categorias" style={({ isActive }) => ({
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px',
+                    padding: '12px 16px',
+                    borderRadius: '8px',
+                    textDecoration: 'none',
+                    color: isActive ? 'white' : '#9da5ad',
+                    backgroundColor: isActive ? 'var(--terracota)' : 'transparent',
+                    transition: 'all 0.2s'
+                })}>
+                    <Tag size={20} />
+                    Categorias
+                </NavLink>
+
+                {/* Movimentações (Entradas/Saídas) */}
+                <NavLink to="/movimentacoes" style={({ isActive }) => ({
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px',
+                    padding: '12px 16px',
+                    borderRadius: '8px',
+                    textDecoration: 'none',
+                    color: isActive ? 'white' : '#9da5ad',
+                    backgroundColor: isActive ? 'var(--terracota)' : 'transparent',
+                    transition: 'all 0.2s'
+                })}>
+                    <ArrowUpDown size={20} />
+                    Movimentações
+                </NavLink>
+
+                {/* Histórico */}
+                <NavLink to="/historico" style={({ isActive }) => ({
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px',
+                    padding: '12px 16px',
+                    borderRadius: '8px',
+                    textDecoration: 'none',
+                    color: isActive ? 'white' : '#9da5ad',
+                    backgroundColor: isActive ? 'var(--terracota)' : 'transparent',
+                    transition: 'all 0.2s'
+                })}>
+                    <ClipboardList size={20} />
+                    Histórico
                 </NavLink>
 
             </nav>

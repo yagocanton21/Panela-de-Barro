@@ -6,7 +6,7 @@ import psycopg2.extras
 router = APIRouter(prefix="/movimentacoes", tags=["movimentacoes"])
 
 # Rota para listar as movimentações
-@router.get("/")
+@router.get("")
 def listar_movimentacoes():
     """Lista todas as movimentações."""
     conn = get_connection()
@@ -14,9 +14,7 @@ def listar_movimentacoes():
         cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
         cursor.execute("SELECT * FROM movimentacoes ORDER BY data_hora DESC")
         movimentacoes = cursor.fetchall()
-        if not movimentacoes:
-            return JSONResponse(status_code=404, content={"message": "Nenhuma movimentação encontrada."})
-        return movimentacoes
+        return movimentacoes if movimentacoes else []
     finally:
         conn.close()
 
