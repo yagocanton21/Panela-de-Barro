@@ -24,18 +24,55 @@ function Dashboard() {
             <h1>Dashboard Panela de Barro</h1>
 
             <div className="stats-grid">
-                <div className="card">
-                    <Package size={28} color="#833e20" />
-                    <div style={{ textAlign: "center" }}>
-                        <span style={{ fontSize: "1.5rem", fontWeight: "bold", display: "block" }}>{stats.total}</span>
-                        <span style={{ fontSize: "0.85rem", color: "#9da5ad" }}>Produtos Totais</span>
+                <div className="card" style={{
+                    flexDirection: 'row',
+                    justifyContent: 'flex-start',
+                    gap: '20px',
+                    padding: '1.8rem',
+                    border: '1px solid #f0ece6',
+                    boxShadow: '0 10px 25px rgba(0,0,0,0.02)',
+                    borderRadius: '24px'
+                }}>
+                    <div style={{
+                        backgroundColor: 'rgba(131, 62, 32, 0.08)',
+                        padding: '18px',
+                        borderRadius: '20px',
+                        color: 'var(--terracota)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                    }}>
+                        <Package size={32} />
+                    </div>
+                    <div>
+                        <span style={{ fontSize: "2rem", fontWeight: "900", color: 'var(--text-dark)', display: "block", lineHeight: 1 }}>{stats.total}</span>
+                        <span style={{ fontSize: "0.9rem", color: "var(--text-muted)", fontWeight: '600' }}>Produtos em Inventário</span>
                     </div>
                 </div>
-                <div className="card">
-                    <AlertTriangle size={28} color={stats.alertas > 0 ? "#f1c40f" : "#27ae60"} />
-                    <div style={{ textAlign: "center" }}>
-                        <span style={{ fontSize: "1.5rem", fontWeight: "bold", display: "block" }}>{stats.alertas}</span>
-                        <span style={{ fontSize: "0.85rem", color: "#9da5ad" }}>Alertas de Estoque</span>
+
+                <div className="card" style={{
+                    flexDirection: 'row',
+                    justifyContent: 'flex-start',
+                    gap: '20px',
+                    padding: '1.8rem',
+                    border: '1px solid #f0ece6',
+                    boxShadow: '0 10px 25px rgba(0,0,0,0.02)',
+                    borderRadius: '24px'
+                }}>
+                    <div style={{
+                        backgroundColor: stats.alertas > 0 ? 'rgba(241, 196, 15, 0.1)' : 'rgba(39, 174, 96, 0.1)',
+                        padding: '18px',
+                        borderRadius: '20px',
+                        color: stats.alertas > 0 ? "#f1c40f" : "#27ae60",
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                    }}>
+                        <AlertTriangle size={32} />
+                    </div>
+                    <div>
+                        <span style={{ fontSize: "2rem", fontWeight: "900", color: 'var(--text-dark)', display: "block", lineHeight: 1 }}>{stats.alertas}</span>
+                        <span style={{ fontSize: "0.9rem", color: "var(--text-muted)", fontWeight: '600' }}>Alertas Críticos</span>
                     </div>
                 </div>
             </div>

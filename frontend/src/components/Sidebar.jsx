@@ -1,4 +1,4 @@
-import { LayoutGrid, Package, Settings, LogOut, Tag, ArrowUpDown, ClipboardList } from "lucide-react";
+import { LayoutGrid, Package, Settings, LogOut, Tag, ArrowUpDown, ClipboardList, Plus } from "lucide-react";
 import { NavLink } from "react-router-dom";
 
 function Sidebar() {
@@ -37,6 +37,22 @@ function Sidebar() {
                     Dashboard
                 </NavLink>
 
+                {/* Estoque / Inventário */}
+                <NavLink to="/estoque" style={({ isActive }) => ({
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px',
+                    padding: '12px 16px',
+                    borderRadius: '8px',
+                    textDecoration: 'none',
+                    color: isActive ? 'white' : '#9da5ad',
+                    backgroundColor: isActive ? 'var(--terracota)' : 'transparent',
+                    transition: 'all 0.2s'
+                })}>
+                    <Package size={20} />
+                    Estoque
+                </NavLink>
+
                 {/* Cadastrar Produto */}
                 <NavLink to="/cadastrar" style={({ isActive }) => ({
                     display: 'flex',
@@ -49,7 +65,7 @@ function Sidebar() {
                     backgroundColor: isActive ? 'var(--terracota)' : 'transparent',
                     transition: 'all 0.2s'
                 })}>
-                    <Package size={20} />
+                    <Plus size={20} />
                     Cadastrar Produto
                 </NavLink>
 

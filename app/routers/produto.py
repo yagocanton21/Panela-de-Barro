@@ -12,7 +12,7 @@ def listar_produtos():
     try:
         cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
         cursor.execute("""
-            SELECT p.id, p.nome, c.nome as categoria, p.quantidade, p.unidade_medida 
+            SELECT p.id, p.nome, c.nome as categoria, p.categoria_id, p.quantidade, p.unidade_medida 
             FROM produtos p 
             LEFT JOIN categorias c ON p.categoria_id = c.id
         """)
