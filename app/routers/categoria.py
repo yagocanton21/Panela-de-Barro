@@ -1,8 +1,12 @@
-from fastapi import APIRouter, Body
+from fastapi import APIRouter, Body, HTTPException
 from fastapi.responses import JSONResponse
+from pydantic import BaseModel
 from app.database import get_connection
 import psycopg2
 import psycopg2.extras
+
+class CategoriaSchema(BaseModel):
+    nome: str
 
 router = APIRouter()
 
@@ -41,28 +45,40 @@ def buscar_categoria_por_nome(nome: str):
 
 # Rota para criar uma categoria
 @router.post("/categorias", status_code=201)
-def criar_categoria(nome: str = Body(...)):
+def criar_categoria(categoria: CategoriaSchema):
     """Cria uma nova categoria."""
     conn = get_connection()
     try:
         cursor = conn.cursor()
-        cursor.execute("INSERT INTO categorias (nome) VALUES (%s)", (nome,))
+        cursor.execute("INSERT INTO categorias (nome) VALUES (%s)", (categoria.nome,))
         conn.commit()
         return {"mensagem": "Categoria criada com sucesso!"}
+    except psycopg2.errors.UniqueViolation:
+        conn.rollback()
+        raise HTTPException(status_code=400, detail="Esta categoria já existe.")
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(status_code=500, detail=f"Erro ao criar categoria: {str(e)}")
     finally:
         conn.close()
 
 
 # Rota para editar uma categoria
 @router.put("/categorias/{id}")
-def editar_categoria(id: int, nome: str = Body(...)):
+def editar_categoria(id: int, categoria: CategoriaSchema):
     """Editar uma categoria pelo ID."""
     conn = get_connection()
     try:
         cursor = conn.cursor()
-        cursor.execute("UPDATE categorias SET nome = %s WHERE id = %s", (nome, id))
+        cursor.execute("UPDATE categorias SET nome = %s WHERE id = %s", (categoria.nome, id))
         conn.commit()
         return {"mensagem": "Categoria atualizada com sucesso!"}
+    except psycopg2.errors.UniqueViolation:
+        conn.rollback()
+        raise HTTPException(status_code=400, detail="Já existe uma categoria com este nome.")
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(status_code=500, detail=f"Erro ao atualizar categoria: {str(e)}")
     finally:
         conn.close()
 

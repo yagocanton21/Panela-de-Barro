@@ -22,7 +22,7 @@ function Categorias() {
         carregarCategorias();
     }, []);
 
-    const handleSalvar = (e) => {
+    const handleSalvar = async (e) => {
         e.preventDefault();
         const url = editandoId
             ? `http://127.0.0.1:8000/categorias/${editandoId}`
@@ -30,17 +30,26 @@ function Categorias() {
 
         const metodo = editandoId ? "PUT" : "POST";
 
-        fetch(url, {
-            method: metodo,
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(nome)
-        })
-            .then(() => {
+        try {
+            const response = await fetch(url, {
+                method: metodo,
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ nome })
+            });
+
+            const dados = await response.json();
+
+            if (response.ok) {
                 setNome("");
                 setEditandoId(null);
                 carregarCategorias();
-            })
-            .catch(err => console.error("Erro ao salvar", err));
+            } else {
+                alert(dados.detail || "Erro ao salvar categoria.");
+            }
+        } catch (err) {
+            console.error("Erro ao salvar", err);
+            alert("Erro de conexão com o servidor.");
+        }
     };
 
     // Deletar categoria
@@ -177,89 +186,120 @@ function Categorias() {
 
                 <div style={{
                     display: "grid",
-                    gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))",
-                    gap: "20px"
+                    gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))",
+                    gap: "24px"
                 }}>
                     {categorias.length > 0 ? categorias.map(cat => (
-                        <div key={cat.id} style={{
+                        <div key={cat.id} className="category-card" style={{
                             position: 'relative',
-                            padding: "24px 16px",
-                            borderRadius: "16px",
+                            padding: "2rem",
+                            borderRadius: "24px",
                             backgroundColor: "#ffffff",
                             border: "1px solid var(--border-light)",
-                            textAlign: 'center',
-                            transition: "all 0.3s ease",
-                            cursor: 'default',
                             display: 'flex',
                             flexDirection: 'column',
                             alignItems: 'center',
-                            gap: '12px',
-                            boxShadow: '0 2px 8px rgba(0,0,0,0.02)'
-                        }}
-                            onMouseOver={(e) => {
-                                e.currentTarget.style.transform = 'translateY(-5px)';
-                                e.currentTarget.style.borderColor = 'var(--terracota)';
-                                e.currentTarget.style.boxShadow = '0 12px 24px rgba(0,0,0,0.06)';
-                            }}
-                            onMouseOut={(e) => {
-                                e.currentTarget.style.transform = 'translateY(0)';
-                                e.currentTarget.style.borderColor = 'var(--border-light)';
-                                e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.02)';
-                            }}
-                        >
+                            gap: '1.2rem',
+                            transition: "all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)",
+                            boxShadow: '0 4px 15px rgba(0, 0, 0, 0.02)',
+                            cursor: 'default',
+                            overflow: 'hidden'
+                        }}>
+                            {/* Círculo de fundo decorativo */}
+                            <div style={{
+                                position: 'absolute',
+                                top: '-30px',
+                                right: '-30px',
+                                width: '80px',
+                                height: '80px',
+                                background: 'rgba(131, 62, 32, 0.03)',
+                                borderRadius: '50%',
+                                zIndex: 0
+                            }}></div>
+
                             {/* Ícone de Categoria Decorativo */}
                             <div style={{
                                 backgroundColor: 'rgba(131, 62, 32, 0.08)',
-                                padding: '12px',
-                                borderRadius: '50%',
+                                padding: '16px',
+                                borderRadius: '20px',
                                 color: 'var(--terracota)',
-                                marginBottom: '4px'
+                                position: 'relative',
+                                zIndex: 1
                             }}>
-                                <Tag size={24} />
+                                <Tag size={28} />
                             </div>
 
-                            <span style={{
-                                fontWeight: '600',
-                                fontSize: '1.05rem',
-                                color: 'var(--text-dark)',
-                                textTransform: 'capitalize'
-                            }}>
-                                {cat.nome}
-                            </span>
+                            <div style={{ textAlign: 'center', zIndex: 1 }}>
+                                <span style={{
+                                    fontWeight: '700',
+                                    fontSize: '1.1rem',
+                                    color: 'var(--text-dark)',
+                                    display: 'block',
+                                    marginBottom: '4px'
+                                }}>
+                                    {cat.nome}
+                                </span>
+                                <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: '500' }}>
+                                    Categoria Ativa
+                                </span>
+                            </div>
 
                             {/* Botões de Ação */}
                             <div style={{
                                 display: "flex",
-                                gap: "12px",
-                                marginTop: '8px',
-                                paddingTop: '15px',
-                                borderTop: '1px solid #f5f0e6',
+                                gap: "10px",
+                                marginTop: '10px',
+                                zIndex: 1,
                                 width: '100%',
                                 justifyContent: 'center'
                             }}>
                                 <button
                                     onClick={() => handleEditar(cat)}
-                                    style={{ background: "none", border: "none", color: "#9da5ad", cursor: "pointer", transition: "color 0.2s" }}
-                                    onMouseOver={(e) => e.currentTarget.style.color = 'var(--terracota)'}
-                                    onMouseOut={(e) => e.currentTarget.style.color = '#9da5ad'}
+                                    style={{
+                                        background: "#f8f9fa",
+                                        border: "none",
+                                        color: "#7d7569",
+                                        cursor: "pointer",
+                                        padding: "10px",
+                                        borderRadius: "12px",
+                                        transition: "all 0.2s"
+                                    }}
+                                    onMouseOver={(e) => { e.currentTarget.style.color = 'var(--terracota)'; e.currentTarget.style.backgroundColor = '#eef0f2'; }}
+                                    onMouseOut={(e) => { e.currentTarget.style.color = '#7d7569'; e.currentTarget.style.backgroundColor = '#f8f9fa'; }}
                                     title="Editar"
                                 >
                                     <Edit2 size={18} />
                                 </button>
                                 <button
                                     onClick={() => handleDeletar(cat.id)}
-                                    style={{ background: "none", border: "none", color: "#e74c3c", cursor: "pointer", transition: "opacity 0.2s" }}
-                                    onMouseOver={(e) => e.currentTarget.style.opacity = '0.7'}
-                                    onMouseOut={(e) => e.currentTarget.style.opacity = '1'}
+                                    style={{
+                                        background: "#f8f9fa",
+                                        border: "none",
+                                        color: "#7d7569",
+                                        cursor: "pointer",
+                                        padding: "10px",
+                                        borderRadius: "12px",
+                                        transition: "all 0.2s"
+                                    }}
+                                    onMouseOver={(e) => { e.currentTarget.style.color = '#e74c3c'; e.currentTarget.style.backgroundColor = '#faeaea'; }}
+                                    onMouseOut={(e) => { e.currentTarget.style.color = '#7d7569'; e.currentTarget.style.backgroundColor = '#f8f9fa'; }}
                                     title="Excluir"
                                 >
                                     <Trash2 size={18} />
                                 </button>
                             </div>
+
+                            <style>{`
+                                .category-card:hover {
+                                    transform: translateY(-8px);
+                                    border-color: var(--terracota);
+                                    box-shadow: 0 15px 35px rgba(131, 62, 32, 0.08);
+                                }
+                            `}</style>
                         </div>
                     )) : (
                         <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>
-                            Nenhuma categoria encontrada.
+                            Nenhum produto encontrado.
                         </div>
                     )}
                 </div>

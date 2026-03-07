@@ -5,6 +5,8 @@ import Layout from "./components/Layout";
 import Categorias from "./pages/Categorias";
 import Movimentacoes from "./pages/Movimentacoes";
 import Historico from "./pages/Historico";
+import Estoque from "./pages/Estoque";
+import EditarProduto from "./pages/EditarProduto";
 
 function App() {
   return (
@@ -26,6 +28,12 @@ function App() {
 
           {/* Rota para o histórico de movimentações */}
           <Route path="/historico" element={<Historico />} />
+
+          {/* Rota para o estoque */}
+          <Route path="/estoque" element={<Estoque />} />
+
+          {/* Rota para editar produto */}
+          <Route path="/editar/:id" element={<EditarProduto />} />
         </Routes>
       </Layout>
     </BrowserRouter>
