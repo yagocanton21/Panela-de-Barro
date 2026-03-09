@@ -12,7 +12,7 @@ function Dashboard() {
             .then(dados => {
                 if (Array.isArray(dados)) {
                     setProdutos(dados);
-                    const lowStock = dados.filter(p => p.quantidade < 15).length;
+                    const lowStock = dados.filter(p => p.quantidade < 10).length;
                     setStats({ total: dados.length, alertas: lowStock });
                 }
             })
@@ -88,7 +88,7 @@ function Dashboard() {
                             borderBottom: "1px solid rgba(255,255,255,0.05)"
                         }}>
                             <span style={{ fontWeight: 500 }}>{p.nome}</span>
-                            <span style={{ color: p.quantidade < 5 ? "#f1c40f" : "#27ae60" }}>
+                            <span style={{ fontWeight: 600, color: p.quantidade <= 0 ? "#e74c3c" : p.quantidade < 10 ? "#f1c40f" : "#27ae60" }}>
                                 {p.quantidade} {p.unidade_medida}
                             </span>
                         </li>
