@@ -1,3 +1,7 @@
+* {
+  box-sizing: border-box;
+}
+
 :root {
   --terracota: #833e20;
   --bg-light: #f5f0e6;
