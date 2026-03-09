@@ -12,7 +12,7 @@ router = APIRouter()
 
 
 # Rota para listar as categorias
-@router.get("/categorias")
+@router.get("/categorias", summary="Listar todas as categorias")
 def listar_categorias():
     """Lista todas as categorias."""
     conn = get_connection()
@@ -28,7 +28,7 @@ def listar_categorias():
 
 
 # Rota para buscar uma categoria pelo nome
-@router.get("/categorias/{nome}")
+@router.get("/categorias/{nome}", summary="Buscar categoria pelo nome")
 def buscar_categoria_por_nome(nome: str):
     """Busca uma categoria pelo nome."""
     conn = get_connection()
@@ -44,7 +44,7 @@ def buscar_categoria_por_nome(nome: str):
 
 
 # Rota para criar uma categoria
-@router.post("/categorias", status_code=201)
+@router.post("/categorias", status_code=201, summary="Criar nova categoria")
 def criar_categoria(categoria: CategoriaSchema):
     """Cria uma nova categoria."""
     conn = get_connection()
@@ -64,7 +64,7 @@ def criar_categoria(categoria: CategoriaSchema):
 
 
 # Rota para editar uma categoria
-@router.put("/categorias/{id}")
+@router.put("/categorias/{id}", summary="Atualizar categoria existente")
 def editar_categoria(id: int, categoria: CategoriaSchema):
     """Editar uma categoria pelo ID."""
     conn = get_connection()
@@ -84,7 +84,7 @@ def editar_categoria(id: int, categoria: CategoriaSchema):
 
 
 # Rota para deletar uma categoria
-@router.delete("/categorias/{id}")
+@router.delete("/categorias/{id}", summary="Deletar categoria")
 def deletar_categoria(id: int):
     """Deleta uma categoria pelo ID."""
     conn = get_connection()
