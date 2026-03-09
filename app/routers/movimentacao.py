@@ -3,10 +3,10 @@ from fastapi.responses import JSONResponse
 from app.database import get_connection
 import psycopg2.extras
 
-router = APIRouter(prefix="/movimentacoes", tags=["movimentacoes"])
+router = APIRouter(prefix="/movimentacoes")
 
 # Rota para listar as movimentações
-@router.get("")
+@router.get("", summary="Listar o histórico de movimentações")
 def listar_movimentacoes():
     """Lista todas as movimentações."""
     conn = get_connection()
@@ -19,8 +19,8 @@ def listar_movimentacoes():
         conn.close()
 
 # Rota para criar uma movimentação com atualização automática de estoque
-@router.post("", status_code=201)
-def criar_movimentacao(produto_id: int = Body(...), tipo: str = Body(...), quantidade: int = Body(...), motivo: str = Body(...)):
+@router.post("", status_code=201, summary="Registrar entrada ou saída de produto")
+def criar_movimentacao(produto_id: int = Body(...), tipo: str = Body(..., description="Deve ser 'entrada' ou 'saida'"), quantidade: int = Body(...), motivo: str = Body(...)):
     """Cria uma nova movimentação e atualiza o saldo do produto."""
     
     if quantidade <= 0:
@@ -66,7 +66,7 @@ def criar_movimentacao(produto_id: int = Body(...), tipo: str = Body(...), quant
         conn.close()
 
 # Rota para buscar uma movimentação pelo ID
-@router.get("/{id}")
+@router.get("/{id}", summary="Consultar uma movimentação por ID")
 def buscar_movimentacao(id: int):
     """Busca uma movimentação pelo ID."""
     conn = get_connection()
@@ -81,7 +81,7 @@ def buscar_movimentacao(id: int):
         conn.close()
 
 # Rota para deletar uma movimentação
-@router.delete("/{id}")
+@router.delete("/{id}", summary="Deletar registro de movimentação")
 def deletar_movimentacao(id: int):
     """Deleta uma movimentação pelo ID."""
     conn = get_connection()
