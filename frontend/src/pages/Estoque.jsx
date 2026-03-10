@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { Package, Search, Filter, AlertTriangle, Edit2, Trash2, Plus, ChevronLeft, ChevronRight } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { Package, Search, Filter, AlertTriangle, Edit2, Trash2, Plus, ChevronLeft, ChevronRight, X } from "lucide-react";
+import { useNavigate, useLocation } from "react-router-dom";
 
 // --- Subcomponentes para limpar o código principal ---
 
@@ -75,17 +75,26 @@ const Pagination = ({ current, total, onPrev, onNext }) => (
 
 function Estoque() {
     const navigate = useNavigate();
+    const location = useLocation();
     const [produtos, setProdutos] = useState([]);
     const [busca, setBusca] = useState("");
     const [categoriaFiltro, setCategoriaFiltro] = useState("todas");
+    const [somenteBaixoEstoque, setSomenteBaixoEstoque] = useState(false);
     const [categorias, setCategorias] = useState([]);
     const [loading, setLoading] = useState(true);
 
     const [paginaAtual, setPaginaAtual] = useState(1);
     const itensPorPagina = 10;
 
-    useEffect(() => { fetchDados(); }, []);
-    useEffect(() => { setPaginaAtual(1); }, [busca, categoriaFiltro]);
+    useEffect(() => { 
+        fetchDados(); 
+        // Verifica se veio do dashboard com o filtro ativado
+        if (location.state && location.state.filterLowStock) {
+            setSomenteBaixoEstoque(true);
+        }
+    }, [location]);
+
+    useEffect(() => { setPaginaAtual(1); }, [busca, categoriaFiltro, somenteBaixoEstoque]);
 
     const fetchDados = async () => {
         setLoading(true);
@@ -110,7 +119,8 @@ function Estoque() {
     const produtosFiltrados = produtos.filter(p => {
         const matchesBusca = p.nome.toLowerCase().includes(busca.toLowerCase());
         const matchesCategoria = categoriaFiltro === "todas" || p.categoria_id === parseInt(categoriaFiltro);
-        return matchesBusca && matchesCategoria;
+        const matchesBaixoEstoque = !somenteBaixoEstoque || p.quantidade < 10;
+        return matchesBusca && matchesCategoria && matchesBaixoEstoque;
     });
 
     const totalPaginas = Math.ceil(produtosFiltrados.length / itensPorPagina);
@@ -166,7 +176,29 @@ function Estoque() {
                         {categorias.map(cat => <option key={cat.id} value={cat.id}>{cat.nome}</option>)}
                     </select>
                 </div>
+                {(busca || categoriaFiltro !== "todas" || somenteBaixoEstoque) && (
+                    <button 
+                        onClick={() => {
+                            setBusca("");
+                            setCategoriaFiltro("todas");
+                            setSomenteBaixoEstoque(false);
+                            // Limpa o estado da navegação para não reativar o filtro ao recarregar
+                            window.history.replaceState({}, document.title);
+                        }}
+                        style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 15px', borderRadius: '15px', border: '1px solid #fce8e6', backgroundColor: '#fff', color: '#d93025', cursor: 'pointer', fontSize: '0.9rem', fontWeight: '600' }}
+                    >
+                        <X size={16} /> Limpar
+                    </button>
+                )}
             </div>
+
+            {/* Banner de Filtro Ativo (Opcional) */}
+            {somenteBaixoEstoque && (
+                <div style={{ marginBottom: '1.5rem', padding: '10px 20px', backgroundColor: '#fef7f7', borderRadius: '12px', border: '1px solid #fce8e6', display: 'flex', alignItems: 'center', gap: '10px', color: '#d93025' }}>
+                    <AlertTriangle size={18} />
+                    <span style={{ fontSize: '0.9rem', fontWeight: '500' }}>Exibindo apenas produtos com estoque baixo (menos de 10 unidades).</span>
+                </div>
+            )}
 
             {/* Conteúdo */}
             {loading ? (

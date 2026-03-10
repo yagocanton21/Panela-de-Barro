@@ -1,7 +1,9 @@
 import { useState, useEffect } from "react";
 import { Package, AlertCircle, ArrowUpRight, ArrowDownRight, Activity } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 function Dashboard() {
+    const navigate = useNavigate();
     const [stats, setStats] = useState({ total: 0, alertas: 0, totalValor: 0 });
     const [produtos, setProdutos] = useState([]);
     const [movimentacoes, setMovimentacoes] = useState([]);
@@ -76,15 +78,22 @@ function Dashboard() {
                 </div>
 
                 {/* Métricas Alerta */}
-                <div style={{
-                    padding: '1.5rem',
-                    backgroundColor: '#fff',
-                    border: '1px solid #eaeaea',
-                    borderRadius: '12px',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '12px'
-                }}>
+                <div 
+                    onClick={() => navigate("/estoque", { state: { filterLowStock: true } })}
+                    style={{
+                        padding: '1.5rem',
+                        backgroundColor: '#fff',
+                        border: '1px solid #eaeaea',
+                        borderRadius: '12px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '12px',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease',
+                    }}
+                    onMouseOver={(e) => e.currentTarget.style.borderColor = '#d93025'}
+                    onMouseOut={(e) => e.currentTarget.style.borderColor = '#eaeaea'}
+                >
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#666' }}>
                         <AlertCircle size={18} strokeWidth={2} color={stats.alertas > 0 ? '#d93025' : '#666'} />
                         <span style={{ fontSize: "0.85rem", fontWeight: '500', textTransform: 'uppercase', letterSpacing: '0.5px', color: stats.alertas > 0 ? '#d93025' : '#666' }}>
