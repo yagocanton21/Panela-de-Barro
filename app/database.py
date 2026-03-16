@@ -12,7 +12,7 @@ POSTGRES_DB = os.getenv("POSTGRES_DB")
 POSTGRES_HOST = os.getenv("POSTGRES_HOST")
 POSTGRES_PORT = os.getenv("POSTGRES_PORT")
 
-
+# Função para criar conexão com o banco de dados
 def get_connection():
     """Cria e retorna uma conexão direta com o PostgreSQL."""
     conn = psycopg2.connect(

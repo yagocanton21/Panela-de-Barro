@@ -1,5 +1,6 @@
 from app.database import get_connection
 
+# Função para criar a tabela de movimentações
 def criar_tabela_movimentacoes():
     """Cria a tabela 'movimentacoes' no banco de dados, caso ela não exista."""
     sql = """

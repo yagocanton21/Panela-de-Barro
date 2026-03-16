@@ -2,7 +2,8 @@ from fastapi import FastAPI
 from app.models.produto import criar_tabela_produtos
 from app.models.categoria import criar_tabela_categorias
 from app.models.movimentacao import criar_tabela_movimentacoes
-from app.routers import produto, categoria, movimentacao
+from app.models.usuario import criar_tabela_usuarios
+from app.routers import produto, categoria, movimentacao, usuario
 from fastapi.middleware.cors import CORSMiddleware
 
 tags_metadata = [
@@ -18,8 +19,13 @@ tags_metadata = [
         "name": "Movimentações",
         "description": "Registro do histórico de gestão de entradas e saídas do estoque do restaurante.",
     },
+    {
+        "name": "Usuários",
+        "description": "Gerenciamento de usuários e controle de acesso.",
+    },
 ]
 
+# Configuração do FastAPI
 app = FastAPI(
     title="Panela de Barro - API de Estoque",
     description="Acompanhamento e gestão de estoque para o Restaurante Panela de Barro.",
@@ -30,6 +36,7 @@ app = FastAPI(
     }
 )
 
+# Configuração do CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -46,12 +53,15 @@ app.add_middleware(
 criar_tabela_categorias()
 criar_tabela_produtos()
 criar_tabela_movimentacoes()
+criar_tabela_usuarios()
 
 # Rotas
 app.include_router(produto.router, tags=["Produtos"])
 app.include_router(categoria.router, tags=["Categorias"])
 app.include_router(movimentacao.router, tags=["Movimentações"])
+app.include_router(usuario.router, tags=["Usuários"])
 
+# Rota inicial
 @app.get("/", tags=["Início"])
 def read_root():
     return {"message": "Bem-vindo à API de Estoque do Restaurante Panela de Barro!"}
