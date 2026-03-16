@@ -48,7 +48,7 @@ def criar_movimentacao(produto_id: int = Body(...), tipo: str = Body(..., descri
         else:
             return JSONResponse(status_code=400, content={"message": "Tipo inválido. Use 'entrada' ou 'saida'."})
 
-        # ATUALIZAR O PRODUTO
+        # Atualizar produto
         cursor.execute("UPDATE produtos SET quantidade = %s WHERE id = %s", (novo_estoque, produto_id))
         
         # Registrar o histórico da movimentação

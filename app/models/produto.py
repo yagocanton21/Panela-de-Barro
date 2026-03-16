@@ -1,6 +1,6 @@
 from app.database import get_connection
 
-
+# Função para criar a tabela de produtos
 def criar_tabela_produtos():
     """Cria a tabela 'produtos' no banco de dados, caso ela não exista."""
     sql = """
