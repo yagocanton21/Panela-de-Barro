@@ -160,7 +160,7 @@ function Dashboard() {
                                     {mov.tipo === 'entrada' ? '+' : '-'}{mov.quantidade}
                                 </span>
                                 <span style={{ fontSize: '0.8rem', color: '#888' }}>
-                                    {new Date(mov.data_movimentacao).toLocaleDateString('pt-BR')}
+                                    {new Date(mov.data_hora).toLocaleDateString('pt-BR')}
                                 </span>
                             </div>
                         </div>
