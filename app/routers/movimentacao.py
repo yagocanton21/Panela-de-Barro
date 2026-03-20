@@ -12,7 +12,12 @@ def listar_movimentacoes():
     conn = get_connection()
     try:
         cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-        cursor.execute("SELECT * FROM movimentacoes ORDER BY data_hora DESC")
+        cursor.execute("""
+            SELECT m.*, p.nome as produto_nome 
+            FROM movimentacoes m
+            LEFT JOIN produtos p ON m.produto_id = p.id
+            ORDER BY m.data_hora DESC
+        """)
         movimentacoes = cursor.fetchall()
         return movimentacoes if movimentacoes else []
     finally:
