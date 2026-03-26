@@ -1,0 +1,205 @@
+/* Animações */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slideInPattern {
+    from { background-position: 0 0; }
+    to { background-position: 100px 100px; }
+}
+
+/* Container Principal */
+.login-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    /* Fundo bege claro do tema com um detalhe visual sutil (gradiente radial) */
+    background: radial-gradient(circle at top right, #fbf8f1, var(--bg-light) 60%);
+    font-family: 'Inter', system-ui, Avenir, Helvetica, Arial, sans-serif;
+    color: var(--text-dark);
+    position: relative;
+    overflow: hidden;
+}
+
+/* Efeito decorativo no fundo para dar um toque mais premium */
+.login-container::before {
+    content: '';
+    position: absolute;
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, rgba(131, 62, 32, 0.05) 0%, transparent 70%);
+    top: -200px;
+    left: -200px;
+    border-radius: 50%;
+    z-index: 0;
+}
+
+.login-container::after {
+    content: '';
+    position: absolute;
+    width: 500px;
+    height: 500px;
+    background: radial-gradient(circle, rgba(131, 62, 32, 0.04) 0%, transparent 60%);
+    bottom: -150px;
+    right: -100px;
+    border-radius: 50%;
+    z-index: 0;
+}
+
+/* Caixa de Login Premium */
+.login-box {
+    background: var(--card-bg);
+    border-radius: 20px;
+    padding: 48px 40px;
+    width: 100%;
+    max-width: 440px;
+    /* Sombras em camadas (Smooth Shadow) para profundidade premium */
+    box-shadow: 
+        0 4px 6px rgba(131, 62, 32, 0.02),
+        0 12px 16px rgba(131, 62, 32, 0.04),
+        0 24px 32px rgba(131, 62, 32, 0.06);
+    border: 1px solid rgba(232, 224, 213, 0.6); /* --border-light suavizada */
+    text-align: center;
+    position: relative;
+    z-index: 1;
+    animation: fadeInUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Cabeçalho */
+.login-box-header {
+    margin-bottom: 32px;
+}
+
+.login-box h2 {
+    margin-top: 0;
+    margin-bottom: 8px;
+    color: var(--terracota);
+    font-size: 32px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+}
+
+.login-box p {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 15px;
+    font-weight: 400;
+}
+
+/* Mensagem de Erro com visual aprimorado */
+.error-message {
+    background-color: #fff0f0;
+    color: #d12e2e;
+    padding: 14px;
+    border-radius: 10px;
+    margin-bottom: 24px;
+    font-size: 14px;
+    font-weight: 500;
+    border-left: 4px solid #d12e2e;
+    text-align: left;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    animation: fadeInUp 0.3s ease-out;
+}
+
+.error-message::before {
+    content: "⚠️";
+}
+
+/* Formulário */
+.login-form {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    text-align: left;
+}
+
+/* Campos Modernos */
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    position: relative;
+}
+
+.form-group label {
+    font-size: 14px;
+    color: var(--text-dark);
+    font-weight: 600;
+    margin-left: 2px;
+}
+
+.form-group input {
+    padding: 16px;
+    border-radius: 12px;
+    border: 1.5px solid var(--border-light);
+    background: #faf8f5;
+    color: var(--text-dark);
+    font-size: 15px;
+    outline: none;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.form-group input::placeholder {
+    color: #b5aca0;
+    font-weight: 400;
+}
+
+/* Estados de Foco (Moderno) */
+.form-group input:hover {
+    border-color: #d3c4b1;
+}
+
+.form-group input:focus {
+    background: #ffffff;
+    border-color: var(--terracota);
+    box-shadow: 0 0 0 4px rgba(131, 62, 32, 0.1);
+}
+
+/* Botão Estilizado Premium */
+.login-btn {
+    padding: 16px;
+    border: none;
+    border-radius: 12px;
+    background: linear-gradient(135deg, var(--terracota), #6a321a);
+    color: #ffffff;
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    margin-top: 8px;
+    box-shadow: 0 4px 12px rgba(131, 62, 32, 0.3);
+    position: relative;
+    overflow: hidden;
+}
+
+/* Efeito Hover do Botão */
+.login-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(131, 62, 32, 0.4);
+}
+
+/* Efeito Active do Botão */
+.login-btn:active:not(:disabled) {
+    transform: translateY(1px);
+    box-shadow: 0 2px 8px rgba(131, 62, 32, 0.3);
+}
+
+/* Botão desabilitado */
+.login-btn:disabled {
+    background: #d1c8bd;
+    box-shadow: none;
+    cursor: not-allowed;
+    color: #ffffff;
+    transform: none;
+}
