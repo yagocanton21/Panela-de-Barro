@@ -1,7 +1,14 @@
 import { LayoutGrid, Package, Settings, LogOut, Tag, ArrowUpDown, ClipboardList, Plus } from "lucide-react";
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 
 function Sidebar() {
+    const navigate = useNavigate();
+
+    const handleLogout = () => {
+        localStorage.removeItem("usuarioLogado");
+        navigate("/login");
+    };
+
     return (
         <aside className="sidebar">
             {/* Logo e Título do Sistema */}
@@ -137,15 +144,18 @@ function Sidebar() {
                     Configurações
                 </div>
 
-                <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '12px',
-                    padding: '12px 16px',
-                    color: '#e74c3c',
-                    cursor: 'pointer',
-                    marginTop: '4px'
-                }}>
+                <div
+                    onClick={handleLogout}
+                    style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '12px',
+                        padding: '12px 16px',
+                        color: '#e74c3c',
+                        cursor: 'pointer',
+                        marginTop: '4px'
+                    }}
+                >
                     <LogOut size={20} />
                     Sair
                 </div>

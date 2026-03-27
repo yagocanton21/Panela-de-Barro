@@ -8,42 +8,37 @@ import Historico from "./pages/Historico";
 import Estoque from "./pages/Estoque";
 import EditarProduto from "./pages/EditarProduto";
 import Login from "./pages/Login";
+import PrivateRoute from "./components/PrivateRoute";
 
+// Rotas protegidas - só quem está logado pode acessar
 function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Rota de login sem o Layout (Sidebar/Navbar) */}
         <Route path="/login" element={<Login />} />
 
-        {/* Todas as outras rotas com Layout usando um wildcard (/*) */}
         <Route path="/*" element={
-          <Layout>
-            <Routes>
-              {/* Rota para a página inicial (Dashboard) */}
-              <Route path="/" element={<Dashboard />} />
-              {/* Redirecionamento temporário caso o login mude para /admin */}
-              <Route path="/admin" element={<Dashboard />} />
-
-              {/* Rota para a tela de cadastrar novo produto */}
-              <Route path="/cadastrar" element={<CadastroProduto />} />
-
-              {/* Rota para a tela de categorias */}
-              <Route path="/categorias" element={<Categorias />} />
-
-              {/* Rota para a tela de movimentações */}
-              <Route path="/movimentacoes" element={<Movimentacoes />} />
-
-              {/* Rota para o histórico de movimentações */}
-              <Route path="/historico" element={<Historico />} />
-
-              {/* Rota para o estoque */}
-              <Route path="/estoque" element={<Estoque />} />
-
-              {/* Rota para editar produto */}
-              <Route path="/editar/:id" element={<EditarProduto />} />
-            </Routes>
-          </Layout>
+          <PrivateRoute>
+            <Layout>
+              <Routes>
+                {/* Página inicial - Dashboard com resumo do sistema */}
+                <Route path="/" element={<Dashboard />} />
+                <Route path="/admin" element={<Dashboard />} />
+                {/* Cadastrar novo produto no estoque */}
+                <Route path="/cadastrar" element={<CadastroProduto />} />
+                {/* Gerenciar categorias de produtos */}
+                <Route path="/categorias" element={<Categorias />} />
+                {/* Registrar entradas e saídas de produtos */}
+                <Route path="/movimentacoes" element={<Movimentacoes />} />
+                {/* Ver histórico de todas as movimentações */}
+                <Route path="/historico" element={<Historico />} />
+                {/* Visualizar estoque atual */}
+                <Route path="/estoque" element={<Estoque />} />
+                {/* Editar dados de um produto específico */}
+                <Route path="/editar/:id" element={<EditarProduto />} />
+              </Routes>
+            </Layout>
+          </PrivateRoute>
         } />
       </Routes>
     </BrowserRouter>
