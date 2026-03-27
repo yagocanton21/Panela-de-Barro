@@ -58,3 +58,30 @@ def buscar_usuario_por_login(usuario_login):
             return cursor.fetchone()
     finally:
         conn.close()
+
+# Função para listar todos os usuários
+def listar_usuarios():
+    sql = "SELECT id, nome_exibicao, usuario, is_admin, data_criacao FROM usuarios ORDER BY id"
+    conn = get_connection()
+    try:
+        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cursor:
+            cursor.execute(sql)
+            return cursor.fetchall()
+    finally:
+        conn.close()
+
+# Função para editar um usuario
+def editar_usuario(id, nome_exibicao, usuario, senha_pura, is_admin=False):
+    senha_hash = hash_password(senha_pura)
+    sql = """
+        UPDATE usuarios
+        SET nome_exibicao = %s, usuario = %s, senha_hash = %s, is_admin = %s
+        WHERE id = %s
+    """
+    conn = get_connection()
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute(sql, (nome_exibicao, usuario, senha_hash, is_admin, id))
+            conn.commit()
+    finally:
+        conn.close()

@@ -1,16 +1,13 @@
 from fastapi import APIRouter, HTTPException, Body
 from fastapi.responses import JSONResponse
-from app.database import get_connection
-from app.models.usuario import criar_usuario, buscar_usuario_por_login, verify_password
+from app.models.usuario import criar_usuario, buscar_usuario_por_login, verify_password, listar_usuarios, editar_usuario
 import psycopg2
-import psycopg2.extras
 
 router = APIRouter()
 
-# Rota para criar um novo usuário
+# Criar novo usuário
 @router.post("/usuarios", status_code=201, summary="Criar novo usuário")
 def registrar_usuario(dados: dict = Body(...)):
-    """Cria um novo usuário."""
     try:
         nome_exibicao = dados.get("nome_exibicao")
         usuario = dados.get("usuario")
@@ -24,35 +21,25 @@ def registrar_usuario(dados: dict = Body(...)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erro ao criar usuário: {str(e)}")
 
-# Rota para listar todos os usuários
+# Listar todos os usuários
 @router.get("/usuarios", summary="Listar todos os usuários")
-def listar_usuarios():
-    """Lista todos os usuários."""
-    conn = get_connection()
-    try:
-        cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-        cursor.execute("SELECT id, nome_exibicao, usuario, is_admin, data_criacao FROM usuarios ORDER BY id")
-        usuarios = cursor.fetchall()
-        if not usuarios:
-            return JSONResponse(status_code=404, content={"message": "Nenhum usuário encontrado."})
-        return usuarios
-    finally:
-        conn.close()
+def get_usuarios():
+    usuarios = listar_usuarios()
+    if not usuarios:
+        return JSONResponse(status_code=404, content={"message": "Nenhum usuário encontrado."})
+    return usuarios
 
-# Rota de login
+# Autenticar usuário
 @router.post("/login", summary="Autenticar usuário")
 def login(dados: dict = Body(...)):
     usuario_login = dados.get("usuario")
     senha_pura = dados.get("senha")
 
-    # 1. Busca o usuário no banco
     db_user = buscar_usuario_por_login(usuario_login)
 
-    # 2. Verifica se o usuário existe e se a senha está correta
     if not db_user or not verify_password(senha_pura, db_user["senha_hash"]):
         raise HTTPException(status_code=401, detail="Usuário ou senha incorretos.")
 
-    # 3. Se estiver tudo certo, retornamos os dados (por enquanto sem JWT para simplificar)
     return {
         "mensagem": "Login realizado com sucesso!",
         "usuario": {
@@ -62,3 +49,17 @@ def login(dados: dict = Body(...)):
             "is_admin": db_user["is_admin"]
         }
     }
+
+# Editar usuário
+@router.put("/usuarios/{id}", summary="Editar usuário")
+def update_usuario(id: int, dados: dict = Body(...)):
+    try:
+        nome_exibicao = dados.get("nome_exibicao")
+        usuario = dados.get("usuario")
+        senha = dados.get("senha")
+        is_admin = dados.get("is_admin", False)
+
+        editar_usuario(id, nome_exibicao, usuario, senha, is_admin)
+        return {"mensagem": "Usuário editado com sucesso!"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro ao editar usuário: {str(e)}")
