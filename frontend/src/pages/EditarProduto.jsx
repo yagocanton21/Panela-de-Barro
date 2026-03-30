@@ -11,6 +11,7 @@ function EditarProduto() {
     const [nome, setNome] = useState("");
     const [categoriaId, setCategoriaId] = useState("");
     const [quantidade, setQuantidade] = useState("");
+    const [quantidadeMinima, setQuantidadeMinima] = useState(5);
     const [unidade, setUnidade] = useState("un");
 
     // Estados de Controle
@@ -37,6 +38,7 @@ function EditarProduto() {
                     setNome(dadosProd.nome);
                     setCategoriaId(dadosProd.categoria_id);
                     setQuantidade(dadosProd.quantidade);
+                    setQuantidadeMinima(dadosProd.quantidade_minima || 5);
                     setUnidade(dadosProd.unidade_medida);
                 } else {
                     setErro("Produto não encontrado.");
@@ -61,6 +63,7 @@ function EditarProduto() {
             nome: nome,
             categoria: parseInt(categoriaId),
             quantidade: parseInt(quantidade),
+            quantidade_minima: parseInt(quantidadeMinima),
             unidade_medida: unidade
         };
 
@@ -208,24 +211,44 @@ function EditarProduto() {
                     </div>
                 </div>
 
-                {/* Quantidade */}
-                <div style={{ marginBottom: '2.5rem' }}>
-                    <label style={{ display: 'block', marginBottom: '10px', fontWeight: 600, color: 'var(--text-dark)', fontSize: '0.95rem' }}>
-                        QUANTIDADE EM ESTOQUE
-                    </label>
-                    <input
-                        type="number"
-                        value={quantidade}
-                        onChange={(e) => setQuantidade(e.target.value)}
-                        required
-                        min="0"
-                        placeholder="Ex: 10"
-                        style={{
-                            width: '100%', padding: '14px', borderRadius: '10px',
-                            border: '1px solid var(--border-light)', outline: 'none',
-                            backgroundColor: '#fdfdfd', fontSize: '1rem', boxSizing: 'border-box'
-                        }}
-                    />
+                {/* Quantidade e Estoque Mínimo */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '25px', marginBottom: '2.5rem' }}>
+                    <div>
+                        <label style={{ display: 'block', marginBottom: '10px', fontWeight: 600, color: 'var(--text-dark)', fontSize: '0.95rem' }}>
+                            QUANTIDADE EM ESTOQUE
+                        </label>
+                        <input
+                            type="number"
+                            value={quantidade}
+                            onChange={(e) => setQuantidade(e.target.value)}
+                            required
+                            min="0"
+                            placeholder="Ex: 10"
+                            style={{
+                                width: '100%', padding: '14px', borderRadius: '10px',
+                                border: '1px solid var(--border-light)', outline: 'none',
+                                backgroundColor: '#fdfdfd', fontSize: '1rem', boxSizing: 'border-box'
+                            }}
+                        />
+                    </div>
+                    <div>
+                        <label style={{ display: 'block', marginBottom: '10px', fontWeight: 600, color: 'var(--text-dark)', fontSize: '0.95rem' }}>
+                            ESTOQUE MÍNIMO (ALERTA)
+                        </label>
+                        <input
+                            type="number"
+                            value={quantidadeMinima}
+                            onChange={(e) => setQuantidadeMinima(e.target.value)}
+                            required
+                            min="0"
+                            placeholder="Ex: 5"
+                            style={{
+                                width: '100%', padding: '14px', borderRadius: '10px',
+                                border: '1px solid var(--border-light)', outline: 'none',
+                                backgroundColor: '#fdfdfd', fontSize: '1rem', boxSizing: 'border-box'
+                            }}
+                        />
+                    </div>
                 </div>
 
                 {/* Mensagem de Erro Inline */}

@@ -52,6 +52,7 @@ def adicionar_produto(
     nome: str = Body(..., description="Nome do produto"),
     categoria: int = Body(..., description="ID numérico da categoria"),
     quantidade: int = Body(default=0, description="Quantidade inicial em estoque"),
+    quantidade_minima: int = Body(default=0, description="Quantidade mínima em estoque"),
     unidade_medida: str = Body(..., description="kg, l, g, ml, un etc.")
 ):
     """Adiciona um novo produto ao estoque com a sua referida quantidade e unidade de medida."""
@@ -77,6 +78,7 @@ def editar_produto(
     nome: str = Body(...),
     categoria: int = Body(...),
     quantidade: int = Body(default=0),
+    quantidade_minima: int = Body(default=0),
     unidade_medida: str = Body(...)
 ):
     """Atualiza as informações (nome, categoria, quantidade, unidade) de um produto existente através do seu ID."""

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "./Login.css";
 
@@ -9,6 +9,14 @@ function Login() {
     const [erro, setErro] = useState("");
     const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
+
+    // Se o usuário já estiver logado, redireciona direto para o painel de admin
+    useEffect(() => {
+        const usuarioLogado = localStorage.getItem("usuarioLogado");
+        if (usuarioLogado) {
+            navigate("/admin");
+        }
+    }, [navigate]);
 
     const handleLogin = async (e) => {
         e.preventDefault();
