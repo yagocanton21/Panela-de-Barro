@@ -119,7 +119,11 @@ function Estoque() {
     const produtosFiltrados = produtos.filter(p => {
         const matchesBusca = p.nome.toLowerCase().includes(busca.toLowerCase());
         const matchesCategoria = categoriaFiltro === "todas" || p.categoria_id === parseInt(categoriaFiltro);
-        const matchesBaixoEstoque = !somenteBaixoEstoque || p.quantidade < 10;
+        
+        // Agora o filtro de estoque baixo usa a quantidade_minima customizada
+        const isLowStock = p.quantidade <= (p.quantidade_minima ?? 5);
+        const matchesBaixoEstoque = !somenteBaixoEstoque || isLowStock;
+        
         return matchesBusca && matchesCategoria && matchesBaixoEstoque;
     });
 
@@ -127,9 +131,12 @@ function Estoque() {
     const startIndex = (paginaAtual - 1) * itensPorPagina;
     const produtosPaginados = produtosFiltrados.slice(startIndex, startIndex + itensPorPagina);
 
-    const getStatusStyle = (qtd) => {
+    const getStatusStyle = (p) => {
+        const qtd = p.quantidade;
+        const min = p.quantidade_minima ?? 5;
+
         if (qtd <= 0) return { color: '#e74c3c', label: 'Esgotado', bg: 'rgba(231, 76, 60, 0.1)' };
-        if (qtd < 10) return { color: '#f1c40f', label: 'Estoque Baixo', bg: 'rgba(241, 196, 15, 0.1)' };
+        if (qtd <= min) return { color: '#f1c40f', label: 'Estoque Baixo', bg: 'rgba(241, 196, 15, 0.1)' };
         return { color: '#27ae60', label: 'Normal', bg: 'rgba(39, 174, 96, 0.1)' };
     };
 
@@ -210,7 +217,7 @@ function Estoque() {
                             <ProductCard 
                                 key={p.id} 
                                 p={p} 
-                                status={getStatusStyle(p.quantidade)} 
+                                status={getStatusStyle(p)} 
                                 onEdit={id => navigate(`/editar/${id}`)} 
                                 onDelete={handleExcluir} 
                                 onMove={() => navigate("/movimentacoes")} 

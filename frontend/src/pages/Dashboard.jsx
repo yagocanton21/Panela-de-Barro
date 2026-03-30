@@ -15,20 +15,23 @@ function Dashboard() {
             .then(dados => {
                 if (Array.isArray(dados)) {
                     setProdutos(dados);
-                    const lowStock = dados.filter(p => p.quantidade < 10).length;
+                    // Usando quantidade minima para alertar
+                    const lowStock = dados.filter(p => p.quantidade <= (p.quantidade_minima ?? 5)).length;
+
                     const valorEstimado = dados.reduce((acc, p) => acc + (p.quantidade * (p.preco_unitario || 0)), 0);
                     setStats({ total: dados.length, alertas: lowStock, totalValor: valorEstimado });
                 }
             })
             .catch(err => console.error("Falha na API", err));
 
-        // Let's fetch recent movements again
+        // Movimentações
         fetch("http://127.0.0.1:8000/movimentacoes")
             .then(res => res.json())
             .then(dados => {
+                console.log("DADOS BRUTOS DA API:", dados); // DEPURAÇÃO
                 if (Array.isArray(dados)) {
-                    // Get only last 5 moves
-                    setMovimentacoes(dados.slice(-5).reverse());
+                    // Pega as 5 ultimas movimentações
+                    setMovimentacoes(dados.slice(0, 5));
                 }
             })
             .catch(err => console.error("Falha na API Movimentacoes", err));
@@ -36,7 +39,7 @@ function Dashboard() {
 
     return (
         <div style={{ paddingBottom: "3rem", textAlign: "left", maxWidth: "1000px", margin: "0 auto", fontFamily: "Inter, sans-serif" }}>
-            
+
             {/* Header Clean */}
             <div style={{ marginBottom: '3rem', borderBottom: '1px solid #eaeaea', paddingBottom: '1.5rem' }}>
                 <h1 style={{ fontSize: "2rem", fontWeight: "600", color: '#111', margin: '0 0 8px 0', letterSpacing: '-0.5px' }}>
@@ -48,11 +51,11 @@ function Dashboard() {
             </div>
 
             {/* Métricas Minimalistas */}
-            <div style={{ 
-                display: 'grid', 
-                gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', 
-                gap: '20px', 
-                marginBottom: '3rem' 
+            <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+                gap: '20px',
+                marginBottom: '3rem'
             }}>
                 {/* Métricas Total */}
                 <div style={{
@@ -78,7 +81,7 @@ function Dashboard() {
                 </div>
 
                 {/* Métricas Alerta */}
-                <div 
+                <div
                     onClick={() => navigate("/estoque", { state: { filterLowStock: true } })}
                     style={{
                         padding: '1.5rem',
@@ -110,30 +113,30 @@ function Dashboard() {
             </div>
 
             {/* View das Ultimas Movimentacoes Clean */}
-            <div style={{ 
-                backgroundColor: '#fff', 
-                border: '1px solid #eaeaea', 
-                borderRadius: '12px', 
+            <div style={{
+                backgroundColor: '#fff',
+                border: '1px solid #eaeaea',
+                borderRadius: '12px',
                 overflow: 'hidden'
             }}>
                 <div style={{ padding: '1.5rem', borderBottom: '1px solid #eaeaea', backgroundColor: '#fafafa', display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <Activity size={18} color="#111" />
                     <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: '500', color: '#111' }}>Últimas Atividades</h3>
                 </div>
-                
+
                 <div style={{ padding: '0 1.5rem' }}>
                     {movimentacoes.length > 0 ? movimentacoes.map((mov, index) => (
-                        <div key={index} style={{ 
-                            display: 'flex', 
-                            justifyContent: 'space-between', 
-                            alignItems: 'center', 
-                            padding: '1.2rem 0', 
-                            borderBottom: index === movimentacoes.length - 1 ? 'none' : '1px solid #eaeaea' 
+                        <div key={index} style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            padding: '1.2rem 0',
+                            borderBottom: index === movimentacoes.length - 1 ? 'none' : '1px solid #eaeaea'
                         }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                                <div style={{ 
-                                    padding: '10px', 
-                                    borderRadius: '50%', 
+                                <div style={{
+                                    padding: '10px',
+                                    borderRadius: '50%',
                                     backgroundColor: mov.tipo === 'entrada' ? '#e6f4ea' : '#fce8e6',
                                     color: mov.tipo === 'entrada' ? '#137333' : '#d93025',
                                     display: 'flex',
@@ -150,12 +153,12 @@ function Dashboard() {
                                 </div>
                             </div>
                             <div style={{ textAlign: 'right' }}>
-                                <span style={{ 
-                                    fontWeight: '600', 
+                                <span style={{
+                                    fontWeight: '600',
                                     fontSize: '1.1rem',
-                                    color: mov.tipo === 'entrada' ? '#137333' : '#d93025', 
-                                    display: 'block', 
-                                    marginBottom: '4px' 
+                                    color: mov.tipo === 'entrada' ? '#137333' : '#d93025',
+                                    display: 'block',
+                                    marginBottom: '4px'
                                 }}>
                                     {mov.tipo === 'entrada' ? '+' : '-'}{mov.quantidade}
                                 </span>
