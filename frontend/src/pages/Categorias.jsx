@@ -10,7 +10,12 @@ function Categorias() {
 
     // Carregar categorias do banco
     const carregarCategorias = () => {
-        fetch("http://127.0.0.1:8000/categorias")
+        const token = localStorage.getItem("access_token");
+        fetch("http://127.0.0.1:8000/categorias", {
+            headers: {
+                "Authorization": `Bearer ${token}`
+            }
+        })
             .then(res => res.json())
             .then(dados => {
                 if (Array.isArray(dados)) setCategorias(dados);
@@ -24,6 +29,7 @@ function Categorias() {
 
     const handleSalvar = async (e) => {
         e.preventDefault();
+        const token = localStorage.getItem("access_token");
         const url = editandoId
             ? `http://127.0.0.1:8000/categorias/${editandoId}`
             : "http://127.0.0.1:8000/categorias";
@@ -33,7 +39,10 @@ function Categorias() {
         try {
             const response = await fetch(url, {
                 method: metodo,
-                headers: { "Content-Type": "application/json" },
+                headers: { 
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                },
                 body: JSON.stringify({ nome })
             });
 
@@ -55,8 +64,14 @@ function Categorias() {
     // Deletar categoria
     const handleDeletar = async (id) => {
         if (window.confirm("Deseja realmente excluir esta categoria?")) {
+            const token = localStorage.getItem("access_token");
             try {
-                const response = await fetch(`http://127.0.0.1:8000/categorias/${id}`, { method: "DELETE" });
+                const response = await fetch(`http://127.0.0.1:8000/categorias/${id}`, { 
+                    method: "DELETE",
+                    headers: {
+                        "Authorization": `Bearer ${token}`
+                    }
+                });
                 const dados = await response.json();
 
                 if (response.ok) {

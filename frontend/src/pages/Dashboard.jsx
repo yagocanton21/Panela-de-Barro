@@ -9,8 +9,14 @@ function Dashboard() {
     const [movimentacoes, setMovimentacoes] = useState([]);
 
     useEffect(() => {
+        const token = localStorage.getItem("access_token");
+        const headers = {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+        };
+
         // Fetch Produtos
-        fetch("http://127.0.0.1:8000/produtos")
+        fetch("http://127.0.0.1:8000/produtos", { headers })
             .then(res => res.json())
             .then(dados => {
                 if (Array.isArray(dados)) {
@@ -25,10 +31,9 @@ function Dashboard() {
             .catch(err => console.error("Falha na API", err));
 
         // Movimentações
-        fetch("http://127.0.0.1:8000/movimentacoes")
+        fetch("http://127.0.0.1:8000/movimentacoes", { headers })
             .then(res => res.json())
             .then(dados => {
-                console.log("DADOS BRUTOS DA API:", dados); // DEPURAÇÃO
                 if (Array.isArray(dados)) {
                     // Pega as 5 ultimas movimentações
                     setMovimentacoes(dados.slice(0, 5));

@@ -1,9 +1,10 @@
-from fastapi import APIRouter, Body
+from fastapi import APIRouter, Body, Depends
 from fastapi.responses import JSONResponse
 from app.database import get_connection 
+from app.auth import obter_usuario_atual
 import psycopg2.extras
 
-router = APIRouter()
+router = APIRouter(dependencies=[Depends(obter_usuario_atual)])
 
 # Rota para listar todos os produtos
 @router.get("/produtos", summary="Listar produtos")

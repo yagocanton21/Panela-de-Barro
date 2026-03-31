@@ -23,10 +23,15 @@ function EditarProduto() {
     // Carregar dados da categoria e do produto
     useEffect(() => {
         const carregarDados = async () => {
+            const token = localStorage.getItem("access_token");
+            const headers = {
+                "Authorization": `Bearer ${token}`
+            };
+
             try {
                 const [resCats, resProd] = await Promise.all([
-                    fetch("http://127.0.0.1:8000/categorias"),
-                    fetch(`http://127.0.0.1:8000/produtos/${id}`)
+                    fetch("http://127.0.0.1:8000/categorias", { headers }),
+                    fetch(`http://127.0.0.1:8000/produtos/${id}`, { headers })
                 ]);
 
                 const dadosCats = await resCats.json();
@@ -59,6 +64,8 @@ function EditarProduto() {
         setLoading(true);
         setErro("");
 
+        const token = localStorage.getItem("access_token");
+
         const produtoEditado = {
             nome: nome,
             categoria: parseInt(categoriaId),
@@ -70,7 +77,10 @@ function EditarProduto() {
         try {
             const response = await fetch(`http://127.0.0.1:8000/produtos/${id}`, {
                 method: "PUT",
-                headers: { "Content-Type": "application/json" },
+                headers: { 
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                },
                 body: JSON.stringify(produtoEditado)
             });
 
