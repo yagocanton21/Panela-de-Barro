@@ -9,9 +9,24 @@ transport = httpx.ASGITransport(app=app)
 base_url = "http://testserver"
 
 async def obter_token(client):
-    """Função auxiliar para logar e pegar o token de acesso"""
+    """Função auxiliar para garantir que o usuário existe e pegar o token"""
+    user_data = {
+        "nome_exibicao": "Marcello Teste",
+        "usuario": "marcello",
+        "senha": "1234",
+        "is_admin": True
+    }
+    # Tenta criar o usuário (ignora erro se já existir)
+    await client.post("/usuarios", json=user_data)
+    
+    # Faz o login
     login_data = {"username": "marcello", "password": "1234"}
     response = await client.post("/login", data=login_data)
+    
+    if response.status_code != 200:
+        print(f"Erro no login: {response.json()}")
+        return None
+        
     return response.json()["access_token"]
 
 async def test_categorias_seed_inicial():
