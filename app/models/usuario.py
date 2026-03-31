@@ -3,8 +3,8 @@ import psycopg2.extras
 from app.database import get_connection
 from passlib.context import CryptContext
 
-# Configuração do Passlib para usar pbkdf2_sha256 (mais compatível e seguro)
-pwd_context = CryptContext(schemes=["pbkdf2_sha256"], deprecated="auto")
+# Configuração do Passlib para usar pbkdf2_sha256 e bcrypt para compatibilidade
+pwd_context = CryptContext(schemes=["pbkdf2_sha256", "bcrypt"], deprecated="auto")
 
 # Funções de hash e verificação de senha
 def hash_password(password: str) -> str:

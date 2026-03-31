@@ -1,5 +1,6 @@
 from fastapi import APIRouter, HTTPException, Body, Depends
 from fastapi.responses import JSONResponse
+from fastapi.security import OAuth2PasswordRequestForm
 from app.models.usuario import criar_usuario, buscar_usuario_por_login, verify_password, listar_usuarios, editar_usuario
 from app.auth import criar_token_acesso, obter_usuario_atual
 import psycopg2
@@ -8,7 +9,7 @@ router = APIRouter()
 
 # Criar novo usuário
 @router.post("/usuarios", status_code=201, summary="Criar novo usuário")
-def registrar_usuario(dados: dict = Body(...), user: dict = Depends(obter_usuario_atual)):
+def registrar_usuario(dados: dict = Body(...)):
     try:
         nome_exibicao = dados.get("nome_exibicao")
         usuario = dados.get("usuario")
@@ -32,9 +33,9 @@ def get_usuarios(user: dict = Depends(obter_usuario_atual)):
 
 # Autenticar usuário
 @router.post("/login", summary="Autenticar usuário")
-def login(dados: dict = Body(...)):
-    usuario_login = dados.get("usuario")
-    senha_pura = dados.get("senha")
+def login(form_data: OAuth2PasswordRequestForm = Depends()):
+    usuario_login = form_data.username
+    senha_pura = form_data.password
 
     db_user = buscar_usuario_por_login(usuario_login)
 
@@ -49,7 +50,6 @@ def login(dados: dict = Body(...)):
     })
 
     return {
-        "mensagem": "Login realizado com sucesso!",
         "access_token": access_token,
         "token_type": "bearer",
         "usuario": {

@@ -25,13 +25,17 @@ function Login() {
         setLoading(true);
 
         try {
-            // Chamada para o backend
+            // Chamada para o backend usando o formato de formulário exigido pelo OAuth2
+            const params = new URLSearchParams();
+            params.append('username', usuario);
+            params.append('password', senha);
+
             const response = await fetch("http://127.0.0.1:8000/login", {
                 method: "POST",
                 headers: {
-                    "Content-Type": "application/json"
+                    "Content-Type": "application/x-www-form-urlencoded"
                 },
-                body: JSON.stringify({ usuario, senha })
+                body: params
             });
 
             if (response.ok) {
