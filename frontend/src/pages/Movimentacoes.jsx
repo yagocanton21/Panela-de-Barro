@@ -14,8 +14,13 @@ function Movimentacoes() {
     });
 
     const carregarProdutos = async () => {
+        const token = localStorage.getItem("access_token");
         try {
-            const res = await fetch("http://127.0.0.1:8000/produtos");
+            const res = await fetch("http://127.0.0.1:8000/produtos", {
+                headers: {
+                    "Authorization": `Bearer ${token}`
+                }
+            });
             const dados = await res.json();
             if (Array.isArray(dados)) setProdutos(dados);
         } catch (err) {
@@ -30,6 +35,7 @@ function Movimentacoes() {
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
+        const token = localStorage.getItem("access_token");
 
         const payload = {
             produto_id: parseInt(formData.produto_id),
@@ -41,7 +47,10 @@ function Movimentacoes() {
         try {
             const response = await fetch("http://127.0.0.1:8000/movimentacoes", {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers: { 
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                },
                 body: JSON.stringify(payload)
             });
 

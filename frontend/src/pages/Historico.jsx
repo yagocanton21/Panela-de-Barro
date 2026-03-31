@@ -10,9 +10,14 @@ function Historico() {
     const [pagina, setPagina] = useState(1);
 
     useEffect(() => {
+        const token = localStorage.getItem("access_token");
+        const headers = {
+            "Authorization": `Bearer ${token}`
+        };
+
         Promise.all([
-            fetch("http://127.0.0.1:8000/movimentacoes").then(r => r.json()),
-            fetch("http://127.0.0.1:8000/produtos").then(r => r.json())
+            fetch("http://127.0.0.1:8000/movimentacoes", { headers }).then(r => r.json()),
+            fetch("http://127.0.0.1:8000/produtos", { headers }).then(r => r.json())
         ]).then(([movs, prods]) => {
             if (Array.isArray(movs)) setTodas(movs);
             if (Array.isArray(prods)) setProdutos(prods);

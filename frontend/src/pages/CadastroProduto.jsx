@@ -21,7 +21,12 @@ function CadastroProduto() {
 
     // Carregar categorias do banco
     useEffect(() => {
-        fetch("http://127.0.0.1:8000/categorias")
+        const token = localStorage.getItem("access_token");
+        fetch("http://127.0.0.1:8000/categorias", {
+            headers: {
+                "Authorization": `Bearer ${token}`
+            }
+        })
             .then(res => res.json())
             .then(dados => {
                 if (Array.isArray(dados)) setCategorias(dados);
@@ -35,6 +40,8 @@ function CadastroProduto() {
         setLoading(true);
         setErro("");
 
+        const token = localStorage.getItem("access_token");
+
         const novoProduto = {
             nome: nome,
             categoria: parseInt(categoriaId),
@@ -46,7 +53,10 @@ function CadastroProduto() {
         try {
             const response = await fetch("http://127.0.0.1:8000/produtos", {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers: { 
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                },
                 body: JSON.stringify(novoProduto)
             });
 

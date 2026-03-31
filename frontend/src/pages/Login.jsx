@@ -12,8 +12,9 @@ function Login() {
 
     // Se o usuário já estiver logado, redireciona direto para o painel de admin
     useEffect(() => {
+        const token = localStorage.getItem("access_token");
         const usuarioLogado = localStorage.getItem("usuarioLogado");
-        if (usuarioLogado) {
+        if (token && usuarioLogado) {
             navigate("/admin");
         }
     }, [navigate]);
@@ -35,7 +36,11 @@ function Login() {
 
             if (response.ok) {
                 const data = await response.json();
+                
+                // SALVA O TOKEN E OS DADOS DO USUÁRIO
+                localStorage.setItem("access_token", data.access_token);
                 localStorage.setItem("usuarioLogado", JSON.stringify(data.usuario));
+                
                 // Redireciona para o painel de admin
                 navigate("/admin");
             } else {

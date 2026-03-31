@@ -98,10 +98,16 @@ function Estoque() {
 
     const fetchDados = async () => {
         setLoading(true);
+        const token = localStorage.getItem("access_token");
+        const headers = {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+        };
+
         try {
             const [resProdutos, resCategorias] = await Promise.all([
-                fetch("http://127.0.0.1:8000/produtos"),
-                fetch("http://127.0.0.1:8000/categorias")
+                fetch("http://127.0.0.1:8000/produtos", { headers }),
+                fetch("http://127.0.0.1:8000/categorias", { headers })
             ]);
             const dadosProdutos = await resProdutos.json();
             const dadosCategorias = await resCategorias.json();
@@ -142,8 +148,14 @@ function Estoque() {
 
     const handleExcluir = async (id) => {
         if (window.confirm("Deseja realmente excluir este produto?")) {
+            const token = localStorage.getItem("access_token");
             try {
-                const response = await fetch(`http://127.0.0.1:8000/produtos/${id}`, { method: "DELETE" });
+                const response = await fetch(`http://127.0.0.1:8000/produtos/${id}`, { 
+                    method: "DELETE",
+                    headers: {
+                        "Authorization": `Bearer ${token}`
+                    }
+                });
                 if (response.ok) fetchDados();
                 else alert("Erro ao excluir produto.");
             } catch (err) {
