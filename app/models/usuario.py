@@ -85,3 +85,14 @@ def editar_usuario(id, nome_exibicao, usuario, senha_pura, is_admin=False):
             conn.commit()
     finally:
         conn.close()
+
+# Função para deletar usuario
+def deletar_usuario(id):
+    sql = "DELETE FROM usuarios WHERE id = %s"
+    conn = get_connection()
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute(sql, (id,))
+            conn.commit()
+    finally:
+        conn.close()

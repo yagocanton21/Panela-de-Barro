@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Body, Depends
 from fastapi.responses import JSONResponse
 from fastapi.security import OAuth2PasswordRequestForm
-from app.models.usuario import criar_usuario, buscar_usuario_por_login, verify_password, listar_usuarios, editar_usuario
+from app.models.usuario import criar_usuario, buscar_usuario_por_login, verify_password, listar_usuarios, editar_usuario, deletar_usuario
 from app.auth import criar_token_acesso, obter_usuario_atual
 import psycopg2
 
@@ -73,3 +73,12 @@ def update_usuario(id: int, dados: dict = Body(...), user: dict = Depends(obter_
         return {"mensagem": "Usuário editado com sucesso!"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erro ao editar usuário: {str(e)}")
+
+# Deletar usuário
+@router.delete("/usuarios/{id}", summary="Deletar usuário")
+def excluir_usuario(id: int, user: dict = Depends(obter_usuario_atual)):
+    try:
+        deletar_usuario(id)
+        return {"mensagem": "Usuário deletado com sucesso!"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro ao deletar usuário: {str(e)}")
