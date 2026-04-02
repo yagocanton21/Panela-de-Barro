@@ -53,4 +53,4 @@ jobs:
 
     # Buildar imagem do projeto
     - name: Testar build do Docker-Compose
-      run: docker-compose build
+      run: docker compose build
