@@ -34,3 +34,62 @@ def criar_tabela_categorias():
     finally:
         conn.close()
 
+import psycopg2.extras
+
+def listar_categorias_db():
+    conn = get_connection()
+    try:
+        cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cursor.execute("SELECT * FROM categorias ORDER BY id")
+        return cursor.fetchall()
+    finally:
+        conn.close()
+
+def buscar_categoria_db(id: int):
+    conn = get_connection()
+    try:
+        cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cursor.execute("SELECT * FROM categorias WHERE id = %s", (id,))
+        return cursor.fetchone()
+    finally:
+        conn.close()
+
+def buscar_categoria_por_nome_db(nome: str):
+    conn = get_connection()
+    try:
+        cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cursor.execute("SELECT * FROM categorias WHERE nome = %s", (nome,))
+        return cursor.fetchone()
+    finally:
+        conn.close()
+
+def adicionar_categoria_db(nome: str):
+    conn = get_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("INSERT INTO categorias (nome) VALUES (%s)", (nome,))
+        conn.commit()
+        return True
+    finally:
+        conn.close()
+
+def editar_categoria_db(id: int, nome: str):
+    conn = get_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("UPDATE categorias SET nome = %s WHERE id = %s", (nome, id))
+        conn.commit()
+        return True
+    finally:
+        conn.close()
+
+def deletar_categoria_db(id: int):
+    conn = get_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM categorias WHERE id = %s", (id,))
+        conn.commit()
+        return True
+    finally:
+        conn.close()
+
