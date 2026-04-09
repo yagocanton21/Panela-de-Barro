@@ -1,4 +1,5 @@
 from app.database import get_connection
+import psycopg2.extras
 
 # Produtos de exemplo para popular o banco de dados na inicialização
 # Formato: (nome, nome_categoria, quantidade, unidade_medida)
@@ -69,5 +70,73 @@ def criar_tabela_produtos():
                 )
 
         conn.commit()
+    finally:
+        conn.close()
+
+# Listar produtos
+def listar_produtos_db():
+    conn = get_connection()
+    try:
+        cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cursor.execute("""
+            SELECT p.id, p.nome, c.nome as categoria, p.categoria_id, p.quantidade, p.unidade_medida 
+            FROM produtos p 
+            LEFT JOIN categorias c ON p.categoria_id = c.id
+        """)
+        return cursor.fetchall()
+    finally:
+        conn.close()
+
+# Buscar produtos
+def buscar_produto_db(id: int):
+    conn = get_connection()
+    try:
+        cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cursor.execute("""
+            SELECT p.id, p.nome, c.nome as categoria, p.quantidade, p.unidade_medida 
+            FROM produtos p 
+            LEFT JOIN categorias c ON p.categoria_id = c.id
+            WHERE p.id = %s
+        """, (id,))
+        return cursor.fetchone()
+    finally:
+        conn.close()
+
+# Cadastrar produto
+def adicionar_produto_db(nome, categoria_id, quantidade, unidade_medida):
+    conn = get_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute(
+            "INSERT INTO produtos (nome, categoria_id, quantidade, unidade_medida) VALUES (%s, %s, %s, %s)",
+            (nome, categoria_id, quantidade, unidade_medida)
+        )
+        conn.commit()
+        return True
+    finally:
+        conn.close()
+
+# Editar produto
+def editar_produto_db(id, nome, categoria_id, quantidade, unidade_medida):
+    conn = get_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute(
+            "UPDATE produtos SET nome = %s, categoria_id = %s, quantidade = %s, unidade_medida = %s WHERE id = %s",
+            (nome, categoria_id, quantidade, unidade_medida, id)
+        )
+        conn.commit()
+        return True
+    finally:
+        conn.close()
+
+# Deletar produtos
+def deletar_produto_db(id):
+    conn = get_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM produtos WHERE id = %s", (id,))
+        conn.commit()
+        return True
     finally:
         conn.close()
