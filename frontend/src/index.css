@@ -86,3 +86,128 @@ h3 {
 span {
   transition: color 0.2s;
 }
+
+/* Botão Hambúrguer (Escondido no Desktop) */
+.menu-toggle {
+  display: none;
+}
+
+/* Grid de Inventário Global (Desktop) */
+.inventory-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 24px;
+}
+
+@media (max-width: 768px) {
+  /* Botão que abre o menu */
+  .menu-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: fixed;
+    top: 15px;
+    left: 15px;
+    z-index: 2000;
+    background: var(--terracota);
+    color: white;
+    border: none;
+    padding: 10px;
+    border-radius: 12px;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(131, 62, 32, 0.3);
+    transition: all 0.2s;
+  }
+
+  .menu-toggle:active {
+    transform: scale(0.9);
+  }
+
+  /* Sidebar como "Gaveta" (Drawer) */
+  .sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    height: 100vh;
+    width: 280px;
+    transform: translateX(-100%); /* Começa fora da tela */
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 1500;
+    box-shadow: 10px 0 30px rgba(0, 0, 0, 0.2);
+    border-right: none;
+  }
+
+  /* Classe que entra em ação quando o botão é clicado */
+  .sidebar.aberta {
+    transform: translateX(0);
+  }
+
+  /* Overlay para escurecer o fundo */
+  .menu-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: 1400;
+    backdrop-filter: blur(3px);
+    animation: fadeIn 0.3s ease;
+  }
+
+  /* Ajustes dos itens internos da sidebar no mobile */
+  .sidebar-logo {
+    display: flex !important; /* Mostra o logo no topo da gaveta */
+    margin-bottom: 2rem !important;
+    padding-left: 10px;
+  }
+
+  .sidebar-nav-item {
+    padding: 14px 20px !important;
+    font-size: 1rem !important;
+  }
+
+  /* Conteúdo principal ganha espaço no topo para o botão */
+  /* Botão de Adicionar Produto no mobile */
+  .add-product-btn {
+    width: 100% !important;
+    justify-content: center !important;
+    padding: 18px !important;
+    font-size: 1.1rem !important;
+    order: 2; /* Garante que ele fique abaixo do título se virem da mesma linha */
+  }
+
+  /* Grid de 2 colunas no mobile */
+  .inventory-grid {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 12px !important;
+    display: grid !important;
+  }
+
+  /* Ajuste de tamanho dos cards para caberem lado a lado */
+  .inventory-card {
+    padding: 1rem !important;
+    border-radius: 16px !important;
+  }
+
+  .inventory-card h3 {
+    font-size: 0.95rem !important;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .inventory-card .move-btn {
+    display: none; /* Esconde o texto do botão para economizar espaço */
+  }
+
+  .main-content {
+    padding: 1.2rem !important;
+    padding-top: 80px !important;
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}

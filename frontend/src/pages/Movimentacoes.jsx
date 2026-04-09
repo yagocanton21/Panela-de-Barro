@@ -47,7 +47,7 @@ function Movimentacoes() {
         try {
             const response = await fetch("http://127.0.0.1:8000/movimentacoes", {
                 method: "POST",
-                headers: { 
+                headers: {
                     "Content-Type": "application/json",
                     "Authorization": `Bearer ${token}`
                 },

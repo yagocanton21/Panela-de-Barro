@@ -38,7 +38,7 @@ function EditarProduto() {
                 const dadosProd = await resProd.json();
 
                 if (Array.isArray(dadosCats)) setCategorias(dadosCats);
-                
+
                 if (resProd.ok) {
                     setNome(dadosProd.nome);
                     setCategoriaId(dadosProd.categoria_id);
@@ -77,7 +77,7 @@ function EditarProduto() {
         try {
             const response = await fetch(`http://127.0.0.1:8000/produtos/${id}`, {
                 method: "PUT",
-                headers: { 
+                headers: {
                     "Content-Type": "application/json",
                     "Authorization": `Bearer ${token}`
                 },

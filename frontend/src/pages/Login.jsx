@@ -40,11 +40,11 @@ function Login() {
 
             if (response.ok) {
                 const data = await response.json();
-                
+
                 // SALVA O TOKEN E OS DADOS DO USUÁRIO
                 localStorage.setItem("access_token", data.access_token);
                 localStorage.setItem("usuarioLogado", JSON.stringify(data.usuario));
-                
+
                 // Redireciona para o painel de admin
                 navigate("/admin");
             } else {

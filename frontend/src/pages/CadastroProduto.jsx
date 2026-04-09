@@ -53,7 +53,7 @@ function CadastroProduto() {
         try {
             const response = await fetch("http://127.0.0.1:8000/produtos", {
                 method: "POST",
-                headers: { 
+                headers: {
                     "Content-Type": "application/json",
                     "Authorization": `Bearer ${token}`
                 },
