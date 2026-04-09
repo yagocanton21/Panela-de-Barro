@@ -29,3 +29,7 @@ docker_data/
 # Sistema Operacional
 .DS_Store
 Thumbs.db
+
+# Ferramentas Locais e Testes Temporários
+.agent/
+test_scraper_cupom.py

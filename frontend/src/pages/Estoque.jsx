@@ -84,10 +84,10 @@ function Estoque() {
     const [loading, setLoading] = useState(true);
 
     const [paginaAtual, setPaginaAtual] = useState(1);
-    const itensPorPagina = 10;
+    const itensPorPagina = 12;
 
-    useEffect(() => { 
-        fetchDados(); 
+    useEffect(() => {
+        fetchDados();
         // Verifica se veio do dashboard com o filtro ativado
         if (location.state && location.state.filterLowStock) {
             setSomenteBaixoEstoque(true);
@@ -125,11 +125,11 @@ function Estoque() {
     const produtosFiltrados = produtos.filter(p => {
         const matchesBusca = p.nome.toLowerCase().includes(busca.toLowerCase());
         const matchesCategoria = categoriaFiltro === "todas" || p.categoria_id === parseInt(categoriaFiltro);
-        
+
         // Agora o filtro de estoque baixo usa a quantidade_minima customizada
         const isLowStock = p.quantidade <= (p.quantidade_minima ?? 5);
         const matchesBaixoEstoque = !somenteBaixoEstoque || isLowStock;
-        
+
         return matchesBusca && matchesCategoria && matchesBaixoEstoque;
     });
 
@@ -150,7 +150,7 @@ function Estoque() {
         if (window.confirm("Deseja realmente excluir este produto?")) {
             const token = localStorage.getItem("access_token");
             try {
-                const response = await fetch(`http://127.0.0.1:8000/produtos/${id}`, { 
+                const response = await fetch(`http://127.0.0.1:8000/produtos/${id}`, {
                     method: "DELETE",
                     headers: {
                         "Authorization": `Bearer ${token}`
@@ -167,18 +167,18 @@ function Estoque() {
     return (
         <div style={{ textAlign: "left" }}>
             {/* Header */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2.5rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2.5rem', flexWrap: 'wrap', gap: '15px' }}>
                 <h1 style={{ margin: 0, fontSize: '2rem', display: 'flex', alignItems: 'center', gap: '15px' }}>
                     <Package size={36} color="var(--terracota)" /> Inventário
                 </h1>
                 <button
                     onClick={() => navigate("/cadastrar")}
-                    className="add-btn"
+                    className="add-product-btn"
                     style={{ backgroundColor: 'var(--terracota)', color: 'white', border: 'none', padding: '12px 24px', borderRadius: '16px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', boxShadow: '0 8px 15px rgba(131, 62, 32, 0.2)', transition: 'transform 0.2s' }}
                     onMouseOver={(e) => e.target.style.transform = 'translateY(-2px)'}
                     onMouseOut={(e) => e.target.style.transform = 'translateY(0)'}
                 >
-                    <Plus size={20} /> Adicionar Produto
+                    <Plus size={20} /> <span>Adicionar Produto</span>
                 </button>
             </div>
 
@@ -196,7 +196,7 @@ function Estoque() {
                     </select>
                 </div>
                 {(busca || categoriaFiltro !== "todas" || somenteBaixoEstoque) && (
-                    <button 
+                    <button
                         onClick={() => {
                             setBusca("");
                             setCategoriaFiltro("todas");
@@ -224,25 +224,25 @@ function Estoque() {
                 <div style={{ padding: '60px', textAlign: 'center', color: 'var(--text-muted)' }}><div className="spinner"></div> Carregando estoque...</div>
             ) : produtosFiltrados.length > 0 ? (
                 <>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '20px' }}>
+                    <div className="inventory-grid">
                         {produtosPaginados.map(p => (
-                            <ProductCard 
-                                key={p.id} 
-                                p={p} 
-                                status={getStatusStyle(p)} 
-                                onEdit={id => navigate(`/editar/${id}`)} 
-                                onDelete={handleExcluir} 
-                                onMove={() => navigate("/movimentacoes")} 
+                            <ProductCard
+                                key={p.id}
+                                p={p}
+                                status={getStatusStyle(p)}
+                                onEdit={id => navigate(`/editar/${id}`)}
+                                onDelete={handleExcluir}
+                                onMove={() => navigate("/movimentacoes")}
                             />
                         ))}
                     </div>
 
                     {totalPaginas > 1 && (
-                        <Pagination 
-                            current={paginaAtual} 
-                            total={totalPaginas} 
-                            onPrev={() => setPaginaAtual(prev => prev - 1)} 
-                            onNext={() => setPaginaAtual(prev => prev + 1)} 
+                        <Pagination
+                            current={paginaAtual}
+                            total={totalPaginas}
+                            onPrev={() => setPaginaAtual(prev => prev - 1)}
+                            onNext={() => setPaginaAtual(prev => prev + 1)}
                         />
                     )}
                 </>

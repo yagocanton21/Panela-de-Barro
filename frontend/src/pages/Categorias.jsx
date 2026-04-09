@@ -39,7 +39,7 @@ function Categorias() {
         try {
             const response = await fetch(url, {
                 method: metodo,
-                headers: { 
+                headers: {
                     "Content-Type": "application/json",
                     "Authorization": `Bearer ${token}`
                 },
@@ -66,7 +66,7 @@ function Categorias() {
         if (window.confirm("Deseja realmente excluir esta categoria?")) {
             const token = localStorage.getItem("access_token");
             try {
-                const response = await fetch(`http://127.0.0.1:8000/categorias/${id}`, { 
+                const response = await fetch(`http://127.0.0.1:8000/categorias/${id}`, {
                     method: "DELETE",
                     headers: {
                         "Authorization": `Bearer ${token}`

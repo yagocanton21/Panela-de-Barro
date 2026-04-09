@@ -17,7 +17,7 @@ function App() {
       <Routes>
         {/* Redireciona a raiz "/" para o login para garantir que o usuário se identifique */}
         <Route path="/" element={<Navigate to="/login" replace />} />
-        
+
         <Route path="/login" element={<Login />} />
 
         {/* Todas as outras rotas são protegidas e levam ao painel administrativo */}
