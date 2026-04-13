@@ -3,8 +3,6 @@ from bs4 import BeautifulSoup
 import logging
 from fastapi import APIRouter, Body, Depends
 from fastapi.responses import JSONResponse
-
-# Importe a sua função de autenticação
 from app.auth import obter_usuario_atual
 
 # Configuração do Logger para rastrear erros no Docker

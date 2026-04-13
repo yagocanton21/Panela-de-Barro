@@ -21,7 +21,7 @@ export const apiRequest = async (endpoint, options = {}) => {
             headers,
         });
 
-        // O PULO DO GATO: Se o backend retornar 401 (Não Autorizado)
+        // Se o backend retornar 401 (Não Autorizado)
         if (response.status === 401 && !window.location.pathname.includes("/login")) {
             console.warn("Sessão expirada. Redirecionando para o login...");
 
