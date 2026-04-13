@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Tag, Edit2, Trash2, X, Plus, ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { apiRequest } from "../api";
 
 function Categorias() {
     const navigate = useNavigate();
@@ -10,13 +11,8 @@ function Categorias() {
 
     // Carregar categorias do banco
     const carregarCategorias = () => {
-        const token = localStorage.getItem("access_token");
-        fetch("http://127.0.0.1:8000/categorias", {
-            headers: {
-                "Authorization": `Bearer ${token}`
-            }
-        })
-            .then(res => res.json())
+        apiRequest("/categorias")
+            .then(res => res && res.json())
             .then(dados => {
                 if (Array.isArray(dados)) setCategorias(dados);
             })
@@ -29,30 +25,24 @@ function Categorias() {
 
     const handleSalvar = async (e) => {
         e.preventDefault();
-        const token = localStorage.getItem("access_token");
-        const url = editandoId
-            ? `http://127.0.0.1:8000/categorias/${editandoId}`
-            : "http://127.0.0.1:8000/categorias";
+        const endpoint = editandoId
+            ? `/categorias/${editandoId}`
+            : "/categorias";
 
         const metodo = editandoId ? "PUT" : "POST";
 
         try {
-            const response = await fetch(url, {
+            const response = await apiRequest(endpoint, {
                 method: metodo,
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`
-                },
                 body: JSON.stringify({ nome })
             });
 
-            const dados = await response.json();
-
-            if (response.ok) {
+            if (response && response.ok) {
                 setNome("");
                 setEditandoId(null);
                 carregarCategorias();
-            } else {
+            } else if (response) {
+                const dados = await response.json();
                 alert(dados.detail || "Erro ao salvar categoria.");
             }
         } catch (err) {
@@ -64,19 +54,15 @@ function Categorias() {
     // Deletar categoria
     const handleDeletar = async (id) => {
         if (window.confirm("Deseja realmente excluir esta categoria?")) {
-            const token = localStorage.getItem("access_token");
             try {
-                const response = await fetch(`http://127.0.0.1:8000/categorias/${id}`, {
-                    method: "DELETE",
-                    headers: {
-                        "Authorization": `Bearer ${token}`
-                    }
+                const response = await apiRequest(`/categorias/${id}`, {
+                    method: "DELETE"
                 });
-                const dados = await response.json();
 
-                if (response.ok) {
+                if (response && response.ok) {
                     carregarCategorias();
-                } else {
+                } else if (response) {
+                    const dados = await response.json();
                     alert(dados.message || "Erro ao deletar categoria.");
                 }
             } catch (err) {

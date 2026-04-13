@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { apiRequest } from "../api";
 import "./Login.css";
 
 // Função para fazer login
@@ -30,7 +31,7 @@ function Login() {
             params.append('username', usuario);
             params.append('password', senha);
 
-            const response = await fetch("http://127.0.0.1:8000/login", {
+            const response = await apiRequest("/login", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/x-www-form-urlencoded"
@@ -38,7 +39,7 @@ function Login() {
                 body: params
             });
 
-            if (response.ok) {
+            if (response && response.ok) {
                 const data = await response.json();
 
                 // SALVA O TOKEN E OS DADOS DO USUÁRIO
@@ -47,7 +48,7 @@ function Login() {
 
                 // Redireciona para o painel de admin
                 navigate("/admin");
-            } else {
+            } else if (response) {
                 const errorData = await response.json().catch(() => ({}));
                 setErro(errorData.detail || "Usuário ou senha incorretos.");
             }

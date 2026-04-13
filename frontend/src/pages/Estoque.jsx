@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Package, Search, Filter, AlertTriangle, Edit2, Trash2, Plus, ChevronLeft, ChevronRight, X } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { apiRequest } from "../api";
 
 // --- Subcomponentes para limpar o código principal ---
 
@@ -98,22 +99,18 @@ function Estoque() {
 
     const fetchDados = async () => {
         setLoading(true);
-        const token = localStorage.getItem("access_token");
-        const headers = {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`
-        };
-
         try {
             const [resProdutos, resCategorias] = await Promise.all([
-                fetch("http://127.0.0.1:8000/produtos", { headers }),
-                fetch("http://127.0.0.1:8000/categorias", { headers })
+                apiRequest("/produtos"),
+                apiRequest("/categorias")
             ]);
-            const dadosProdutos = await resProdutos.json();
-            const dadosCategorias = await resCategorias.json();
 
-            setProdutos(Array.isArray(dadosProdutos) ? dadosProdutos : []);
-            setCategorias(Array.isArray(dadosCategorias) ? dadosCategorias : []);
+            if (resProdutos && resCategorias) {
+                const dadosProdutos = await resProdutos.json();
+                const dadosCategorias = await resCategorias.json();
+                setProdutos(Array.isArray(dadosProdutos) ? dadosProdutos : []);
+                setCategorias(Array.isArray(dadosCategorias) ? dadosCategorias : []);
+            }
         } catch (error) {
             console.error("Erro ao carregar dados:", error);
             setProdutos([]);
@@ -148,16 +145,12 @@ function Estoque() {
 
     const handleExcluir = async (id) => {
         if (window.confirm("Deseja realmente excluir este produto?")) {
-            const token = localStorage.getItem("access_token");
             try {
-                const response = await fetch(`http://127.0.0.1:8000/produtos/${id}`, {
-                    method: "DELETE",
-                    headers: {
-                        "Authorization": `Bearer ${token}`
-                    }
+                const response = await apiRequest(`/produtos/${id}`, {
+                    method: "DELETE"
                 });
-                if (response.ok) fetchDados();
-                else alert("Erro ao excluir produto.");
+                if (response && response.ok) fetchDados();
+                else if (response) alert("Erro ao excluir produto.");
             } catch (err) {
                 alert("Erro de conexão com o servidor.");
             }

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Package, PlusCircle, ArrowLeft, CheckCircle } from "lucide-react";
+import { apiRequest } from "../api";
 
 function CadastroProduto() {
     const navigate = useNavigate();
@@ -21,13 +22,8 @@ function CadastroProduto() {
 
     // Carregar categorias do banco
     useEffect(() => {
-        const token = localStorage.getItem("access_token");
-        fetch("http://127.0.0.1:8000/categorias", {
-            headers: {
-                "Authorization": `Bearer ${token}`
-            }
-        })
-            .then(res => res.json())
+        apiRequest("/categorias")
+            .then(res => res && res.json())
             .then(dados => {
                 if (Array.isArray(dados)) setCategorias(dados);
             })
@@ -40,8 +36,6 @@ function CadastroProduto() {
         setLoading(true);
         setErro("");
 
-        const token = localStorage.getItem("access_token");
-
         const novoProduto = {
             nome: nome,
             categoria: parseInt(categoriaId),
@@ -51,21 +45,16 @@ function CadastroProduto() {
         };
 
         try {
-            const response = await fetch("http://127.0.0.1:8000/produtos", {
+            const response = await apiRequest("/produtos", {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`
-                },
                 body: JSON.stringify(novoProduto)
             });
 
-            const dados = await response.json();
-
-            if (response.ok) {
+            if (response && response.ok) {
                 setSuccess(true);
                 setTimeout(() => navigate("/"), 2000);
-            } else {
+            } else if (response) {
+                const dados = await response.json();
                 setErro(dados.message || dados.detail || "Erro ao cadastrar. Verifique os dados.");
             }
         } catch (error) {

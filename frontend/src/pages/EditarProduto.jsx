@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Package, PlusCircle, ArrowLeft, CheckCircle } from "lucide-react";
+import { apiRequest } from "../api";
 
 function EditarProduto() {
     const navigate = useNavigate();
@@ -23,30 +24,27 @@ function EditarProduto() {
     // Carregar dados da categoria e do produto
     useEffect(() => {
         const carregarDados = async () => {
-            const token = localStorage.getItem("access_token");
-            const headers = {
-                "Authorization": `Bearer ${token}`
-            };
-
             try {
                 const [resCats, resProd] = await Promise.all([
-                    fetch("http://127.0.0.1:8000/categorias", { headers }),
-                    fetch(`http://127.0.0.1:8000/produtos/${id}`, { headers })
+                    apiRequest("/categorias"),
+                    apiRequest(`/produtos/${id}`)
                 ]);
 
-                const dadosCats = await resCats.json();
-                const dadosProd = await resProd.json();
+                if (resCats && resProd) {
+                    const dadosCats = await resCats.json();
+                    const dadosProd = await resProd.json();
 
-                if (Array.isArray(dadosCats)) setCategorias(dadosCats);
+                    if (Array.isArray(dadosCats)) setCategorias(dadosCats);
 
-                if (resProd.ok) {
-                    setNome(dadosProd.nome);
-                    setCategoriaId(dadosProd.categoria_id);
-                    setQuantidade(dadosProd.quantidade);
-                    setQuantidadeMinima(dadosProd.quantidade_minima || 5);
-                    setUnidade(dadosProd.unidade_medida);
-                } else {
-                    setErro("Produto não encontrado.");
+                    if (resProd.ok) {
+                        setNome(dadosProd.nome);
+                        setCategoriaId(dadosProd.categoria_id);
+                        setQuantidade(dadosProd.quantidade);
+                        setQuantidadeMinima(dadosProd.quantidade_minima || 5);
+                        setUnidade(dadosProd.unidade_medida);
+                    } else {
+                        setErro("Produto não encontrado.");
+                    }
                 }
             } catch (err) {
                 console.error("Erro ao carregar dados:", err);
@@ -64,8 +62,6 @@ function EditarProduto() {
         setLoading(true);
         setErro("");
 
-        const token = localStorage.getItem("access_token");
-
         const produtoEditado = {
             nome: nome,
             categoria: parseInt(categoriaId),
@@ -75,21 +71,16 @@ function EditarProduto() {
         };
 
         try {
-            const response = await fetch(`http://127.0.0.1:8000/produtos/${id}`, {
+            const response = await apiRequest(`/produtos/${id}`, {
                 method: "PUT",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`
-                },
                 body: JSON.stringify(produtoEditado)
             });
 
-            const dados = await response.json();
-
-            if (response.ok) {
+            if (response && response.ok) {
                 setSuccess(true);
                 setTimeout(() => navigate("/estoque"), 2000);
-            } else {
+            } else if (response) {
+                const dados = await response.json();
                 setErro(dados.message || dados.detail || "Erro ao atualizar. Verifique os dados.");
             }
         } catch (error) {

@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Configurações do JWT (Lidas do .env)
-SECRET_KEY = os.getenv("SECRET_KEY", "chave_padrao_muito_longa_e_segura")
+SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = os.getenv("JWT_ALGORITHM", "HS256")
 ACCESS_TOKEN_EXPIRE_HOURS = int(os.getenv("JWT_EXPIRATION_HOURS", "24"))
 
@@ -34,6 +34,6 @@ def obter_usuario_atual(token: str = Depends(oauth2_scheme)):
         usuario: str = payload.get("sub") # 'sub' é o padrão para o identificador do usuário
         if usuario is None:
             raise credentials_exception
-        return payload # Retorna os dados que você guardou no token
+        return payload
     except JWTError:
         raise credentials_exception
