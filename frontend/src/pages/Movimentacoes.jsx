@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { ArrowUpDown, Package } from "lucide-react";
+import { apiRequest } from "../api";
 
 function Movimentacoes() {
     const [produtos, setProdutos] = useState([]);
@@ -14,15 +15,12 @@ function Movimentacoes() {
     });
 
     const carregarProdutos = async () => {
-        const token = localStorage.getItem("access_token");
         try {
-            const res = await fetch("http://127.0.0.1:8000/produtos", {
-                headers: {
-                    "Authorization": `Bearer ${token}`
-                }
-            });
-            const dados = await res.json();
-            if (Array.isArray(dados)) setProdutos(dados);
+            const res = await apiRequest("/produtos");
+            if (res && res.ok) {
+                const dados = await res.json();
+                if (Array.isArray(dados)) setProdutos(dados);
+            }
         } catch (err) {
             console.error("Erro ao carregar produtos:", err);
         }
@@ -35,7 +33,6 @@ function Movimentacoes() {
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
-        const token = localStorage.getItem("access_token");
 
         const payload = {
             produto_id: parseInt(formData.produto_id),
@@ -45,22 +42,17 @@ function Movimentacoes() {
         };
 
         try {
-            const response = await fetch("http://127.0.0.1:8000/movimentacoes", {
+            const response = await apiRequest("/movimentacoes", {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`
-                },
                 body: JSON.stringify(payload)
             });
 
-            const dados = await response.json();
-
-            if (response.ok) {
+            if (response && response.ok) {
                 setFormData({ produto_id: "", produto_nome: "", tipo: "entrada", quantidade: "", motivo: "" });
                 carregarProdutos();
                 alert("Movimentação registrada com sucesso!");
-            } else {
+            } else if (response) {
+                const dados = await response.json();
                 alert(dados.message || "Erro ao registrar.");
             }
         } catch (err) {

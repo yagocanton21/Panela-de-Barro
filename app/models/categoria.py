@@ -1,4 +1,5 @@
 from app.database import get_connection
+import psycopg2.extras
 
 categorias = [
     "Carnes",
@@ -34,8 +35,7 @@ def criar_tabela_categorias():
     finally:
         conn.close()
 
-import psycopg2.extras
-
+# Listar categorias
 def listar_categorias_db():
     conn = get_connection()
     try:
@@ -45,6 +45,7 @@ def listar_categorias_db():
     finally:
         conn.close()
 
+# Buscar categoria por id
 def buscar_categoria_db(id: int):
     conn = get_connection()
     try:
@@ -54,6 +55,7 @@ def buscar_categoria_db(id: int):
     finally:
         conn.close()
 
+# Buscar categorias
 def buscar_categoria_por_nome_db(nome: str):
     conn = get_connection()
     try:
@@ -63,6 +65,7 @@ def buscar_categoria_por_nome_db(nome: str):
     finally:
         conn.close()
 
+# Adicionar categoria
 def adicionar_categoria_db(nome: str):
     conn = get_connection()
     try:
@@ -73,6 +76,7 @@ def adicionar_categoria_db(nome: str):
     finally:
         conn.close()
 
+# Editar categoria
 def editar_categoria_db(id: int, nome: str):
     conn = get_connection()
     try:
@@ -83,6 +87,7 @@ def editar_categoria_db(id: int, nome: str):
     finally:
         conn.close()
 
+# Deletar categoria
 def deletar_categoria_db(id: int):
     conn = get_connection()
     try:

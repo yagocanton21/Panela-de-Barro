@@ -3,7 +3,7 @@ from app.models.produto import criar_tabela_produtos
 from app.models.categoria import criar_tabela_categorias
 from app.models.movimentacao import criar_tabela_movimentacoes
 from app.models.usuario import criar_tabela_usuarios
-from app.routers import produto, categoria, movimentacao, usuario
+from app.routers import produto, categoria, movimentacao, usuario, nfe
 from fastapi.middleware.cors import CORSMiddleware
 
 tags_metadata = [
@@ -22,6 +22,10 @@ tags_metadata = [
     {
         "name": "Usuários",
         "description": "Gerenciamento de usuários e controle de acesso.",
+    },
+    {
+        "name": "Nota Fiscal",
+        "description": "Extração de dados de NFC-e para automação de estoque.",
     },
 ]
 
@@ -60,6 +64,7 @@ app.include_router(produto.router, tags=["Produtos"])
 app.include_router(categoria.router, tags=["Categorias"])
 app.include_router(movimentacao.router, tags=["Movimentações"])
 app.include_router(usuario.router, tags=["Usuários"])
+app.include_router(nfe.router, tags=["Nota Fiscal"])
 
 # Rota inicial
 @app.get("/", tags=["Início"])

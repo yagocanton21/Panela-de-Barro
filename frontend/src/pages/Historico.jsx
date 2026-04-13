@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { ClipboardList, ArrowUpCircle, ArrowDownCircle, Info } from "lucide-react";
+import { apiRequest } from "../api";
 
 const ITENS_POR_PAGINA = 5;
 
@@ -10,14 +11,9 @@ function Historico() {
     const [pagina, setPagina] = useState(1);
 
     useEffect(() => {
-        const token = localStorage.getItem("access_token");
-        const headers = {
-            "Authorization": `Bearer ${token}`
-        };
-
         Promise.all([
-            fetch("http://127.0.0.1:8000/movimentacoes", { headers }).then(r => r.json()),
-            fetch("http://127.0.0.1:8000/produtos", { headers }).then(r => r.json())
+            apiRequest("/movimentacoes").then(r => r && r.json()),
+            apiRequest("/produtos").then(r => r && r.json())
         ]).then(([movs, prods]) => {
             if (Array.isArray(movs)) setTodas(movs);
             if (Array.isArray(prods)) setProdutos(prods);
