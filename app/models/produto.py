@@ -79,7 +79,7 @@ def listar_produtos_db():
     try:
         cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
         cursor.execute("""
-            SELECT p.id, p.nome, c.nome as categoria, p.categoria_id, p.quantidade, p.unidade_medida 
+            SELECT p.id, p.nome, c.nome as categoria, p.categoria_id, p.quantidade, p.quantidade_minima, p.unidade_medida 
             FROM produtos p 
             LEFT JOIN categorias c ON p.categoria_id = c.id
         """)
@@ -93,7 +93,7 @@ def buscar_produto_db(id: int):
     try:
         cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
         cursor.execute("""
-            SELECT p.id, p.nome, c.nome as categoria, p.quantidade, p.unidade_medida 
+            SELECT p.id, p.nome, c.nome as categoria, p.quantidade, p.quantidade_minima, p.unidade_medida 
             FROM produtos p 
             LEFT JOIN categorias c ON p.categoria_id = c.id
             WHERE p.id = %s
@@ -103,13 +103,13 @@ def buscar_produto_db(id: int):
         conn.close()
 
 # Cadastrar produto
-def adicionar_produto_db(nome, categoria_id, quantidade, unidade_medida):
+def adicionar_produto_db(nome, categoria_id, quantidade, quantidade_minima, unidade_medida):
     conn = get_connection()
     try:
         cursor = conn.cursor()
         cursor.execute(
-            "INSERT INTO produtos (nome, categoria_id, quantidade, unidade_medida) VALUES (%s, %s, %s, %s)",
-            (nome, categoria_id, quantidade, unidade_medida)
+            "INSERT INTO produtos (nome, categoria_id, quantidade, quantidade_minima, unidade_medida) VALUES (%s, %s, %s, %s, %s)",
+            (nome, categoria_id, quantidade, quantidade_minima, unidade_medida)
         )
         conn.commit()
         return True
@@ -117,13 +117,13 @@ def adicionar_produto_db(nome, categoria_id, quantidade, unidade_medida):
         conn.close()
 
 # Editar produto
-def editar_produto_db(id, nome, categoria_id, quantidade, unidade_medida):
+def editar_produto_db(id, nome, categoria_id, quantidade, quantidade_minima, unidade_medida):
     conn = get_connection()
     try:
         cursor = conn.cursor()
         cursor.execute(
-            "UPDATE produtos SET nome = %s, categoria_id = %s, quantidade = %s, unidade_medida = %s WHERE id = %s",
-            (nome, categoria_id, quantidade, unidade_medida, id)
+            "UPDATE produtos SET nome = %s, categoria_id = %s, quantidade = %s, quantidade_minima = %s, unidade_medida = %s WHERE id = %s",
+            (nome, categoria_id, quantidade, quantidade_minima, unidade_medida, id)
         )
         conn.commit()
         return True

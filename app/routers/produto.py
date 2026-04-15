@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Body, Depends
+from fastapi import APIRouter, Body, Depends, HTTPException
 from fastapi.responses import JSONResponse
 from app.auth import obter_usuario_atual
 from app.models.produto import (
@@ -15,19 +15,25 @@ router = APIRouter(dependencies=[Depends(obter_usuario_atual)])
 @router.get("/produtos", summary="Listar produtos")
 def listar_produtos():
     """Retorna uma lista com todos os produtos cadastrados no estoque, contendo informações detalhadas e o nome da sua categoria."""
-    produtos = listar_produtos_db()
-    if not produtos:
-        return JSONResponse(status_code=404, content={"message": "Nenhum produto encontrado."})
-    return produtos
+    try:
+        produtos = listar_produtos_db()
+        if not produtos:
+            return JSONResponse(status_code=404, content={"message": "Nenhum produto encontrado."})
+        return produtos
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Ocorreu um erro interno no servidor ao processar solicitação")
 
 # Rota para buscar produto
 @router.get("/produtos/{id}", summary="Consultar produto por ID")
 def buscar_produto(id: int):
     """Busca as informações e detalhes de um produto específico através de seu ID numérico."""
-    produto = buscar_produto_db(id)
-    if not produto:
-        return JSONResponse(status_code=404, content={"message": "Produto nao encontrado."})
-    return produto
+    try:
+        produto = buscar_produto_db(id)
+        if not produto:
+            return JSONResponse(status_code=404, content={"message": "Produto nao encontrado."})
+        return produto
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Ocorreu um erro interno no servidor ao processar solicitação")
 
 # Rota para adicionar produto
 @router.post("/produtos", status_code=201, summary="Adicionar novo produto")
@@ -42,8 +48,11 @@ def adicionar_produto(
     if quantidade < 0:
         return JSONResponse(status_code=400, content={"message": "A quantidade inicial não pode ser negativa."})
 
-    adicionar_produto_db(nome, categoria, quantidade, unidade_medida)
-    return JSONResponse(status_code=201, content={"message": "Produto adicionado com sucesso."})
+    try:
+        adicionar_produto_db(nome, categoria, quantidade, quantidade_minima, unidade_medida)
+        return JSONResponse(status_code=201, content={"message": "Produto adicionado com sucesso."})
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Ocorreu um erro interno no servidor ao processar solicitação")
 
 # Rota para editar produto
 @router.put("/produtos/{id}", summary="Atualizar dados de um produto")
@@ -56,12 +65,18 @@ def editar_produto(
     unidade_medida: str = Body(...)
 ):
     """Atualiza as informações (nome, categoria, quantidade, unidade) de um produto existente através do seu ID."""
-    editar_produto_db(id, nome, categoria, quantidade, unidade_medida)
-    return {"mensagem": "Produto atualizado com sucesso!"}
+    try:
+        editar_produto_db(id, nome, categoria, quantidade, quantidade_minima, unidade_medida)
+        return {"mensagem": "Produto atualizado com sucesso!"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Ocorreu um erro interno no servidor ao processar solicitação")
 
 # Rota para deletar produto
 @router.delete("/produtos/{id}", summary="Deletar produto")
 def deletar_produto(id: int):
     """Deleta permanentemente um produto do registro de estoque pelo seu ID."""
-    deletar_produto_db(id)
-    return {"mensagem": "Produto deletado com sucesso!"}
+    try:
+        deletar_produto_db(id)
+        return {"mensagem": "Produto deletado com sucesso!"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Ocorreu um erro interno no servidor ao processar solicitação")
