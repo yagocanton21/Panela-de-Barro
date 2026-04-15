@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Body, Depends
+from fastapi import APIRouter, Body, Depends, HTTPException
 from fastapi.responses import JSONResponse
 from app.auth import obter_usuario_atual
 from app.models.movimentacao import (
@@ -35,7 +35,7 @@ def criar_movimentacao(produto_id: int = Body(...), tipo: str = Body(..., descri
             
         return {"mensagem": f"Movimentação de {tipo} realizada! Novo saldo: {resultado}"}
     except Exception as e:
-        return JSONResponse(status_code=500, content={"message": f"Erro: {str(e)}"})
+        raise HTTPException(status_code=500, detail="Ocorreu um erro interno no servidor ao processar solicitação")
 
 # Rota para buscar uma movimentação pelo ID
 @router.get("/{id}", summary="Consultar uma movimentação por ID")

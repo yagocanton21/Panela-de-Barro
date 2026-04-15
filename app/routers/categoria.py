@@ -41,7 +41,7 @@ def criar_categoria(nome: str = Body(...)):
     except psycopg2.errors.UniqueViolation:
         raise HTTPException(status_code=400, detail="Esta categoria já existe.")
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Erro ao criar categoria: {str(e)}")
+        raise HTTPException(status_code=500, detail="Ocorreu um erro interno no servidor ao processar solicitação")
 
 # Rota para editar uma categoria
 @router.put("/categorias/{id}", summary="Atualizar categoria existente")
@@ -53,7 +53,7 @@ def editar_categoria(id: int, nome: str = Body(...)):
     except psycopg2.errors.UniqueViolation:
         raise HTTPException(status_code=400, detail="Já existe uma categoria com este nome.")
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Erro ao atualizar categoria: {str(e)}")
+        raise HTTPException(status_code=500, detail="Ocorreu um erro interno no servidor ao processar solicitação")
 
 # Rota para deletar uma categoria
 @router.delete("/categorias/{id}", summary="Deletar categoria")
@@ -68,4 +68,4 @@ def deletar_categoria(id: int):
             content={"message": "Não é possível excluir uma categoria que possui produtos vinculados."}
         )
     except Exception as e:
-        return JSONResponse(status_code=500, content={"message": f"Erro interno: {str(e)}"})
+        raise HTTPException(status_code=500, detail="Ocorreu um erro interno no servidor ao processar solicitação")

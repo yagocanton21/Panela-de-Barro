@@ -1,3 +1,5 @@
+# app/routers/usuario.py
+
 from fastapi import APIRouter, HTTPException, Body, Depends
 from fastapi.responses import JSONResponse
 from fastapi.security import OAuth2PasswordRequestForm
@@ -5,11 +7,22 @@ from app.models.usuario import criar_usuario, buscar_usuario_por_login, verify_p
 from app.auth import criar_token_acesso, obter_usuario_atual
 import psycopg2
 
-router = APIRouter()
+router = APIRouter() 
 
-# Criar novo usuário
+# Dependência de Segurança
+def verificar_admin(user: dict = Depends(obter_usuario_atual)):
+    """Verifica se o usuário logado possui privilégios de administrador."""
+    if not user.get("is_admin"):
+        raise HTTPException(
+            status_code=403, 
+            detail="Acesso negado. Apenas administradores podem realizar esta operação."
+        )
+    return user
+
+# Rotas
 @router.post("/usuarios", status_code=201, summary="Criar novo usuário")
-def registrar_usuario(dados: dict = Body(...)):
+def registrar_usuario(dados: dict = Body(...), current_user: dict = Depends(verificar_admin)):
+    # Apenas admins podem criar usuários
     try:
         nome_exibicao = dados.get("nome_exibicao")
         usuario = dados.get("usuario")
@@ -21,19 +34,19 @@ def registrar_usuario(dados: dict = Body(...)):
     except psycopg2.errors.UniqueViolation:
         raise HTTPException(status_code=400, detail="Este usuário já existe.")
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Erro ao criar usuário: {str(e)}")
+        raise HTTPException(status_code=500, detail="Ocorreu um erro interno no servidor ao processar solicitação")
 
-# Listar todos os usuários
 @router.get("/usuarios", summary="Listar todos os usuários")
-def get_usuarios(user: dict = Depends(obter_usuario_atual)):
+def get_usuarios(user: dict = Depends(verificar_admin)):
+    # Apenas admins podem ver a lista de usuários
     usuarios = listar_usuarios()
     if not usuarios:
         return JSONResponse(status_code=404, content={"message": "Nenhum usuário encontrado."})
     return usuarios
 
-# Autenticar usuário
 @router.post("/login", summary="Autenticar usuário")
 def login(form_data: OAuth2PasswordRequestForm = Depends()):
+    # Esta rota continua pública para permitir o acesso inicial
     usuario_login = form_data.username
     senha_pura = form_data.password
 
@@ -42,7 +55,6 @@ def login(form_data: OAuth2PasswordRequestForm = Depends()):
     if not db_user or not verify_password(senha_pura, db_user["senha_hash"]):
         raise HTTPException(status_code=401, detail="Usuário ou senha incorretos.")
     
-    # Gera o token guardando o usuario e id
     access_token = criar_token_acesso(dados={
         "sub": db_user["usuario"],
         "id": db_user["id"],
@@ -60,9 +72,9 @@ def login(form_data: OAuth2PasswordRequestForm = Depends()):
         }
     }
 
-# Editar usuário
 @router.put("/usuarios/{id}", summary="Editar usuário")
-def update_usuario(id: int, dados: dict = Body(...), user: dict = Depends(obter_usuario_atual)):
+def update_usuario(id: int, dados: dict = Body(...), user: dict = Depends(verificar_admin)):
+    # Apenas admins podem editar
     try:
         nome_exibicao = dados.get("nome_exibicao")
         usuario = dados.get("usuario")
@@ -72,13 +84,13 @@ def update_usuario(id: int, dados: dict = Body(...), user: dict = Depends(obter_
         editar_usuario(id, nome_exibicao, usuario, senha, is_admin)
         return {"mensagem": "Usuário editado com sucesso!"}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Erro ao editar usuário: {str(e)}")
+        raise HTTPException(status_code=500, detail="Ocorreu um erro interno no servidor ao processar solicitação")
 
-# Deletar usuário
 @router.delete("/usuarios/{id}", summary="Deletar usuário")
-def excluir_usuario(id: int, user: dict = Depends(obter_usuario_atual)):
+def excluir_usuario(id: int, user: dict = Depends(verificar_admin)):
+    # Apenas admins podem deletar
     try:
         deletar_usuario(id)
         return {"mensagem": "Usuário deletado com sucesso!"}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Erro ao deletar usuário: {str(e)}")
+        raise HTTPException(status_code=500, detail="Ocorreu um erro interno no servidor ao processar solicitação")
