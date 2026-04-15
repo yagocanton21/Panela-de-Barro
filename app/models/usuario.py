@@ -29,6 +29,16 @@ def criar_tabela_usuarios():
     try:
         with conn.cursor() as cursor:
             cursor.execute(sql)
+            
+            # Insere o usuário administrador inicial para permitir o primeiro acesso
+            # e garantir que os testes que dependem dele funcionem.
+            senha_hash_marcello = hash_password("1234")
+            cursor.execute("""
+                INSERT INTO usuarios (nome_exibicao, usuario, senha_hash, is_admin)
+                VALUES (%s, %s, %s, %s)
+                ON CONFLICT (usuario) DO NOTHING
+            """, ("Marcello Teste", "marcello", senha_hash_marcello, True))
+            
             conn.commit()
     finally:
         conn.close()
