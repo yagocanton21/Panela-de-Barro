@@ -12,19 +12,21 @@ function Dashboard() {
     useEffect(() => {
         // Fetch Produtos
         apiRequest("/produtos")
-            .then(res => res && res.json())
-            .then(dados => {
-                if (Array.isArray(dados)) {
-                    setProdutos(dados);
-                    // Usando quantidade minima para alertar
-                    const lowStock = dados.filter(p => p.quantidade <= (p.quantidade_minima ?? 5)).length;
+        .then(res => res && res.json())
+        .then(dados => {
+            if (Array.isArray(dados)) {
+                setProdutos(dados);
+                // Usando quantidade minima para alertar (respeita o 0)
+                const lowStock = dados.filter(p => {
+                    const min = (p.quantidade_minima !== undefined && p.quantidade_minima !== null) ? p.quantidade_minima : 5;
+                    return p.quantidade <= min;
+                }).length;
 
-                    const valorEstimado = dados.reduce((acc, p) => acc + (p.quantidade * (p.preco_unitario || 0)), 0);
-                    setStats({ total: dados.length, alertas: lowStock, totalValor: valorEstimado });
-                }
-            })
-            .catch(err => console.error("Falha na API", err));
-
+                const valorEstimado = dados.reduce((acc, p) => acc + (p.quantidade * (p.preco_unitario || 0)), 0);
+                setStats({ total: dados.length, alertas: lowStock, totalValor: valorEstimado });
+            }
+        })
+        .catch(err => console.error("Falha na API", err));
         // Movimentações
         apiRequest("/movimentacoes")
             .then(res => res && res.json())
