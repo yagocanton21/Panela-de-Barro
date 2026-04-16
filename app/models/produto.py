@@ -9,7 +9,7 @@ def criar_tabela_produtos():
             id SERIAL PRIMARY KEY,
             nome VARCHAR(255) NOT NULL,
             categoria_id INTEGER REFERENCES categorias(id),
-            quantidade INTEGER DEFAULT 0,
+            quantidade INTEGER DEFAULT 0 CHECK (quantidade >= 0),
             quantidade_minima INTEGER DEFAULT 0,
             unidade_medida VARCHAR(50)
         );
