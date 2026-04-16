@@ -12,7 +12,7 @@ function EditarProduto() {
     const [nome, setNome] = useState("");
     const [categoriaId, setCategoriaId] = useState("");
     const [quantidade, setQuantidade] = useState("");
-    const [quantidadeMinima, setQuantidadeMinima] = useState(5);
+    const [quantidadeMinima, setQuantidadeMinima] = useState(0);
     const [unidade, setUnidade] = useState("un");
 
     // Estados de Controle
@@ -40,7 +40,7 @@ function EditarProduto() {
                         setNome(dadosProd.nome);
                         setCategoriaId(dadosProd.categoria_id);
                         setQuantidade(dadosProd.quantidade);
-                        setQuantidadeMinima(dadosProd.quantidade_minima || 5);
+                        setQuantidadeMinima(dadosProd.quantidade_minima || 0);
                         setUnidade(dadosProd.unidade_medida);
                     } else {
                         setErro("Produto não encontrado.");
@@ -66,7 +66,7 @@ function EditarProduto() {
             nome: nome,
             categoria: parseInt(categoriaId),
             quantidade: parseInt(quantidade),
-            quantidade_minima: parseInt(quantidadeMinima),
+            quantidade_minima: parseInt(quantidadeMinima) || 0,
             unidade_medida: unidade
         };
 

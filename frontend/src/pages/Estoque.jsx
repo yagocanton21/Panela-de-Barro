@@ -123,8 +123,9 @@ function Estoque() {
         const matchesBusca = p.nome.toLowerCase().includes(busca.toLowerCase());
         const matchesCategoria = categoriaFiltro === "todas" || p.categoria_id === parseInt(categoriaFiltro);
 
-        // Agora o filtro de estoque baixo usa a quantidade_minima customizada
-        const isLowStock = p.quantidade <= (p.quantidade_minima ?? 5);
+        // Agora o filtro de estoque baixo usa a quantidade_minima customizada (respeita o 0)
+        const min = (p.quantidade_minima !== undefined && p.quantidade_minima !== null) ? p.quantidade_minima : 5;
+        const isLowStock = p.quantidade <= min;
         const matchesBaixoEstoque = !somenteBaixoEstoque || isLowStock;
 
         return matchesBusca && matchesCategoria && matchesBaixoEstoque;
@@ -136,7 +137,7 @@ function Estoque() {
 
     const getStatusStyle = (p) => {
         const qtd = p.quantidade;
-        const min = p.quantidade_minima ?? 5;
+        const min = (p.quantidade_minima !== undefined && p.quantidade_minima !== null) ? p.quantidade_minima : 5;
 
         if (qtd <= 0) return { color: '#e74c3c', label: 'Esgotado', bg: 'rgba(231, 76, 60, 0.1)' };
         if (qtd <= min) return { color: '#f1c40f', label: 'Estoque Baixo', bg: 'rgba(241, 196, 15, 0.1)' };
@@ -208,7 +209,7 @@ function Estoque() {
             {somenteBaixoEstoque && (
                 <div style={{ marginBottom: '1.5rem', padding: '10px 20px', backgroundColor: '#fef7f7', borderRadius: '12px', border: '1px solid #fce8e6', display: 'flex', alignItems: 'center', gap: '10px', color: '#d93025' }}>
                     <AlertTriangle size={18} />
-                    <span style={{ fontSize: '0.9rem', fontWeight: '500' }}>Exibindo apenas produtos com estoque baixo (menos de 10 unidades).</span>
+                    <span style={{ fontSize: '0.9rem', fontWeight: '500' }}>Exibindo apenas produtos com estoque baixo.</span>
                 </div>
             )}
 

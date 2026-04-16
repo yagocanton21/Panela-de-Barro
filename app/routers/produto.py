@@ -49,7 +49,7 @@ def adicionar_produto(
         return JSONResponse(status_code=400, content={"message": "A quantidade inicial não pode ser negativa."})
 
     try:
-        adicionar_produto_db(nome, categoria, quantidade, quantidade_minima, unidade_medida)
+        adicionar_produto_db(nome, categoria, quantidade, unidade_medida)
         return JSONResponse(status_code=201, content={"message": "Produto adicionado com sucesso."})
     except Exception as e:
         raise HTTPException(status_code=500, detail="Ocorreu um erro interno no servidor ao processar solicitação")
@@ -66,7 +66,7 @@ def editar_produto(
 ):
     """Atualiza as informações (nome, categoria, quantidade, unidade) de um produto existente através do seu ID."""
     try:
-        editar_produto_db(id, nome, categoria, quantidade, quantidade_minima, unidade_medida)
+        editar_produto_db(id, nome, categoria, quantidade, unidade_medida)
         return {"mensagem": "Produto atualizado com sucesso!"}
     except Exception as e:
         raise HTTPException(status_code=500, detail="Ocorreu um erro interno no servidor ao processar solicitação")

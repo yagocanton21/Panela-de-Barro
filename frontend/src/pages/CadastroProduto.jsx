@@ -11,7 +11,7 @@ function CadastroProduto() {
     const [nome, setNome] = useState("");
     const [categoriaId, setCategoriaId] = useState("");
     const [quantidade, setQuantidade] = useState("");
-    const [quantidadeMinima, setQuantidadeMinima] = useState(5);
+    const [quantidadeMinima, setQuantidadeMinima] = useState(0);
     const [unidade, setUnidade] = useState("un");
 
     // Estados de Controle
@@ -40,7 +40,7 @@ function CadastroProduto() {
             nome: nome,
             categoria: parseInt(categoriaId),
             quantidade: parseInt(quantidade),
-            quantidade_minima: parseInt(quantidadeMinima),
+            quantidade_minima: parseInt(quantidadeMinima) || 0,
             unidade_medida: unidade
         };
 

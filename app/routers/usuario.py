@@ -34,8 +34,8 @@ def registrar_usuario(dados: dict = Body(...), current_user: dict = Depends(veri
     except psycopg2.errors.UniqueViolation:
         raise HTTPException(status_code=400, detail="Este usuário já existe.")
     except Exception as e:
+        print(f"Erro ao registrar usuário: {e}")
         raise HTTPException(status_code=500, detail="Ocorreu um erro interno no servidor ao processar solicitação")
-
 @router.get("/usuarios", summary="Listar todos os usuários")
 def get_usuarios(user: dict = Depends(verificar_admin)):
     # Apenas admins podem ver a lista de usuários
@@ -50,10 +50,18 @@ def login(form_data: OAuth2PasswordRequestForm = Depends()):
     usuario_login = form_data.username
     senha_pura = form_data.password
 
+    print(f"Tentativa de login para usuário: '{usuario_login}'")
     db_user = buscar_usuario_por_login(usuario_login)
 
-    if not db_user or not verify_password(senha_pura, db_user["senha_hash"]):
+    if not db_user:
+        print(f"Usuário '{usuario_login}' não encontrado no banco.")
         raise HTTPException(status_code=401, detail="Usuário ou senha incorretos.")
+    
+    if not verify_password(senha_pura, db_user["senha_hash"]):
+        print(f"Senha incorreta para o usuário '{usuario_login}'.")
+        raise HTTPException(status_code=401, detail="Usuário ou senha incorretos.")
+    
+    print(f"Login bem-sucedido para: '{usuario_login}'")
     
     access_token = criar_token_acesso(dados={
         "sub": db_user["usuario"],
@@ -84,7 +92,7 @@ def update_usuario(id: int, dados: dict = Body(...), user: dict = Depends(verifi
         editar_usuario(id, nome_exibicao, usuario, senha, is_admin)
         return {"mensagem": "Usuário editado com sucesso!"}
     except Exception as e:
-        raise HTTPException(status_code=500, detail="Ocorreu um erro interno no servidor ao processar solicitação")
+        raise HTTPException(status_code=500, detail="Ocorreu um erro interno no servidor ao processar sua solicitação.")
 
 @router.delete("/usuarios/{id}", summary="Deletar usuário")
 def excluir_usuario(id: int, user: dict = Depends(verificar_admin)):
@@ -93,4 +101,4 @@ def excluir_usuario(id: int, user: dict = Depends(verificar_admin)):
         deletar_usuario(id)
         return {"mensagem": "Usuário deletado com sucesso!"}
     except Exception as e:
-        raise HTTPException(status_code=500, detail="Ocorreu um erro interno no servidor ao processar solicitação")
+        raise HTTPException(status_code=500, detail="Ocorreu um erro interno no servidor ao processar sua solicitação.")
