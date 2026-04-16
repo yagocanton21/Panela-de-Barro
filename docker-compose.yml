@@ -28,14 +28,24 @@ services:
   frontend:
     build:
       context: ./frontend
-    ports:
-      - "5173:5173"
+    # Removida porta 5173 externa, o Nginx lidará com isso na porta 80
+    expose:
+      - "5173"
     volumes:
       - ./frontend:/app
       - /app/node_modules
     environment:
-      - VITE_API_URL=http://192.168.11.234:8000
+      - VITE_API_URL=/api
     depends_on:
+      - backend
+
+  nginx:
+    build:
+      context: ./nginx
+    ports:
+      - "80:80"
+    depends_on:
+      - frontend
       - backend
 
 volumes:
