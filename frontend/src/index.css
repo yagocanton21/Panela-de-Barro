@@ -87,7 +87,11 @@ span {
   transition: color 0.2s;
 }
 
-/* Botão Hambúrguer (Escondido no Desktop) */
+/* Botão Hambúrguer e Header Mobile (Escondidos no Desktop) */
+.mobile-header {
+  display: none;
+}
+
 .menu-toggle {
   display: none;
 }
@@ -100,22 +104,41 @@ span {
 }
 
 @media (max-width: 768px) {
+  /* Header no topo para mobile */
+  .mobile-header {
+    display: flex;
+    align-items: center;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 64px;
+    background-color: white;
+    border-bottom: 1px solid var(--border-light);
+    z-index: 1300;
+    padding: 0 16px;
+    gap: 16px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  }
+
+  .mobile-logo {
+    font-weight: bold;
+    color: var(--terracota);
+    font-size: 1.2rem;
+  }
+
   /* Botão que abre o menu */
   .menu-toggle {
     display: flex;
     align-items: center;
     justify-content: center;
-    position: fixed;
-    top: 15px;
-    left: 15px;
-    z-index: 2000;
     background: var(--terracota);
     color: white;
     border: none;
-    padding: 10px;
-    border-radius: 12px;
+    padding: 8px;
+    border-radius: 10px;
     cursor: pointer;
-    box-shadow: 0 4px 12px rgba(131, 62, 32, 0.3);
+    box-shadow: 0 4px 10px rgba(131, 62, 32, 0.2);
     transition: all 0.2s;
   }
 

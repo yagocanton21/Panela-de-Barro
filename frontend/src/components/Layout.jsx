@@ -7,14 +7,19 @@ function Layout({ children }) {
 
     return (
         <div className="app-layout">
-            {/* Botão de Menu para Celular */}
-            <button 
-                className="menu-toggle" 
-                onClick={() => setMenuAberto(!menuAberto)}
-                aria-label="Abrir menu"
-            >
-                {menuAberto ? <X size={24} /> : <Menu size={24} />}
-            </button>
+            {/* Header Mobile */}
+            <header className="mobile-header">
+                <button 
+                    className="menu-toggle" 
+                    onClick={() => setMenuAberto(!menuAberto)}
+                    aria-label="Abrir menu"
+                >
+                    {menuAberto ? <X size={24} /> : <Menu size={24} />}
+                </button>
+                <div className="mobile-logo">
+                    <span>Panela de Barro</span>
+                </div>
+            </header>
 
             {/* Sidebar agora recebe o estado de abertura */}
             <Sidebar aberta={menuAberto} onClose={() => setMenuAberto(false)} />
