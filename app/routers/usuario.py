@@ -47,7 +47,7 @@ def get_usuarios(user: dict = Depends(verificar_admin)):
 @router.post("/login", summary="Autenticar usuário")
 def login(form_data: OAuth2PasswordRequestForm = Depends()):
     # Esta rota continua pública para permitir o acesso inicial
-    usuario_login = form_data.username
+    usuario_login = form_data.username.strip()
     senha_pura = form_data.password
 
     print(f"Tentativa de login para usuário: '{usuario_login}'")

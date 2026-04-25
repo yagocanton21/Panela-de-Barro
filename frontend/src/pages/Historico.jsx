@@ -46,12 +46,12 @@ function Historico() {
                 }}>
                     <ClipboardList size={28} />
                 </div>
-                <h1 style={{ margin: 0, color: 'var(--text-dark)', fontSize: '1.8rem', fontWeight: 'bold' }}>
+                <h1 style={{ margin: 0, color: 'var(--text-dark)', fontSize: '1.4rem', fontWeight: 'bold' }}>
                     Histórico de Movimentações
                 </h1>
             </div>
 
-            <div className="card" style={{ display: 'block', padding: '2rem' }}>
+            <div className="card" style={{ display: 'block', padding: '1.5rem' }}>
                 {/* Filtros */}
                 <div style={{ display: 'flex', gap: '10px', marginBottom: '2rem', flexWrap: 'wrap' }}>
                     {["todos", "entrada", "saida"].map(tipo => (
@@ -69,7 +69,7 @@ function Historico() {
                             {tipo === "todos" ? "Todos" : tipo === "entrada" ? "📈 Entradas" : "📉 Saídas"}
                         </button>
                     ))}
-                    <span style={{ marginLeft: 'auto', fontSize: '0.85rem', color: 'var(--text-muted)', alignSelf: 'center' }}>
+                    <span style={{ marginLeft: '0', fontSize: '0.85rem', color: 'var(--text-muted)', alignSelf: 'center' }}>
                         {filtradas.length} registro(s)
                     </span>
                 </div>
@@ -91,7 +91,7 @@ function Historico() {
                                 {mov.tipo === 'entrada' ? <ArrowUpCircle size={22} /> : <ArrowDownCircle size={22} />}
                             </div>
                             <div style={{ flex: 1 }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', marginBottom: '4px' }}>
                                     <span style={{ fontWeight: 'bold', color: 'var(--text-dark)' }}>
                                         {getNomeProduto(mov.produto_id)}
                                     </span>
@@ -99,7 +99,7 @@ function Historico() {
                                         {new Date(mov.data_hora).toLocaleString('pt-BR')}
                                     </span>
                                 </div>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '0.9rem' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '0.9rem', flexWrap: 'wrap' }}>
                                     <span style={{
                                         color: mov.tipo === 'entrada' ? '#27ae60' : '#e74c3c',
                                         fontWeight: 'bold', padding: '2px 8px', borderRadius: '4px',
