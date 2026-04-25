@@ -107,7 +107,7 @@ function Categorias() {
                 }}>
                     <Tag size={28} />
                 </div>
-                <h1 style={{ margin: 0, color: 'var(--text-dark)', fontSize: '1.8rem', fontWeight: 'bold' }}>
+                <h1 style={{ margin: 0, color: 'var(--text-dark)', fontSize: '1.4rem', fontWeight: 'bold' }}>
                     Gestão de Categorias
                 </h1>
             </div>

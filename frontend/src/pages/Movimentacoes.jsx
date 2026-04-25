@@ -74,17 +74,17 @@ function Movimentacoes() {
                 }}>
                     <ArrowUpDown size={28} />
                 </div>
-                <h1 style={{ margin: 0, color: 'var(--text-dark)', fontSize: '1.8rem', fontWeight: 'bold' }}>
+                <h1 style={{ margin: 0, color: 'var(--text-dark)', fontSize: '1.4rem', fontWeight: 'bold' }}>
                     Movimentações de Estoque
                 </h1>
             </div>
 
             {/* Card de Registro */}
-            <div className="card" style={{ display: 'block', padding: '2rem', borderTop: '4px solid var(--terracota)' }}>
+            <div className="card" style={{ display: 'block', padding: '1.5rem', borderTop: '4px solid var(--terracota)' }}>
                 <h3 style={{ marginTop: 0, marginBottom: '1.5rem', color: 'var(--text-dark)' }}>Registrar Nova Entrada/Saída</h3>
 
                 <form onSubmit={handleSubmit}>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr 1fr', gap: '20px', marginBottom: '1.5rem' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', marginBottom: '1.5rem' }}>
                         <div>
                             <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, fontSize: '0.85rem' }}>PRODUTO</label>
                             <input
@@ -97,7 +97,7 @@ function Movimentacoes() {
                                 }}
                                 placeholder="Digite para buscar..."
                                 required
-                                style={{ width: '100%', padding: '12px', borderRadius: '10px', border: '1px solid var(--border-light)', backgroundColor: '#fdfdfd' }}
+                                style={{ width: '100%', padding: '12px', borderRadius: '10px', border: '1px solid var(--border-light)', backgroundColor: '#fdfdfd', boxSizing: 'border-box' }}
                             />
                             <datalist id="lista-produtos">
                                 {produtos.map(p => (
@@ -111,7 +111,7 @@ function Movimentacoes() {
                             <select
                                 value={formData.tipo}
                                 onChange={(e) => setFormData({ ...formData, tipo: e.target.value })}
-                                style={{ width: '100%', padding: '12px', borderRadius: '10px', border: '1px solid var(--border-light)', backgroundColor: '#fdfdfd' }}
+                                style={{ width: '100%', padding: '12px', borderRadius: '10px', border: '1px solid var(--border-light)', backgroundColor: '#fdfdfd', boxSizing: 'border-box' }}
                             >
                                 <option value="entrada">📈 Entrada</option>
                                 <option value="saida">📉 Saída</option>
@@ -126,7 +126,7 @@ function Movimentacoes() {
                                 onChange={(e) => setFormData({ ...formData, quantidade: e.target.value })}
                                 required
                                 min="1"
-                                style={{ width: '100%', padding: '12px', borderRadius: '10px', border: '1px solid var(--border-light)', backgroundColor: '#fdfdfd' }}
+                                style={{ width: '100%', padding: '12px', borderRadius: '10px', border: '1px solid var(--border-light)', backgroundColor: '#fdfdfd', boxSizing: 'border-box' }}
                             />
                         </div>
                     </div>
@@ -139,7 +139,7 @@ function Movimentacoes() {
                             onChange={(e) => setFormData({ ...formData, motivo: e.target.value })}
                             placeholder="Ex: Reposição de estoque, Uso na cozinha..."
                             required
-                            style={{ width: '100%', padding: '12px', borderRadius: '10px', border: '1px solid var(--border-light)', backgroundColor: '#fdfdfd' }}
+                            style={{ width: '100%', padding: '12px', borderRadius: '10px', border: '1px solid var(--border-light)', backgroundColor: '#fdfdfd', boxSizing: 'border-box' }}
                         />
                     </div>
 

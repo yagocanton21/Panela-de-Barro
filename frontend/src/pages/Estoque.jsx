@@ -162,7 +162,7 @@ function Estoque() {
         <div style={{ textAlign: "left" }}>
             {/* Header */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2.5rem', flexWrap: 'wrap', gap: '15px' }}>
-                <h1 style={{ margin: 0, fontSize: '2rem', display: 'flex', alignItems: 'center', gap: '15px' }}>
+                <h1 style={{ margin: 0, fontSize: '1.4rem', display: 'flex', alignItems: 'center', gap: '15px' }}>
                     <Package size={36} color="var(--terracota)" /> Inventário
                 </h1>
                 <button
@@ -177,12 +177,12 @@ function Estoque() {
             </div>
 
             {/* Filtros */}
-            <div style={{ display: 'flex', gap: '15px', marginBottom: '2.5rem', backgroundColor: 'white', padding: '1.2rem', borderRadius: '24px', border: '1px solid var(--border-light)', boxShadow: '0 4px 12px rgba(0,0,0,0.03)' }}>
-                <div style={{ position: 'relative', flex: 2 }}>
+            <div style={{ display: 'flex', gap: '15px', marginBottom: '2.5rem', backgroundColor: 'white', padding: '1.2rem', borderRadius: '24px', border: '1px solid var(--border-light)', boxShadow: '0 4px 12px rgba(0,0,0,0.03)', flexWrap: 'wrap' }}>
+                <div style={{ position: 'relative', flex: '1 1 200px' }}>
                     <Search size={20} color="#9da5ad" style={{ position: 'absolute', left: '15px', top: '50%', transform: 'translateY(-50%)' }} />
                     <input type="text" placeholder="Busque pelo nome..." value={busca} onChange={(e) => setBusca(e.target.value)} style={{ width: '100%', padding: '14px 14px 14px 45px', borderRadius: '15px', border: '1px solid #eee', backgroundColor: '#f9f9f9', fontSize: '0.95rem', outline: 'none', boxSizing: 'border-box' }} />
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: '1 1 150px' }}>
                     <Filter size={20} color="#9da5ad" />
                     <select value={categoriaFiltro} onChange={(e) => setCategoriaFiltro(e.target.value)} style={{ width: '100%', padding: '14px', borderRadius: '15px', border: '1px solid #eee', backgroundColor: '#f9f9f9', cursor: 'pointer', fontSize: '0.95rem', outline: 'none' }}>
                         <option value="todas">Todas Categorias</option>

@@ -106,13 +106,13 @@ function CadastroProduto() {
                 }}>
                     <PlusCircle size={28} />
                 </div>
-                <h1 style={{ margin: 0, color: 'var(--text-dark)', fontSize: '1.8rem', fontWeight: 'bold' }}>
+                <h1 style={{ margin: 0, color: 'var(--text-dark)', fontSize: '1.4rem', fontWeight: 'bold' }}>
                     Novo Produto
                 </h1>
             </div>
 
             {/* Card do Formulário */}
-            <form onSubmit={handleSubmit} className="card" style={{ display: 'block', padding: '2.5rem', textAlign: 'left', borderTop: '4px solid var(--terracota)' }}>
+            <form onSubmit={handleSubmit} className="card" style={{ display: 'block', padding: '1.5rem', textAlign: 'left', borderTop: '4px solid var(--terracota)' }}>
 
                 {/* Nome do Produto */}
                 <div style={{ marginBottom: '1.8rem' }}>
@@ -134,7 +134,7 @@ function CadastroProduto() {
                 </div>
 
                 {/* Linha: Categoria e Unidade */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: '25px', marginBottom: '1.8rem' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '25px', marginBottom: '1.8rem' }}>
                     <div>
                         <label style={{ display: 'block', marginBottom: '10px', fontWeight: 600, color: 'var(--text-dark)', fontSize: '0.95rem' }}>
                             CATEGORIA
@@ -195,10 +195,10 @@ function CadastroProduto() {
                 </div>
 
                 {/* Estoque e Alerta */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '25px', marginBottom: '2.5rem' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '25px', marginBottom: '2.5rem' }}>
                     <div>
                         <label style={{ display: 'block', marginBottom: '10px', fontWeight: 600, color: 'var(--text-dark)', fontSize: '0.95rem' }}>
-                            QUANTIDADE EM ESTOQUE
+                            QTD. EM ESTOQUE
                         </label>
                         <input
                             type="number"
@@ -216,7 +216,7 @@ function CadastroProduto() {
                     </div>
                     <div>
                         <label style={{ display: 'block', marginBottom: '10px', fontWeight: 600, color: 'var(--text-dark)', fontSize: '0.95rem' }}>
-                            ESTOQUE MÍNIMO (ALERTA)
+                            ESTOQUE MÍNIMO
                         </label>
                         <input
                             type="number"
