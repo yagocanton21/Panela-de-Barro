@@ -6,7 +6,8 @@ from app.models.produto import (
     buscar_produto_db, 
     adicionar_produto_db, 
     editar_produto_db, 
-    deletar_produto_db
+    deletar_produto_db,
+    listar_produtos_em_falta_db
 )
 
 router = APIRouter(dependencies=[Depends(obter_usuario_atual)])
@@ -17,6 +18,18 @@ def listar_produtos():
     """Retorna uma lista com todos os produtos cadastrados no estoque, contendo informações detalhadas e o nome da sua categoria."""
     try:
         produtos = listar_produtos_db()
+        if not produtos:
+            return JSONResponse(status_code=404, content={"message": "Nenhum produto encontrado."})
+        return produtos
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Ocorreu um erro interno no servidor ao processar solicitação")
+
+# Rota para listar produtos em falta
+@router.get("/produtos/em-falta", summary="Listar produtos em falta")
+def listar_produtos_em_falta():
+    """Retorna uma lista com os produtos que estão com estoque baixo ou esgotado (quantidade <= quantidade mínima)."""
+    try:
+        produtos = listar_produtos_em_falta_db()
         if not produtos:
             return JSONResponse(status_code=404, content={"message": "Nenhum produto encontrado."})
         return produtos
