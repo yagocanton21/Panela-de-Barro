@@ -5,7 +5,7 @@ from app.database import get_connection
 from app.auth import obter_usuario_atual
 from app.models.produto import Produto
 from app.models.categoria import Categoria
-from app.schemas.produto import CriarProduto, ProdutoResponse, MessageResponse
+from app.schemas.produto import CriarProduto, ProdutoResponse, MessageResponse, CriarProdutoResponse
 from typing import List
 
 router = APIRouter(
@@ -80,13 +80,14 @@ async def buscar_produto(id: int, db: AsyncSession = Depends(get_connection)):
     return produto._mapping
 
 # Rota para criar produto
-@router.post("/produtos", response_model=MessageResponse, status_code=status.HTTP_201_CREATED, summary="Adicionar novo produto")
+@router.post("/produtos", response_model=CriarProdutoResponse, status_code=status.HTTP_201_CREATED, summary="Adicionar novo produto")
 async def adicionar_produto(dados: CriarProduto, db: AsyncSession = Depends(get_connection)):
     """Adiciona um novo produto ao estoque."""
     novo_produto = Produto(**dados.model_dump())
     db.add(novo_produto)
     await db.commit()
-    return {"message": "Produto adicionado com sucesso."}
+    await db.refresh(novo_produto)
+    return {"message": "Produto adicionado com sucesso.", "id": novo_produto.id}
 
 # Rota para atualizar produto
 @router.put("/produtos/{id}", response_model=MessageResponse, summary="Atualizar produto")

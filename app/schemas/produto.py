@@ -23,3 +23,12 @@ class ProdutoResponse(ProdutoBase):
 # Schema genérico para mensagens de sucesso
 class MessageResponse(BaseModel):
     message: str
+
+# Schema para resposta de criação de produto (inclui o ID gerado)
+class CriarProdutoResponse(BaseModel):
+    message: str
+    id: int
+
+# Schema para resposta de movimentação (inclui estoque atual)
+class MovimentacaoMessageResponse(BaseModel):
+    mensagem: str

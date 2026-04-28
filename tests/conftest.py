@@ -1,4 +1,3 @@
-import asyncio
 import pytest
 import pytest_asyncio
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
@@ -7,71 +6,96 @@ from app.database import Base, get_connection
 import app.database as db_module
 import os
 
-# Configuração do banco de dados de teste via variável de ambiente
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql+asyncpg://user:password@localhost:5432/test_db")
-
-# Engine global de teste com NullPool para evitar conflitos de conexão no CI
-engine_test = create_async_engine(
-    DATABASE_URL, 
-    poolclass=NullPool,
-    echo=False
+# URL do banco de dados de teste via variável de ambiente
+DATABASE_URL = os.getenv(
+    "DATABASE_URL",
+    "postgresql+asyncpg://user:password@localhost:5432/test_db"
 )
-
-# Fábrica de sessões de teste
-TestingSessionLocal = async_sessionmaker(
-    bind=engine_test, 
-    class_=AsyncSession, 
-    expire_on_commit=False,
-    autocommit=False,
-    autoflush=False
-)
-
-# IMPORTANTE: Sobrescrever ANTES de importar a app para que o lifespan pegue a engine correta
-db_module.engine = engine_test
-db_module.SessionLocal = TestingSessionLocal
-
-from app.main import app
-
 
 
 @pytest_asyncio.fixture(scope="session")
-def event_loop():
-    """Cria e gerencia o event loop para toda a sessão de testes."""
-    policy = asyncio.get_event_loop_policy()
-    loop = policy.new_event_loop()
-    asyncio.set_event_loop(loop)
-    yield loop
-    loop.close()
+async def _test_engine():
+    """
+    Cria a engine de teste DENTRO do event loop do pytest-asyncio.
+    Isso garante que todas as conexões asyncpg fiquem vinculadas ao loop correto.
+    """
+    engine = create_async_engine(DATABASE_URL, poolclass=NullPool, echo=False)
+    yield engine
+    await engine.dispose()
+
+
+@pytest_asyncio.fixture(scope="session")
+async def _test_session_factory(_test_engine):
+    """Fábrica de sessões vinculada à engine de teste."""
+    factory = async_sessionmaker(
+        bind=_test_engine,
+        class_=AsyncSession,
+        expire_on_commit=False,
+        autocommit=False,
+        autoflush=False,
+    )
+    return factory
+
 
 @pytest_asyncio.fixture(scope="session", autouse=True)
-async def setup_database():
-    """Inicializa o esquema do banco de dados uma vez por sessão."""
-    async with engine_test.begin() as conn:
+async def setup_database(_test_engine, _test_session_factory):
+    """
+    Inicializa o esquema e os dados de bootstrap uma vez por sessão.
+    Sobrescreve as variáveis globais do módulo database ANTES de qualquer teste.
+    """
+    # 1. Sobrescrever engine e SessionLocal da aplicação
+    db_module.engine = _test_engine
+    db_module.SessionLocal = _test_session_factory
+
+    # 2. Criar todas as tabelas
+    async with _test_engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
         await conn.run_sync(Base.metadata.create_all)
-    yield
-    # Limpeza final
-    async with engine_test.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
-    await engine_test.dispose()
 
-@pytest_asyncio.fixture
-async def db_session():
-    """Provê uma sessão de banco de dados isolada para cada teste."""
-    # Usamos uma conexão explícita para garantir controle total do loop
-    async with engine_test.connect() as connection:
-        async with TestingSessionLocal(bind=connection) as session:
-            yield session
-            # Forçamos rollback para garantir que um teste não suje o outro
-            await session.rollback()
+    # 3. Bootstrap: criar admin e categorias iniciais (simula o lifespan)
+    from app.models.usuario import Usuario, hash_password
+    from app.models.categoria import Categoria
+    from sqlalchemy import select
+
+    async with _test_session_factory() as session:
+        # Admin inicial
+        result = await session.execute(select(Usuario))
+        if not result.scalars().first():
+            admin = Usuario(
+                nome_exibicao="Marcello Admin",
+                usuario="marcello",
+                senha_hash=hash_password("123"),
+                is_admin=True,
+            )
+            session.add(admin)
+
+        # Categorias iniciais para os testes
+        result = await session.execute(select(Categoria))
+        if not result.scalars().first():
+            for nome in ["Marmitas", "Carnes", "Bebidas", "Sobremesas"]:
+                session.add(Categoria(nome=nome))
+
+        await session.commit()
+
+    yield
+
+    # Limpeza final
+    async with _test_engine.begin() as conn:
+        await conn.run_sync(Base.metadata.drop_all)
+
 
 @pytest_asyncio.fixture(autouse=True)
-async def override_dependencies(db_session):
-    """Injeta a sessão de teste nas rotas do FastAPI."""
+async def override_dependencies(_test_session_factory):
+    """
+    Injeta uma sessão de teste fresca nas rotas do FastAPI para cada teste.
+    Cada chamada de dependência recebe sua própria sessão limpa.
+    """
+    from app.main import app
+
     async def _get_test_db():
-        yield db_session
-    
+        async with _test_session_factory() as session:
+            yield session
+
     app.dependency_overrides[get_connection] = _get_test_db
     yield
     app.dependency_overrides.clear()
-

@@ -12,7 +12,7 @@ async def test_categorias_seed_inicial():
         token = login_res.json()["access_token"]
         headers = {"Authorization": f"Bearer {token}"}
 
-        response = await ac.get("/categorias/", headers=headers)
+        response = await ac.get("/categorias", headers=headers)
         assert response.status_code == 200
         categorias = response.json()
         nomes = [c["nome"] for c in categorias]

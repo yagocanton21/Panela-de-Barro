@@ -19,12 +19,12 @@ async def test_crud_produto_completo():
             "quantidade": 10,
             "unidade_medida": "UN"
         }
-        response_post = await ac.post("/produtos/", json=novo_produto, headers=headers)
+        response_post = await ac.post("/produtos", json=novo_produto, headers=headers)
         assert response_post.status_code == 201
         produto_id = response_post.json()["id"]
 
         # 2. Listar produtos
-        response_list = await ac.get("/produtos/", headers=headers)
+        response_list = await ac.get("/produtos", headers=headers)
         assert response_list.status_code == 200
         
         # 3. Buscar pelo ID

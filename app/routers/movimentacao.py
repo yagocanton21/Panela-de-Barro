@@ -6,7 +6,7 @@ from app.auth import obter_usuario_atual
 from app.models.movimentacao import Movimentacao
 from app.models.produto import Produto
 from app.schemas.movimentacao import CriarMovimentacao, MovimentacaoResponse
-from app.schemas.produto import MessageResponse
+from app.schemas.produto import MessageResponse, MovimentacaoMessageResponse
 from typing import List
 
 router = APIRouter(
@@ -37,7 +37,7 @@ async def listar_movimentacoes(db: AsyncSession = Depends(get_connection)):
     return [m._mapping for m in movimentacoes]
 
 # Rota para criar movimentação
-@router.post("/movimentacoes", response_model=MessageResponse, status_code=status.HTTP_201_CREATED, summary="Registrar movimentação")
+@router.post("/movimentacoes", response_model=MovimentacaoMessageResponse, status_code=status.HTTP_201_CREATED, summary="Registrar movimentação")
 async def criar_movimentacao(dados: CriarMovimentacao, db: AsyncSession = Depends(get_connection)):
     """Cria uma nova movimentação e atualiza o saldo do produto no estoque."""
     # Buscar o produto
@@ -60,7 +60,7 @@ async def criar_movimentacao(dados: CriarMovimentacao, db: AsyncSession = Depend
     db.add(nova)
     await db.commit()
     
-    return {"message": f"Movimentação de {dados.tipo} realizada com sucesso!"}
+    return {"mensagem": f"Movimentação de {dados.tipo} realizada. Estoque atual: {produto.quantidade}"}
 
 # Rota para buscar movimentação por ID
 @router.get("/{id}", response_model=MovimentacaoResponse, summary="Consultar movimentação por ID")

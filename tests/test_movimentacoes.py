@@ -22,23 +22,23 @@ async def test_logica_estoque_movimentacao():
             "quantidade": 10,
             "unidade_medida": "KG"
         }
-        resp_prod = await ac.post("/produtos/", json=novo_prod, headers=headers)
+        resp_prod = await ac.post("/produtos", json=novo_prod, headers=headers)
         assert resp_prod.status_code == 201
         prod_id = resp_prod.json()["id"]
 
         # 3. Entrada (+5)
         mov_in = {"produto_id": prod_id, "tipo": "entrada", "quantidade": 5, "motivo": "Teste"}
-        resp_in = await ac.post("/movimentacoes/", json=mov_in, headers=headers)
+        resp_in = await ac.post("/movimentacoes", json=mov_in, headers=headers)
         assert resp_in.status_code == 201
         assert "15" in str(resp_in.json()["mensagem"])
 
         # 4. Saída (-3)
         mov_out = {"produto_id": prod_id, "tipo": "saida", "quantidade": 3, "motivo": "Teste"}
-        resp_out = await ac.post("/movimentacoes/", json=mov_out, headers=headers)
+        resp_out = await ac.post("/movimentacoes", json=mov_out, headers=headers)
         assert resp_out.status_code == 201
         assert "12" in str(resp_out.json()["mensagem"])
 
         # 5. Erro insuficiente
         mov_fail = {"produto_id": prod_id, "tipo": "saida", "quantidade": 100, "motivo": "Fail"}
-        resp_fail = await ac.post("/movimentacoes/", json=mov_fail, headers=headers)
+        resp_fail = await ac.post("/movimentacoes", json=mov_fail, headers=headers)
         assert resp_fail.status_code == 400
