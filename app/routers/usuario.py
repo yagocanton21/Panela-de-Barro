@@ -1,104 +1,121 @@
-# app/routers/usuario.py
-
-from fastapi import APIRouter, HTTPException, Body, Depends
-from fastapi.responses import JSONResponse
+from fastapi import APIRouter, HTTPException, Depends, status
 from fastapi.security import OAuth2PasswordRequestForm
-from app.models.usuario import criar_usuario, buscar_usuario_por_login, verify_password, listar_usuarios, editar_usuario, deletar_usuario
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
+from app.database import get_connection
 from app.auth import criar_token_acesso, obter_usuario_atual
-import psycopg2
+from app.models.usuario import Usuario, hash_password, verify_password
+from app.schemas.usuario import CriarUsuario, UsuarioResponse
+from app.schemas.produto import MessageResponse
+from typing import List
 
-router = APIRouter() 
+router = APIRouter(
+    tags=["Usuários"]
+)
 
 # Dependência de Segurança
 def verificar_admin(user: dict = Depends(obter_usuario_atual)):
     """Verifica se o usuário logado possui privilégios de administrador."""
     if not user.get("is_admin"):
         raise HTTPException(
-            status_code=403, 
+            status_code=status.HTTP_403_FORBIDDEN, 
             detail="Acesso negado. Apenas administradores podem realizar esta operação."
         )
     return user
 
-# Rotas
-@router.post("/usuarios", status_code=201, summary="Criar novo usuário")
-def registrar_usuario(dados: dict = Body(...), current_user: dict = Depends(verificar_admin)):
-    # Apenas admins podem criar usuários
+# Rota para criar novo usuário
+@router.post("/usuarios", response_model=MessageResponse, status_code=status.HTTP_201_CREATED, summary="Criar novo usuário")
+async def registrar_usuario(dados: CriarUsuario, db: AsyncSession = Depends(get_connection), current_user: dict = Depends(verificar_admin)):
+    """Apenas admins podem criar novos usuários."""
     try:
-        nome_exibicao = dados.get("nome_exibicao")
-        usuario = dados.get("usuario")
-        senha = dados.get("senha")
-        is_admin = dados.get("is_admin", False)
-
-        criar_usuario(nome_exibicao, usuario, senha, is_admin)
-        return {"mensagem": "Usuário criado com sucesso!"}
-    except psycopg2.errors.UniqueViolation:
+        novo = Usuario(
+            nome_exibicao=dados.nome_exibicao,
+            usuario=dados.usuario,
+            senha_hash=hash_password(dados.senha),
+            is_admin=dados.is_admin
+        )
+        db.add(novo)
+        await db.commit()
+        return {"message": "Usuário criado com sucesso!"}
+    except IntegrityError:
+        await db.rollback()
         raise HTTPException(status_code=400, detail="Este usuário já existe.")
-    except Exception as e:
-        print(f"Erro ao registrar usuário: {e}")
-        raise HTTPException(status_code=500, detail="Ocorreu um erro interno no servidor ao processar solicitação")
-@router.get("/usuarios", summary="Listar todos os usuários")
-def get_usuarios(user: dict = Depends(verificar_admin)):
-    # Apenas admins podem ver a lista de usuários
-    usuarios = listar_usuarios()
+
+# Rota para listar todos os usuários
+@router.get("/usuarios", response_model=List[UsuarioResponse], summary="Listar todos os usuários")
+async def get_usuarios(db: AsyncSession = Depends(get_connection), user: dict = Depends(verificar_admin)):
+    """Retorna a lista de todos os usuários cadastrados."""
+    resultado = await db.execute(select(Usuario).order_by(Usuario.id))
+    usuarios = resultado.scalars().all()
+    
     if not usuarios:
-        return JSONResponse(status_code=404, content={"message": "Nenhum usuário encontrado."})
+        raise HTTPException(status_code=404, detail="Nenhum usuário encontrado.")
+        
     return usuarios
 
+# Rota para autenticar usuário
 @router.post("/login", summary="Autenticar usuário")
-def login(form_data: OAuth2PasswordRequestForm = Depends()):
-    # Esta rota continua pública para permitir o acesso inicial
+async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: AsyncSession = Depends(get_connection)):
+    """Autenticação via OAuth2 para obtenção de token JWT."""
     usuario_login = form_data.username.strip()
     senha_pura = form_data.password
 
-    print(f"Tentativa de login para usuário: '{usuario_login}'")
-    db_user = buscar_usuario_por_login(usuario_login)
+    resultado = await db.execute(select(Usuario).where(Usuario.usuario == usuario_login))
+    db_user = resultado.scalars().first()
 
-    if not db_user:
-        print(f"Usuário '{usuario_login}' não encontrado no banco.")
-        raise HTTPException(status_code=401, detail="Usuário ou senha incorretos.")
-    
-    if not verify_password(senha_pura, db_user["senha_hash"]):
-        print(f"Senha incorreta para o usuário '{usuario_login}'.")
-        raise HTTPException(status_code=401, detail="Usuário ou senha incorretos.")
-    
-    print(f"Login bem-sucedido para: '{usuario_login}'")
+    if not db_user or not verify_password(senha_pura, db_user.senha_hash):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Usuário ou senha incorretos.")
     
     access_token = criar_token_acesso(dados={
-        "sub": db_user["usuario"],
-        "id": db_user["id"],
-        "is_admin": db_user["is_admin"]
+        "sub": db_user.usuario,
+        "id": db_user.id,
+        "is_admin": db_user.is_admin
     })
 
     return {
         "access_token": access_token,
         "token_type": "bearer",
         "usuario": {
-            "id": db_user["id"],
-            "nome": db_user["nome_exibicao"],
-            "usuario": db_user["usuario"],
-            "is_admin": db_user["is_admin"]
+            "id": db_user.id,
+            "nome": db_user.nome_exibicao,
+            "usuario": db_user.usuario,
+            "is_admin": db_user.is_admin
         }
     }
 
-@router.put("/usuarios/{id}", summary="Editar usuário")
-def update_usuario(id: int, dados: dict = Body(...), user: dict = Depends(verificar_admin)):
-    # Apenas admins podem editar
+# Rota para editar usuário
+@router.put("/usuarios/{id}", response_model=MessageResponse, summary="Editar usuário")
+async def update_usuario(id: int, dados: CriarUsuario, db: AsyncSession = Depends(get_connection), user: dict = Depends(verificar_admin)):
+    """Atualiza os dados de um usuário existente."""
+    resultado = await db.execute(select(Usuario).where(Usuario.id == id))
+    usuario = resultado.scalars().first()
+    
+    if not usuario:
+        raise HTTPException(status_code=404, detail="Usuário não encontrado.")
+    
     try:
-        nome_exibicao = dados.get("nome_exibicao")
-        usuario = dados.get("usuario")
-        senha = dados.get("senha")
-        is_admin = dados.get("is_admin", False)
+        usuario.nome_exibicao = dados.nome_exibicao
+        usuario.usuario = dados.usuario
+        usuario.senha_hash = hash_password(dados.senha)
+        usuario.is_admin = dados.is_admin
+        await db.commit()
+        return {"message": "Usuário editado com sucesso!"}
+    except IntegrityError:
+        await db.rollback()
+        raise HTTPException(status_code=400, detail="Este nome de usuário já está em uso.")
 
-        editar_usuario(id, nome_exibicao, usuario, senha, is_admin)
-        return {"mensagem": "Usuário editado com sucesso!"}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail="Ocorreu um erro interno no servidor ao processar sua solicitação.")
+# Rota para deletar usuário
+@router.delete("/usuarios/{id}", response_model=MessageResponse, summary="Deletar usuário")
+async def excluir_usuario(id: int, db: AsyncSession = Depends(get_connection), user: dict = Depends(verificar_admin)):
+    """Deleta permanentemente um usuário."""
+    resultado = await db.execute(select(Usuario).where(Usuario.id == id))
+    usuario = resultado.scalars().first()
+    
+    if not usuario:
+        raise HTTPException(status_code=404, detail="Usuário não encontrado.")
+    
+    await db.delete(usuario)
+    await db.commit()
+    return {"message": "Usuário deletado com sucesso!"}
 
-@router.delete("/usuarios/{id}", summary="Deletar usuário")
-def excluir_usuario(id: int, user: dict = Depends(verificar_admin)):
-    # Apenas admins podem deletar
-    try:
-        deletar_usuario(id)
-        return {"mensagem": "Usuário deletado com sucesso!"}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail="Ocorreu um erro interno no servidor ao processar sua solicitação.")

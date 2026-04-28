@@ -1,21 +1,25 @@
-from pydantic import BaseModel, ConfigDict
-from typing import Optional
+from pydantic import BaseModel, ConfigDict, Field
+from typing import Optional, List
 
-# Classe para Criar Produto
-class CriarProduto(BaseModel):
-    nome: str
-    quantidade: int
-    quantidade_minima: int = 0
+# Schema base para compartilhar campos comuns
+class ProdutoBase(BaseModel):
+    nome: str = Field(..., min_length=1, max_length=255)
+    quantidade: int = Field(..., ge=0)
+    quantidade_minima: int = Field(0, ge=0)
     categoria_id: int
-    unidade_medida: str = ""
+    unidade_medida: Optional[str] = Field("", max_length=50)
 
-# Classe para Retornar Produto
-class ProdutoResponse(BaseModel):
+# Schema para Criar/Atualizar Produto
+class CriarProduto(ProdutoBase):
+    pass
+
+# Schema para Retornar Produto (Diferencia Saída de Entrada)
+class ProdutoResponse(ProdutoBase):
     id: int
-    nome: str
-    categoria: Optional[str] = None  # Nome da categoria (vem do JOIN)
-    categoria_id: int
-    quantidade: int
-    quantidade_minima: int
-    unidade_medida: Optional[str] = None
+    categoria: Optional[str] = None  # Nome da categoria vindo do JOIN
+    
     model_config = ConfigDict(from_attributes=True)
+
+# Schema genérico para mensagens de sucesso
+class MessageResponse(BaseModel):
+    message: str

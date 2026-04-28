@@ -1,71 +1,91 @@
-from fastapi import APIRouter, Body, HTTPException, Depends
-from fastapi.responses import JSONResponse
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
+from app.database import get_connection
 from app.auth import obter_usuario_atual
-from app.models.categoria import (
-    listar_categorias_db, 
-    buscar_categoria_db, 
-    buscar_categoria_por_nome_db,
-    adicionar_categoria_db, 
-    editar_categoria_db, 
-    deletar_categoria_db
+from app.models.categoria import Categoria
+from app.schemas.categoria import CategoriaCreate, CategoriaResponse
+from app.schemas.produto import MessageResponse
+from typing import List
+
+router = APIRouter(
+    tags=["Categorias"],
+    dependencies=[Depends(obter_usuario_atual)]
 )
-import psycopg2
 
-router = APIRouter(dependencies=[Depends(obter_usuario_atual)])
-
-# Rota para listar as categorias
-@router.get("/categorias", summary="Listar todas as categorias")
-def listar_categorias():
-    """Lista todas as categorias."""
-    categorias = listar_categorias_db()
+# Rota para listar todas as categorias
+@router.get("/categorias", response_model=List[CategoriaResponse], summary="Listar todas as categorias")
+async def listar_categorias(db: AsyncSession = Depends(get_connection)):
+    """Retorna uma lista com todas as categorias ordenadas por ID."""
+    resultado = await db.execute(select(Categoria).order_by(Categoria.id))
+    categorias = resultado.scalars().all()
+    
     if not categorias:
-        return JSONResponse(status_code=404, content={"message": "Nenhuma categoria encontrada."})
+        raise HTTPException(status_code=404, detail="Nenhuma categoria encontrada.")
+    
     return categorias
 
-# Rota para buscar uma categoria pelo nome
-@router.get("/categorias/{nome}", summary="Buscar categoria pelo nome")
-def buscar_categoria_por_nome(nome: str):
-    """Busca uma categoria pelo nome."""
-    categoria = buscar_categoria_por_nome_db(nome)
+# Rota para buscar categoria por nome
+@router.get("/categorias/{nome}", response_model=CategoriaResponse, summary="Buscar categoria pelo nome")
+async def buscar_categoria_por_nome(nome: str, db: AsyncSession = Depends(get_connection)):
+    """Busca os detalhes de uma categoria específica através de seu nome."""
+    resultado = await db.execute(select(Categoria).where(Categoria.nome == nome))
+    categoria = resultado.scalars().first()
+    
     if not categoria:
-        return JSONResponse(status_code=404, content={"message": "Categoria não encontrada."})
+        raise HTTPException(status_code=404, detail="Categoria não encontrada.")
+    
     return categoria
 
-# Rota para criar uma categoria
-@router.post("/categorias", status_code=201, summary="Criar nova categoria")
-def criar_categoria(nome: str = Body(...)):
-    """Cria uma nova categoria."""
+# Rota para criar categoria
+@router.post("/categorias", response_model=MessageResponse, status_code=status.HTTP_201_CREATED, summary="Criar nova categoria")
+async def criar_categoria(dados: CategoriaCreate, db: AsyncSession = Depends(get_connection)):
+    """Cria uma nova categoria para classificação de produtos."""
     try:
-        adicionar_categoria_db(nome)
-        return {"mensagem": "Categoria criada com sucesso!"}
-    except psycopg2.errors.UniqueViolation:
+        nova = Categoria(nome=dados.nome)
+        db.add(nova)
+        await db.commit()
+        return {"message": "Categoria criada com sucesso!"}
+    except IntegrityError:
+        await db.rollback()
         raise HTTPException(status_code=400, detail="Esta categoria já existe.")
-    except Exception as e:
-        raise HTTPException(status_code=500, detail="Ocorreu um erro interno no servidor ao processar solicitação")
 
-# Rota para editar uma categoria
-@router.put("/categorias/{id}", summary="Atualizar categoria existente")
-def editar_categoria(id: int, nome: str = Body(...)):
-    """Editar uma categoria pelo ID."""
+# Rota para atualizar categoria
+@router.put("/{id}", response_model=MessageResponse, summary="Atualizar categoria")
+async def editar_categoria(id: int, dados: CategoriaCreate, db: AsyncSession = Depends(get_connection)):
+    """Atualiza o nome de uma categoria existente."""
+    resultado = await db.execute(select(Categoria).where(Categoria.id == id))
+    categoria = resultado.scalars().first()
+    
+    if not categoria:
+        raise HTTPException(status_code=404, detail="Categoria não encontrada.")
+    
     try:
-        editar_categoria_db(id, nome)
-        return {"mensagem": "Categoria atualizada com sucesso!"}
-    except psycopg2.errors.UniqueViolation:
+        categoria.nome = dados.nome
+        await db.commit()
+        return {"message": "Categoria atualizada com sucesso!"}
+    except IntegrityError:
+        await db.rollback()
         raise HTTPException(status_code=400, detail="Já existe uma categoria com este nome.")
-    except Exception as e:
-        raise HTTPException(status_code=500, detail="Ocorreu um erro interno no servidor ao processar solicitação")
 
-# Rota para deletar uma categoria
-@router.delete("/categorias/{id}", summary="Deletar categoria")
-def deletar_categoria(id: int):
-    """Deleta uma categoria pelo ID."""
+# Rota para deletar categoria
+@router.delete("/{id}", response_model=MessageResponse, summary="Deletar categoria")
+async def deletar_categoria(id: int, db: AsyncSession = Depends(get_connection)):
+    """Deleta permanentemente uma categoria se não houver produtos vinculados."""
+    resultado = await db.execute(select(Categoria).where(Categoria.id == id))
+    categoria = resultado.scalars().first()
+    
+    if not categoria:
+        raise HTTPException(status_code=404, detail="Categoria não encontrada.")
+    
     try:
-        deletar_categoria_db(id)
-        return {"mensagem": "Categoria deletada com sucesso!"}
-    except psycopg2.errors.ForeignKeyViolation:
-        return JSONResponse(
+        await db.delete(categoria)
+        await db.commit()
+        return {"message": "Categoria deletada com sucesso!"}
+    except IntegrityError:
+        await db.rollback()
+        raise HTTPException(
             status_code=400, 
-            content={"message": "Não é possível excluir uma categoria que possui produtos vinculados."}
+            detail="Não é possível excluir uma categoria que possui produtos vinculados."
         )
-    except Exception as e:
-        raise HTTPException(status_code=500, detail="Ocorreu um erro interno no servidor ao processar solicitação")

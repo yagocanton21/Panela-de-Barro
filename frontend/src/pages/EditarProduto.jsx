@@ -64,7 +64,7 @@ function EditarProduto() {
 
         const produtoEditado = {
             nome: nome,
-            categoria: parseInt(categoriaId),
+            categoria_id: parseInt(categoriaId),
             quantidade: parseInt(quantidade),
             quantidade_minima: parseInt(quantidadeMinima) || 0,
             unidade_medida: unidade

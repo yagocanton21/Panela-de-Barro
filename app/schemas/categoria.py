@@ -1,12 +1,17 @@
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
-# Molde para CRIAR ou EDITAR categoria
-class CategoriaCreate(BaseModel):
-    nome: str
+# Classe Base   
+class CategoriaBase(BaseModel):
+    nome: str = Field(..., min_length=1, max_length=100)
 
-# Molde para RESPONDER com uma categoria 
-class CategoriaResponse(BaseModel):
+# Classe para criar categoria
+class CategoriaCreate(CategoriaBase):
+    pass
+
+# Classe para retornar categoria
+class CategoriaResponse(CategoriaBase):
     id: int
-    nome: str
+    
     model_config = ConfigDict(from_attributes=True)
+
 
