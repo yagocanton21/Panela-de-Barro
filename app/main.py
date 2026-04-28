@@ -1,67 +1,107 @@
-from fastapi import FastAPI
-from app.models.produto import criar_tabela_produtos
-from app.models.categoria import criar_tabela_categorias
-from app.models.movimentacao import criar_tabela_movimentacoes
-from app.models.usuario import criar_tabela_usuarios
-from app.routers import produto, categoria, movimentacao, usuario
+from contextlib import asynccontextmanager
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.trustedhost import TrustedHostMiddleware
+from app.database import engine, Base
+from app.routers import produto, categoria, movimentacao, usuario
+import logging
+
+# Configuração de Logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Cria as tabelas do banco de dados na inicialização
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+    
+    # Criar usuário administrador inicial se não houver nenhum
+    from app.database import SessionLocal
+    from app.models.usuario import Usuario, hash_password
+    from sqlalchemy import select
+
+    async with SessionLocal() as session:
+        result = await session.execute(select(Usuario))
+        if not result.scalars().first():
+            logger.info("Criando usuário administrador inicial (Marcello)...")
+            admin_inicial = Usuario(
+                nome_exibicao="Marcello Admin",
+                usuario="marcello",
+                senha_hash=hash_password("123"), # Altere após o primeiro login
+                is_admin=True
+            )
+            session.add(admin_inicial)
+            await session.commit()
+            logger.info("Usuário 'marcello' criado com sucesso! Senha padrão: admin123")
+
+    yield
+    # Fecha a engine ao desligar
+    await engine.dispose()
 
 tags_metadata = [
-    {
-        "name": "Produtos",
-        "description": "Operações com produtos. Onde é feito o registro, leitura, alteração e exclusão dos itens no estoque.",
-    },
-    {
-        "name": "Categorias",
-        "description": "Gerenciamento das categorias para classificar e organizar os produtos.",
-    },
-    {
-        "name": "Movimentações",
-        "description": "Registro do histórico de gestão de entradas e saídas do estoque do restaurante.",
-    },
-    {
-        "name": "Usuários",
-        "description": "Gerenciamento de usuários e controle de acesso.",
-    },
-    {
-        "name": "Nota Fiscal",
-        "description": "Extração de dados de NFC-e para automação de estoque.",
-    },
+    {"name": "Produtos", "description": "Gestão de itens no estoque."},
+    {"name": "Categorias", "description": "Classificação de produtos."},
+    {"name": "Movimentações", "description": "Histórico de entradas e saídas."},
+    {"name": "Usuários", "description": "Controle de acesso e autenticação."},
 ]
 
-# Configuração do FastAPI
 app = FastAPI(
-    title="Panela de Barro - API de Estoque",
-    description="Acompanhamento e gestão de estoque para o Restaurante Panela de Barro.",
-    version="1.0.0",
+    title="Panela de Barro - API Elite",
+    description="""
+    🚀 **Gestão de Estoque Profissional**
+    
+    Sistema de alta performance desenvolvido com FastAPI (Async) e Pydantic V2.
+    
+    **Recursos:**
+    * 📦 Gestão completa de produtos
+    * 🗂️ Organização por categorias
+    * 🔄 Histórico de movimentações (Entradas/Saídas)
+    * 🔐 Segurança via OAuth2 e JWT
+    """,
+    version="2.0.0",
     openapi_tags=tags_metadata,
-    contact={
-        "name": "Equipe de Desenvolvimento",
-    }
+    lifespan=lifespan,
+    docs_url="/docs",
+    redoc_url="/redoc"
 )
 
-# Configuração do CORS
+# Middlewares de Segurança
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["*"], # Na VPS, o Nginx deve restringir isso se necessário
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Cria as tabelas no banco de dados ao iniciar a aplicação
-criar_tabela_categorias()
-criar_tabela_produtos()
-criar_tabela_movimentacoes()
-criar_tabela_usuarios()
+# Liberando hosts para funcionamento na VPS (Oracle Cloud)
+app.add_middleware(
+    TrustedHostMiddleware, 
+    allowed_hosts=["*"]
+)
 
-# Rotas
-app.include_router(produto.router, tags=["Produtos"])
-app.include_router(categoria.router, tags=["Categorias"])
-app.include_router(movimentacao.router, tags=["Movimentações"])
-app.include_router(usuario.router, tags=["Usuários"])
+# Exception Handlers Globais
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    logger.error(f"Erro inesperado em {request.url.path}: {exc}", exc_info=True)
+    return JSONResponse(
+        status_code=500,
+        content={"message": "Ocorreu um erro interno no servidor. Tente novamente mais tarde."}
+    )
 
-# Rota inicial
+# Inclusão das Rotas
+app.include_router(usuario.router)
+app.include_router(produto.router)
+app.include_router(categoria.router)
+app.include_router(movimentacao.router)
+
 @app.get("/", tags=["Início"])
 def read_root():
-    return {"message": "Bem-vindo à API de Estoque do Restaurante Panela de Barro!"}
+    return {
+        "status": "online",
+        "message": "API Panela de Barro (Modo Elite) ativa.",
+        "version": "2.0.0"
+    }
+

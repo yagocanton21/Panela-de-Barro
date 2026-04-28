@@ -1,21 +1,22 @@
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 from datetime import datetime
-from typing import Optional
+from typing import Optional, Literal
 
-# Classe para Criar Movimentação
-class CriarMovimentacao(BaseModel):
+# Classe base
+class MovimentacaoBase(BaseModel):
     produto_id: int
-    tipo: str
-    quantidade: int
-    motivo: str
+    tipo: Literal["entrada", "saida"]
+    quantidade: int = Field(..., gt=0)
+    motivo: Optional[str] = Field(None, max_length=255)
 
-# Classe para Retornar Movimentação
-class MovimentacaoResponse(BaseModel):
+# Classe para criar movimentação
+class CriarMovimentacao(MovimentacaoBase):
+    pass
+
+# Classe para retornar movimentação
+class MovimentacaoResponse(MovimentacaoBase):
     id: int
-    produto_id: int
-    tipo: str
-    quantidade: int
     data_hora: datetime
-    motivo: Optional[str] = None
     produto_nome: Optional[str] = None
+    
     model_config = ConfigDict(from_attributes=True)

@@ -1,95 +1,121 @@
-from fastapi import APIRouter, Body, Depends, HTTPException
-from fastapi.responses import JSONResponse
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
+from app.database import get_connection
 from app.auth import obter_usuario_atual
-from app.models.produto import (
-    listar_produtos_db, 
-    buscar_produto_db, 
-    adicionar_produto_db, 
-    editar_produto_db, 
-    deletar_produto_db,
-    listar_produtos_em_falta_db
+from app.models.produto import Produto
+from app.models.categoria import Categoria
+from app.schemas.produto import CriarProduto, ProdutoResponse, MessageResponse, CriarProdutoResponse
+from typing import List
+
+router = APIRouter(
+    tags=["Produtos"],
+    dependencies=[Depends(obter_usuario_atual)]
 )
 
-router = APIRouter(dependencies=[Depends(obter_usuario_atual)])
-
 # Rota para listar todos os produtos
-@router.get("/produtos", summary="Listar produtos")
-def listar_produtos():
-    """Retorna uma lista com todos os produtos cadastrados no estoque, contendo informações detalhadas e o nome da sua categoria."""
-    try:
-        produtos = listar_produtos_db()
-        if not produtos:
-            return JSONResponse(status_code=404, content={"message": "Nenhum produto encontrado."})
-        return produtos
-    except Exception as e:
-        raise HTTPException(status_code=500, detail="Ocorreu um erro interno no servidor ao processar solicitação")
+@router.get("/produtos", response_model=List[ProdutoResponse], summary="Listar todos os produtos")
+async def listar_produtos(db: AsyncSession = Depends(get_connection)):
+    """Retorna uma lista com todos os produtos cadastrados no estoque."""
+    query = select(
+        Produto.id, 
+        Produto.nome, 
+        Categoria.nome.label("categoria"), 
+        Produto.categoria_id, 
+        Produto.quantidade, 
+        Produto.quantidade_minima, 
+        Produto.unidade_medida
+    ).outerjoin(Categoria, Produto.categoria_id == Categoria.id)
+    
+    resultado = await db.execute(query)
+    produtos = resultado.all()
+    
+    if not produtos:
+        raise HTTPException(status_code=404, detail="Nenhum produto encontrado.")
+    
+    return [p._mapping for p in produtos]
 
 # Rota para listar produtos em falta
-@router.get("/produtos/em-falta", summary="Listar produtos em falta")
-def listar_produtos_em_falta():
-    """Retorna uma lista com os produtos que estão com estoque baixo ou esgotado (quantidade <= quantidade mínima)."""
-    try:
-        produtos = listar_produtos_em_falta_db()
-        if not produtos:
-            return JSONResponse(status_code=404, content={"message": "Nenhum produto encontrado."})
-        return produtos
-    except Exception as e:
-        raise HTTPException(status_code=500, detail="Ocorreu um erro interno no servidor ao processar solicitação")
+@router.get("/produtos/em-falta", response_model=List[ProdutoResponse], summary="Listar produtos em falta")
+async def listar_produtos_em_falta(db: AsyncSession = Depends(get_connection)):
+    """Retorna produtos com estoque baixo ou esgotado (quantidade <= quantidade mínima)."""
+    query = select(
+        Produto.id, 
+        Produto.nome, 
+        Categoria.nome.label("categoria"), 
+        Produto.categoria_id, 
+        Produto.quantidade, 
+        Produto.quantidade_minima, 
+        Produto.unidade_medida
+    ).outerjoin(Categoria, Produto.categoria_id == Categoria.id).where(Produto.quantidade <= Produto.quantidade_minima)
+    
+    resultado = await db.execute(query)
+    produtos = resultado.all()
+    
+    if not produtos:
+        raise HTTPException(status_code=404, detail="Nenhum produto em falta encontrado.")
+    
+    return [p._mapping for p in produtos]
 
-# Rota para buscar produto
-@router.get("/produtos/{id}", summary="Consultar produto por ID")
-def buscar_produto(id: int):
-    """Busca as informações e detalhes de um produto específico através de seu ID numérico."""
-    try:
-        produto = buscar_produto_db(id)
-        if not produto:
-            return JSONResponse(status_code=404, content={"message": "Produto nao encontrado."})
-        return produto
-    except Exception as e:
-        raise HTTPException(status_code=500, detail="Ocorreu um erro interno no servidor ao processar solicitação")
+# Rota para buscar produto por ID
+@router.get("/produtos/{id}", response_model=ProdutoResponse, summary="Consultar produto por ID")
+async def buscar_produto(id: int, db: AsyncSession = Depends(get_connection)):
+    """Busca os detalhes de um produto específico através de seu ID."""
+    query = select(
+        Produto.id, 
+        Produto.nome, 
+        Categoria.nome.label("categoria"), 
+        Produto.categoria_id,
+        Produto.quantidade, 
+        Produto.quantidade_minima, 
+        Produto.unidade_medida
+    ).outerjoin(Categoria, Produto.categoria_id == Categoria.id).where(Produto.id == id)
+    
+    resultado = await db.execute(query)
+    produto = resultado.first()
+    
+    if not produto:
+        raise HTTPException(status_code=404, detail="Produto não encontrado.")
+    
+    return produto._mapping
 
-# Rota para adicionar produto
-@router.post("/produtos", status_code=201, summary="Adicionar novo produto")
-def adicionar_produto(
-    nome: str = Body(..., description="Nome do produto"),
-    categoria: int = Body(..., description="ID numérico da categoria"),
-    quantidade: int = Body(default=0, description="Quantidade inicial em estoque"),
-    quantidade_minima: int = Body(default=0, description="Quantidade mínima em estoque"),
-    unidade_medida: str = Body(..., description="kg, l, g, ml, un etc.")
-):
-    """Adiciona um novo produto ao estoque com a sua referida quantidade e unidade de medida."""
-    if quantidade < 0:
-        return JSONResponse(status_code=400, content={"message": "A quantidade inicial não pode ser negativa."})
+# Rota para criar produto
+@router.post("/produtos", response_model=CriarProdutoResponse, status_code=status.HTTP_201_CREATED, summary="Adicionar novo produto")
+async def adicionar_produto(dados: CriarProduto, db: AsyncSession = Depends(get_connection)):
+    """Adiciona um novo produto ao estoque."""
+    novo_produto = Produto(**dados.model_dump())
+    db.add(novo_produto)
+    await db.commit()
+    await db.refresh(novo_produto)
+    return {"message": "Produto adicionado com sucesso.", "id": novo_produto.id}
 
-    try:
-        adicionar_produto_db(nome, categoria, quantidade, quantidade_minima, unidade_medida)
-        return JSONResponse(status_code=201, content={"message": "Produto adicionado com sucesso."})
-    except Exception as e:
-        raise HTTPException(status_code=500, detail="Ocorreu um erro interno no servidor ao processar solicitação")
-
-# Rota para editar produto
-@router.put("/produtos/{id}", summary="Atualizar dados de um produto")
-def editar_produto(
-    id: int,
-    nome: str = Body(...),
-    categoria: int = Body(...),
-    quantidade: int = Body(default=0),
-    quantidade_minima: int = Body(default=0),
-    unidade_medida: str = Body(...)
-):
-    """Atualiza as informações (nome, categoria, quantidade, unidade) de um produto existente através do seu ID."""
-    try:
-        editar_produto_db(id, nome, categoria, quantidade, quantidade_minima, unidade_medida)
-        return {"mensagem": "Produto atualizado com sucesso!"}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail="Ocorreu um erro interno no servidor ao processar solicitação")
+# Rota para atualizar produto
+@router.put("/produtos/{id}", response_model=MessageResponse, summary="Atualizar produto")
+async def editar_produto(id: int, dados: CriarProduto, db: AsyncSession = Depends(get_connection)):
+    """Atualiza as informações de um produto existente."""
+    resultado = await db.execute(select(Produto).where(Produto.id == id))
+    produto = resultado.scalars().first()
+    
+    if not produto:
+        raise HTTPException(status_code=404, detail="Produto não encontrado.")
+    
+    for campo, valor in dados.model_dump().items():
+        setattr(produto, campo, valor)
+        
+    await db.commit()
+    return {"message": "Produto atualizado com sucesso!"}
 
 # Rota para deletar produto
-@router.delete("/produtos/{id}", summary="Deletar produto")
-def deletar_produto(id: int):
-    """Deleta permanentemente um produto do registro de estoque pelo seu ID."""
-    try:
-        deletar_produto_db(id)
-        return {"mensagem": "Produto deletado com sucesso!"}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail="Ocorreu um erro interno no servidor ao processar solicitação")
+@router.delete("/produtos/{id}", response_model=MessageResponse, summary="Deletar produto")
+async def deletar_produto(id: int, db: AsyncSession = Depends(get_connection)):
+    """Deleta permanentemente um produto do registro de estoque."""
+    resultado = await db.execute(select(Produto).where(Produto.id == id))
+    produto = resultado.scalars().first()
+    
+    if not produto:
+        raise HTTPException(status_code=404, detail="Produto não encontrado.")
+    
+    await db.delete(produto)
+    await db.commit()
+    return {"message": "Produto deletado com sucesso!"}
+
