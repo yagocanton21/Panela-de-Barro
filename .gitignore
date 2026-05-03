@@ -19,6 +19,7 @@ htmlcov/
 # Docker
 docker_data/
 .docker/
+.dockerignore
 
 # IDE e Editores
 .vscode/
@@ -34,3 +35,4 @@ Thumbs.db
 .agent/
 test_scraper_cupom.py
 antigravity-awesome-skills/
+.claude
