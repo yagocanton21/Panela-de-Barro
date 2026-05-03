@@ -4,7 +4,7 @@ from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from app.database import engine, Base
-from app.routers import produto, categoria, movimentacao, usuario
+from app.routers import produto, categoria, movimentacao, usuario, lista_compras
 import logging
 
 # Configuração de Logging
@@ -64,7 +64,8 @@ app = FastAPI(
     openapi_tags=tags_metadata,
     lifespan=lifespan,
     docs_url="/docs",
-    redoc_url="/redoc"
+    redoc_url="/redoc",
+    root_path="/api"
 )
 
 # Middlewares de Segurança
@@ -96,6 +97,7 @@ app.include_router(usuario.router)
 app.include_router(produto.router)
 app.include_router(categoria.router)
 app.include_router(movimentacao.router)
+app.include_router(lista_compras.router)
 
 @app.get("/", tags=["Início"])
 def read_root():
