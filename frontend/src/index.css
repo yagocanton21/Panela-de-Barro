@@ -121,7 +121,53 @@ span {
   gap: 24px;
 }
 
+/* --- Estilos para a Lista de Compras --- */
+.lista-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.lista-actions-container {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.lista-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+  margin-bottom: 2rem;
+}
+
+.lista-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 1.5rem;
+  background-color: white;
+  padding: 6px;
+  border-radius: 16px;
+  border: 1px solid var(--border-light);
+  width: fit-content;
+}
+
+.item-lista-card {
+  background-color: white;
+  border-radius: 20px;
+  padding: 1.2rem;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+  transition: all 0.3s ease;
+}
+
 @media (max-width: 768px) {
+
   /* Header no topo para mobile */
   .mobile-header {
     display: flex;
@@ -171,7 +217,8 @@ span {
     top: 0;
     height: 100vh;
     width: 280px;
-    transform: translateX(-100%); /* Começa fora da tela */
+    transform: translateX(-100%);
+    /* Começa fora da tela */
     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     z-index: 1500;
     box-shadow: 10px 0 30px rgba(0, 0, 0, 0.2);
@@ -198,7 +245,8 @@ span {
 
   /* Ajustes dos itens internos da sidebar no mobile */
   .sidebar-logo {
-    display: flex !important; /* Mostra o logo no topo da gaveta */
+    display: flex !important;
+    /* Mostra o logo no topo da gaveta */
     margin-bottom: 2rem !important;
     padding-left: 10px;
   }
@@ -215,7 +263,8 @@ span {
     justify-content: center !important;
     padding: 18px !important;
     font-size: 1.1rem !important;
-    order: 2; /* Garante que ele fique abaixo do título se virem da mesma linha */
+    order: 2;
+    /* Garante que ele fique abaixo do título se virem da mesma linha */
   }
 
   /* Grid de 2 colunas no mobile */
@@ -239,16 +288,65 @@ span {
   }
 
   .inventory-card .move-btn {
-    display: none; /* Esconde o texto do botão para economizar espaço */
+    display: none;
+    /* Esconde o texto do botão para economizar espaço */
   }
 
   .main-content {
     padding: 1.2rem !important;
     padding-top: 80px !important;
   }
+
+  /* Estilos Mobile para Lista de Compras */
+  .lista-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 1.5rem;
+  }
+
+  .lista-actions-container {
+    width: 100%;
+    flex-direction: column;
+  }
+
+  .lista-actions-container button {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .lista-stats-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .lista-stats-grid .card:last-child {
+    grid-column: span 2;
+  }
+
+  .lista-tabs {
+    width: 100%;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .lista-tabs button {
+    flex: 1;
+    min-width: 100px;
+  }
+
+  .item-lista-card {
+    padding: 1rem;
+    gap: 10px;
+  }
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }

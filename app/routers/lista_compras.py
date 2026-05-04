@@ -80,33 +80,53 @@ async def sincronizar_com_estoque(db: AsyncSession = Depends(get_connection)):
 async def atualizar_status_item(
     id: int,
     comprado: bool = Body(..., embed=True),
+    quantidade: int = Body(None, embed=True),
     db: AsyncSession = Depends(get_connection)
 ):
-    """Atualiza o status de compra do item. Se comprado e vinculado ao estoque, dá entrada automática."""
+    """Atualiza o status de compra e/ou a quantidade do item na lista."""
     resultado = await db.execute(select(ItemListaCompras).where(ItemListaCompras.id == id))
     item = resultado.scalars().first()
 
     if not item:
         raise HTTPException(status_code=404, detail="Item não encontrado.")
 
-    if comprado and not item.comprado and item.produto_id:
-        res_prod = await db.execute(select(Produto).where(Produto.id == item.produto_id))
-        produto = res_prod.scalars().first()
-
-        if produto:
-            produto.quantidade += item.quantidade
-            db.add(Movimentacao(
-                produto_id=produto.id,
-                tipo="entrada",
-                quantidade=item.quantidade,
-                motivo=f"Entrada via Lista de Compras (Item #{item.id})"
-            ))
+    if quantidade is not None and quantidade > 0:
+        item.quantidade = quantidade
 
     item.comprado = comprado
     await db.commit()
 
-    msg = "Status atualizado e estoque sincronizado." if comprado and item.produto_id else "Status atualizado."
-    return {"message": msg}
+    return {"message": "Status atualizado."}
+
+# Rota para dar entrada nos itens comprados e limpar a lista
+@router.post("/finalizar", response_model=MessageResponse, summary="Finalizar compras")
+async def finalizar_compras(db: AsyncSession = Depends(get_connection)):
+    """Dá entrada no estoque de todos os itens marcados como comprados e os remove da lista."""
+    resultado = await db.execute(select(ItemListaCompras).where(ItemListaCompras.comprado == True))
+    itens_comprados = resultado.scalars().all()
+    
+    if not itens_comprados:
+        raise HTTPException(status_code=400, detail="Nenhum item comprado para finalizar.")
+        
+    count_entrada = 0
+    for item in itens_comprados:
+        if item.produto_id:
+            res_prod = await db.execute(select(Produto).where(Produto.id == item.produto_id))
+            produto = res_prod.scalars().first()
+            if produto:
+                produto.quantidade += item.quantidade
+                db.add(Movimentacao(
+                    produto_id=produto.id,
+                    tipo="entrada",
+                    quantidade=item.quantidade,
+                    motivo="Entrada via Finalização da Lista de Compras"
+                ))
+                count_entrada += 1
+        
+        await db.delete(item)
+        
+    await db.commit()
+    return {"message": f"Compras finalizadas! {len(itens_comprados)} item(ns) removido(s) da lista ({count_entrada} entraram no estoque)."}
 
 # Rota para remover item da lista
 @router.delete("/{id}", response_model=MessageResponse, summary="Remover item da lista")

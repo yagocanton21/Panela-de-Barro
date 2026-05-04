@@ -1,4 +1,4 @@
-import { LayoutGrid, Package, Settings, LogOut, Tag, ArrowUpDown, ClipboardList, Plus } from "lucide-react";
+import { LayoutGrid, Package, Settings, LogOut, Tag, ArrowUpDown, ClipboardList, Plus, ShoppingCart } from "lucide-react";
 import { NavLink, useNavigate } from "react-router-dom";
 
 function Sidebar({ aberta, onClose }) {
@@ -83,6 +83,15 @@ function Sidebar({ aberta, onClose }) {
                 })}>
                     <ClipboardList size={20} />
                     <span>Histórico</span>
+                </NavLink>
+
+                <NavLink to="/lista-compras" className="sidebar-nav-item" style={({ isActive }) => ({
+                    display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', borderRadius: '8px',
+                    textDecoration: 'none', color: isActive ? 'white' : '#9da5ad',
+                    backgroundColor: isActive ? 'var(--terracota)' : 'transparent', transition: 'all 0.2s'
+                })}>
+                    <ShoppingCart size={20} />
+                    <span>Lista de Compras</span>
                 </NavLink>
             </nav>
 
