@@ -6,6 +6,7 @@ from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from app.database import engine, Base
 from app.routers import produto, categoria, movimentacao, usuario, lista_compras
 import logging
+import os
 
 # Configuração de Logging
 logging.basicConfig(level=logging.INFO)
@@ -25,16 +26,19 @@ async def lifespan(app: FastAPI):
     async with SessionLocal() as session:
         result = await session.execute(select(Usuario))
         if not result.scalars().first():
-            logger.info("Criando usuário administrador inicial (Marcello)...")
+            admin_password = os.getenv("ADMIN_PASSWORD", "troca-isso")
+            admin_username = os.getenv("ADMIN_USERNAME", "admin")
+            admin_display = os.getenv("ADMIN_DISPLAY_NAME", "Administrador")
+            logger.info("Criando usuário administrador inicial...")
             admin_inicial = Usuario(
-                nome_exibicao="Marcello Admin",
-                usuario="marcello",
-                senha_hash=hash_password("123"), # Altere após o primeiro login
+                nome_exibicao=admin_display,
+                usuario=admin_username,
+                senha_hash=hash_password(admin_password),
                 is_admin=True
             )
             session.add(admin_inicial)
             await session.commit()
-            logger.info("Usuário 'marcello' criado com sucesso! Senha padrão: admin123")
+            logger.info(f"Usuário '{admin_username}' criado com sucesso!")
 
     yield
     # Fecha a engine ao desligar

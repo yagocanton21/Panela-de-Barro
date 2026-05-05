@@ -144,7 +144,7 @@
     border: 1.5px solid var(--border-light);
     background: #faf8f5;
     color: var(--text-dark);
-    font-size: 15px;
+    font-size: 16px;
     outline: none;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
