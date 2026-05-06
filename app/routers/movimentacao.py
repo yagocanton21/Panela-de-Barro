@@ -63,7 +63,7 @@ async def criar_movimentacao(dados: CriarMovimentacao, db: AsyncSession = Depend
     return {"mensagem": f"Movimentação de {dados.tipo} realizada. Estoque atual: {produto.quantidade}"}
 
 # Rota para buscar movimentação por ID
-@router.get("/{id}", response_model=MovimentacaoResponse, summary="Consultar movimentação por ID")
+@router.get("/movimentacoes/{id}", response_model=MovimentacaoResponse, summary="Consultar movimentação por ID")
 async def buscar_movimentacao(id: int, db: AsyncSession = Depends(get_connection)):
     """Busca os detalhes de uma movimentação específica."""
     query = select(
@@ -85,7 +85,7 @@ async def buscar_movimentacao(id: int, db: AsyncSession = Depends(get_connection
     return movimentacao._mapping
 
 # Rota para deletar movimentação
-@router.delete("/{id}", response_model=MessageResponse, summary="Deletar movimentação")
+@router.delete("/movimentacoes/{id}", response_model=MessageResponse, summary="Deletar movimentação")
 async def deletar_movimentacao(id: int, db: AsyncSession = Depends(get_connection)):
     """Deleta permanentemente um registro de movimentação."""
     resultado = await db.execute(select(Movimentacao).where(Movimentacao.id == id))

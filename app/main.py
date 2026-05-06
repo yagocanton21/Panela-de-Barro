@@ -26,7 +26,9 @@ async def lifespan(app: FastAPI):
     async with SessionLocal() as session:
         result = await session.execute(select(Usuario))
         if not result.scalars().first():
-            admin_password = os.getenv("ADMIN_PASSWORD", "troca-isso")
+            admin_password = os.getenv("ADMIN_PASSWORD")
+            if not admin_password:
+                raise RuntimeError("Variável ADMIN_PASSWORD não definida no .env")
             admin_username = os.getenv("ADMIN_USERNAME", "admin")
             admin_display = os.getenv("ADMIN_DISPLAY_NAME", "Administrador")
             logger.info("Criando usuário administrador inicial...")

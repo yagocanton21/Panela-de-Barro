@@ -5,7 +5,7 @@ import { apiRequest } from "../api";
 
 function Dashboard() {
     const navigate = useNavigate();
-    const [stats, setStats] = useState({ total: 0, alertas: 0, totalValor: 0 });
+    const [stats, setStats] = useState({ total: 0, alertas: 0 });
     const [produtos, setProdutos] = useState([]);
     const [movimentacoes, setMovimentacoes] = useState([]);
 
@@ -22,8 +22,7 @@ function Dashboard() {
                     return p.quantidade <= min;
                 }).length;
 
-                const valorEstimado = dados.reduce((acc, p) => acc + (p.quantidade * (p.preco_unitario || 0)), 0);
-                setStats({ total: dados.length, alertas: lowStock, totalValor: valorEstimado });
+                setStats({ total: dados.length, alertas: lowStock });
             }
         })
         .catch(err => console.error("Falha na API", err));
