@@ -52,7 +52,7 @@ async def criar_categoria(dados: CategoriaCreate, db: AsyncSession = Depends(get
         raise HTTPException(status_code=400, detail="Esta categoria já existe.")
 
 # Rota para atualizar categoria
-@router.put("/{id}", response_model=MessageResponse, summary="Atualizar categoria")
+@router.put("/categorias/{id}", response_model=MessageResponse, summary="Atualizar categoria")
 async def editar_categoria(id: int, dados: CategoriaCreate, db: AsyncSession = Depends(get_connection)):
     """Atualiza o nome de uma categoria existente."""
     resultado = await db.execute(select(Categoria).where(Categoria.id == id))
@@ -70,7 +70,7 @@ async def editar_categoria(id: int, dados: CategoriaCreate, db: AsyncSession = D
         raise HTTPException(status_code=400, detail="Já existe uma categoria com este nome.")
 
 # Rota para deletar categoria
-@router.delete("/{id}", response_model=MessageResponse, summary="Deletar categoria")
+@router.delete("/categorias/{id}", response_model=MessageResponse, summary="Deletar categoria")
 async def deletar_categoria(id: int, db: AsyncSession = Depends(get_connection)):
     """Deleta permanentemente uma categoria se não houver produtos vinculados."""
     resultado = await db.execute(select(Categoria).where(Categoria.id == id))

@@ -10,105 +10,74 @@ function Sidebar({ aberta, onClose }) {
         navigate("/login");
     };
 
+    const menuItems = [
+        { to: "/admin", icon: LayoutGrid, label: "Dashboard" },
+        { to: "/estoque", icon: Package, label: "Estoque" },
+        { to: "/cadastrar", icon: Plus, label: "Cadastrar" },
+        { to: "/categorias", icon: Tag, label: "Categorias" },
+        { to: "/movimentacoes", icon: ArrowUpDown, label: "Movimentações" },
+        { to: "/historico", icon: ClipboardList, label: "Histórico" },
+        { to: "/lista-compras", icon: ShoppingCart, label: "Lista de Compras" },
+    ];
+
+    const navStyle = ({ isActive }) => ({
+        display: "flex",
+        alignItems: "center",
+        gap: "12px",
+        padding: "12px 16px",
+        borderRadius: "8px",
+        textDecoration: "none",
+        color: isActive ? "white" : "#9da5ad",
+        backgroundColor: isActive ? "var(--terracota)" : "transparent",
+        transition: "all 0.2s",
+    });
+
     return (
-        <aside className={`sidebar ${aberta ? 'aberta' : ''}`}>
-            {/* Logo e Título do Sistema */}
+        <aside className={`sidebar ${aberta ? "aberta" : ""}`}>
+            {/* Logo */}
             <div className="sidebar-logo" style={{
-                fontSize: '1.5rem',
-                fontWeight: 'bold',
-                color: 'var(--terracota)',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '12px',
-                marginBottom: '2rem'
+                fontSize: "1.5rem",
+                fontWeight: "bold",
+                color: "var(--terracota)",
+                display: "flex",
+                alignItems: "center",
+                gap: "12px",
+                marginBottom: "2rem",
             }}>
                 <Package size={32} />
                 <span>Panela de Barro</span>
             </div>
 
-            {/* Menu de Navegação - Fecha ao clicar (onClose) no mobile */}
+            {/* Menu */}
             <nav
-                onClick={onClose}
-                style={{ display: 'flex', flexDirection: 'column', gap: '8px', width: '100%' }}
+                onClick={() => onClose && onClose()}
+                style={{ display: "flex", flexDirection: "column", gap: "8px", width: "100%" }}
             >
-                <NavLink to="/admin" className="sidebar-nav-item" style={({ isActive }) => ({
-                    display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', borderRadius: '8px',
-                    textDecoration: 'none', color: isActive ? 'white' : '#9da5ad',
-                    backgroundColor: isActive ? 'var(--terracota)' : 'transparent', transition: 'all 0.2s'
-                })}>
-                    <LayoutGrid size={20} />
-                    <span>Dashboard</span>
-                </NavLink>
-
-                <NavLink to="/estoque" className="sidebar-nav-item" style={({ isActive }) => ({
-                    display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', borderRadius: '8px',
-                    textDecoration: 'none', color: isActive ? 'white' : '#9da5ad',
-                    backgroundColor: isActive ? 'var(--terracota)' : 'transparent', transition: 'all 0.2s'
-                })}>
-                    <Package size={20} />
-                    <span>Estoque</span>
-                </NavLink>
-
-                <NavLink to="/cadastrar" className="sidebar-nav-item" style={({ isActive }) => ({
-                    display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', borderRadius: '8px',
-                    textDecoration: 'none', color: isActive ? 'white' : '#9da5ad',
-                    backgroundColor: isActive ? 'var(--terracota)' : 'transparent', transition: 'all 0.2s'
-                })}>
-                    <Plus size={20} />
-                    <span>Cadastrar</span>
-                </NavLink>
-
-                <NavLink to="/categorias" className="sidebar-nav-item" style={({ isActive }) => ({
-                    display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', borderRadius: '8px',
-                    textDecoration: 'none', color: isActive ? 'white' : '#9da5ad',
-                    backgroundColor: isActive ? 'var(--terracota)' : 'transparent', transition: 'all 0.2s'
-                })}>
-                    <Tag size={20} />
-                    <span>Categorias</span>
-                </NavLink>
-
-                <NavLink to="/movimentacoes" className="sidebar-nav-item" style={({ isActive }) => ({
-                    display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', borderRadius: '8px',
-                    textDecoration: 'none', color: isActive ? 'white' : '#9da5ad',
-                    backgroundColor: isActive ? 'var(--terracota)' : 'transparent', transition: 'all 0.2s'
-                })}>
-                    <ArrowUpDown size={20} />
-                    <span>Movimentações</span>
-                </NavLink>
-
-                <NavLink to="/historico" className="sidebar-nav-item" style={({ isActive }) => ({
-                    display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', borderRadius: '8px',
-                    textDecoration: 'none', color: isActive ? 'white' : '#9da5ad',
-                    backgroundColor: isActive ? 'var(--terracota)' : 'transparent', transition: 'all 0.2s'
-                })}>
-                    <ClipboardList size={20} />
-                    <span>Histórico</span>
-                </NavLink>
-
-                <NavLink to="/lista-compras" className="sidebar-nav-item" style={({ isActive }) => ({
-                    display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', borderRadius: '8px',
-                    textDecoration: 'none', color: isActive ? 'white' : '#9da5ad',
-                    backgroundColor: isActive ? 'var(--terracota)' : 'transparent', transition: 'all 0.2s'
-                })}>
-                    <ShoppingCart size={20} />
-                    <span>Lista de Compras</span>
-                </NavLink>
+                {menuItems.map(({ to, icon: Icon, label }) => (
+                    <NavLink key={to} to={to} className="sidebar-nav-item" style={navStyle}>
+                        <Icon size={20} />
+                        <span>{label}</span>
+                    </NavLink>
+                ))}
             </nav>
 
-            {/* Rodapé da Sidebar */}
+            {/* Rodapé */}
             <div style={{ marginTop: "auto", borderTop: "1px solid rgba(255,255,255,0.1)", paddingTop: "1rem" }}>
-                <div onClick={onClose} className="sidebar-nav-item" style={{
-                    display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', color: '#9da5ad', cursor: 'pointer'
-                }}>
+                <NavLink to="/ajustes" className="sidebar-nav-item" style={navStyle}>
                     <Settings size={20} />
                     <span>Ajustes</span>
-                </div>
+                </NavLink>
 
                 <div
-                    onClick={() => { handleLogout(); onClose(); }}
+                    onClick={() => { handleLogout(); onClose && onClose(); }}
                     style={{
-                        display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px',
-                        color: '#e74c3c', cursor: 'pointer', marginTop: '4px'
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "12px",
+                        padding: "12px 16px",
+                        color: "#e74c3c",
+                        cursor: "pointer",
+                        marginTop: "4px",
                     }}
                 >
                     <LogOut size={20} />

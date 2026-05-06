@@ -8,6 +8,7 @@ import Historico from "./pages/Historico";
 import Estoque from "./pages/Estoque";
 import EditarProduto from "./pages/EditarProduto";
 import ListaCompras from "./pages/ListaCompras";
+import Ajustes from "./pages/Ajustes";
 import Login from "./pages/Login";
 import PrivateRoute from "./components/PrivateRoute";
 
@@ -42,6 +43,7 @@ function App() {
                 <Route path="/editar/:id" element={<EditarProduto />} />
                 {/* Lista de compras com sincronização de estoque */}
                 <Route path="/lista-compras" element={<ListaCompras />} />
+                <Route path="/ajustes" element={<Ajustes />} />
               </Routes>
             </Layout>
           </PrivateRoute>
