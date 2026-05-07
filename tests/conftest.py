@@ -4,7 +4,7 @@ os.environ["SECRET_KEY"] = "test_secret_key_for_pytest_very_secret_123"
 import pytest
 import pytest_asyncio
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
-from sqlalchemy.pool import StaticPool
+from sqlalchemy.pool import StaticPool, NullPool
 from app.database import Base, get_connection
 import app.database as db_module
 
@@ -19,14 +19,23 @@ DATABASE_URL = os.getenv(
 async def _test_engine():
     """
     Cria a engine de teste DENTRO do event loop do pytest-asyncio.
-    Usamos StaticPool para garantir que as tabelas persistam em memória durante o teste.
+    Usamos StaticPool para SQLite garantir persistência em memória.
+    Para PostgreSQL (ex: no GitHub Actions se configurado), usamos NullPool sem check_same_thread.
     """
-    engine = create_async_engine(
-        DATABASE_URL, 
-        poolclass=StaticPool, 
-        connect_args={"check_same_thread": False},
-        echo=False
-    )
+    if DATABASE_URL.startswith("sqlite"):
+        engine = create_async_engine(
+            DATABASE_URL, 
+            poolclass=StaticPool, 
+            connect_args={"check_same_thread": False},
+            echo=False
+        )
+    else:
+        engine = create_async_engine(
+            DATABASE_URL, 
+            poolclass=NullPool,
+            echo=False
+        )
+        
     yield engine
     await engine.dispose()
 
