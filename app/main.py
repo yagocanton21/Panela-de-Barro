@@ -1,12 +1,15 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
-from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from app.database import engine, Base
 from app.routers import produto, categoria, movimentacao, usuario, lista_compras
 import logging
 import os
+from app.database import SessionLocal
+from app.models.usuario import Usuario, hash_password
+from sqlalchemy import select
+
 
 # Configuração de Logging
 logging.basicConfig(level=logging.INFO)
@@ -75,14 +78,6 @@ app = FastAPI(
 )
 
 # Middlewares de Segurança
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"], # Na VPS, o Nginx deve restringir isso se necessário
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
 # Liberando hosts para funcionamento na VPS (Oracle Cloud)
 app.add_middleware(
     TrustedHostMiddleware, 
