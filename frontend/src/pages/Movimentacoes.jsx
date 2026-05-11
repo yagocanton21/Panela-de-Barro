@@ -100,9 +100,18 @@ function Movimentacoes() {
                                 style={{ width: '100%', padding: '12px', borderRadius: '10px', border: '1px solid var(--border-light)', backgroundColor: '#fdfdfd', boxSizing: 'border-box' }}
                             />
                             <datalist id="lista-produtos">
-                                {produtos.map(p => (
-                                    <option key={p.id} value={`${p.nome} (${p.quantidade} ${p.unidade_medida})`} />
-                                ))}
+                                {produtos
+                                    .filter(p => {
+                                        const q = formData.produto_nome.toLowerCase();
+                                        if (!q) return true;
+                                        const optVal = `${p.nome} (${p.quantidade} ${p.unidade_medida})`.toLowerCase();
+                                        return p.nome.toLowerCase().includes(q) || optVal === q;
+                                    })
+                                    .slice(0, 5)
+                                    .map(p => (
+                                        <option key={p.id} value={`${p.nome} (${p.quantidade} ${p.unidade_medida})`} />
+                                    ))
+                                }
                             </datalist>
                         </div>
 

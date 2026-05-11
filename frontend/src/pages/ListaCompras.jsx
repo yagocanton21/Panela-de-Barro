@@ -13,6 +13,8 @@ function ListaCompras() {
     const [modalAberto, setModalAberto] = useState(false);
     const [filtro, setFiltro] = useState("todos"); // "todos", "pendentes", "comprados"
     const [mensagem, setMensagem] = useState(null);
+    const [pagina, setPagina] = useState(1);
+    const ITENS_POR_PAGINA = 15;
 
     useEffect(() => {
         fetchDados();
@@ -146,6 +148,14 @@ function ListaCompras() {
     const totalPendentes = itens.filter(i => !i.comprado).length;
     const totalComprados = itens.filter(i => i.comprado).length;
 
+    const totalPaginas = Math.ceil(itensFiltrados.length / ITENS_POR_PAGINA);
+    const itensPaginados = itensFiltrados.slice((pagina - 1) * ITENS_POR_PAGINA, pagina * ITENS_POR_PAGINA);
+
+    const mudarFiltro = (novoFiltro) => {
+        setFiltro(novoFiltro);
+        setPagina(1);
+    };
+
     return (
         <div style={{ textAlign: "left" }}>
             {/* Header */}
@@ -246,7 +256,7 @@ function ListaCompras() {
                 ].map(tab => (
                     <button
                         key={tab.key}
-                        onClick={() => setFiltro(tab.key)}
+                        onClick={() => mudarFiltro(tab.key)}
                         style={{
                             padding: '8px 16px', borderRadius: '12px', border: 'none', cursor: 'pointer',
                             fontWeight: '600', fontSize: '0.85rem', transition: 'all 0.2s',
@@ -265,16 +275,47 @@ function ListaCompras() {
                     Carregando lista de compras...
                 </div>
             ) : itensFiltrados.length > 0 ? (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                    {itensFiltrados.map(item => (
-                        <ItemListaCard
-                            key={item.id}
-                            item={item}
-                            onToggle={handleToggleComprado}
-                            onRemove={handleRemover}
-                        />
-                    ))}
-                </div>
+                <>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                        {itensPaginados.map(item => (
+                            <ItemListaCard
+                                key={item.id}
+                                item={item}
+                                onToggle={handleToggleComprado}
+                                onRemove={handleRemover}
+                            />
+                        ))}
+                    </div>
+                    {totalPaginas > 1 && (
+                        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '16px', marginTop: '24px' }}>
+                            <button
+                                onClick={() => setPagina(p => p - 1)}
+                                disabled={pagina === 1}
+                                style={{
+                                    padding: '8px 16px', borderRadius: '10px', border: '1px solid var(--border-light)',
+                                    backgroundColor: 'white', cursor: pagina === 1 ? 'not-allowed' : 'pointer',
+                                    opacity: pagina === 1 ? 0.4 : 1, fontWeight: '600',
+                                }}
+                            >
+                                ← Anterior
+                            </button>
+                            <span style={{ color: 'var(--text-muted)', fontSize: '0.9rem', fontWeight: '600' }}>
+                                {pagina} / {totalPaginas}
+                            </span>
+                            <button
+                                onClick={() => setPagina(p => p + 1)}
+                                disabled={pagina === totalPaginas}
+                                style={{
+                                    padding: '8px 16px', borderRadius: '10px', border: '1px solid var(--border-light)',
+                                    backgroundColor: 'white', cursor: pagina === totalPaginas ? 'not-allowed' : 'pointer',
+                                    opacity: pagina === totalPaginas ? 0.4 : 1, fontWeight: '600',
+                                }}
+                            >
+                                Próximo →
+                            </button>
+                        </div>
+                    )}
+                </>
             ) : (
                 <div style={{
                     backgroundColor: 'white', padding: '60px', textAlign: 'center',
