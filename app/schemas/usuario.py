@@ -1,11 +1,19 @@
 from pydantic import BaseModel, ConfigDict
 from datetime import datetime
+from typing import Optional
 
 # Classe para Criar Usuário
 class CriarUsuario(BaseModel):
     nome_exibicao: str
     usuario: str
     senha: str
+    is_admin: bool = False
+
+# Classe para Editar Usuário (senha opcional)
+class EditarUsuario(BaseModel):
+    nome_exibicao: str
+    usuario: str
+    senha: Optional[str] = None
     is_admin: bool = False
 
 # Classe para Retornar Usuário

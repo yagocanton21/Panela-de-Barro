@@ -1,13 +1,14 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from datetime import datetime
 from app.database import get_connection
 from app.auth import obter_usuario_atual
 from app.models.movimentacao import Movimentacao
 from app.models.produto import Produto
 from app.schemas.movimentacao import CriarMovimentacao, MovimentacaoResponse
 from app.schemas.produto import MessageResponse, MovimentacaoMessageResponse
-from typing import List
+from typing import List, Literal, Optional
 
 router = APIRouter(
     tags=["Movimentações"],
@@ -16,24 +17,40 @@ router = APIRouter(
 
 # Rota para listar movimentações
 @router.get("/movimentacoes", response_model=List[MovimentacaoResponse], summary="Listar histórico")
-async def listar_movimentacoes(db: AsyncSession = Depends(get_connection)):
-    """Retorna todas as movimentações registradas."""
+async def listar_movimentacoes(
+    db: AsyncSession = Depends(get_connection),
+    tipo: Optional[Literal["entrada", "saida"]] = Query(None, description="Filtrar por tipo"),
+    produto_id: Optional[int] = Query(None, description="Filtrar por produto"),
+    data_inicio: Optional[datetime] = Query(None, description="Data/hora mínima (ISO 8601)"),
+    data_fim: Optional[datetime] = Query(None, description="Data/hora máxima (ISO 8601)"),
+    limit: int = Query(100, ge=1, le=500, description="Máximo de registros"),
+    offset: int = Query(0, ge=0, description="Deslocamento para paginação"),
+):
+    """Retorna movimentações com filtros opcionais por tipo, produto e período."""
     query = select(
-        Movimentacao.id, 
-        Movimentacao.produto_id, 
+        Movimentacao.id,
+        Movimentacao.produto_id,
         Movimentacao.tipo,
-        Movimentacao.quantidade, 
-        Movimentacao.data_hora, 
+        Movimentacao.quantidade,
+        Movimentacao.data_hora,
         Movimentacao.motivo,
         Produto.nome.label("produto_nome")
-    ).outerjoin(Produto, Movimentacao.produto_id == Produto.id).order_by(Movimentacao.data_hora.desc())
-    
+    ).outerjoin(Produto, Movimentacao.produto_id == Produto.id)
+
+    if tipo is not None:
+        query = query.where(Movimentacao.tipo == tipo)
+    if produto_id is not None:
+        query = query.where(Movimentacao.produto_id == produto_id)
+    if data_inicio is not None:
+        query = query.where(Movimentacao.data_hora >= data_inicio)
+    if data_fim is not None:
+        query = query.where(Movimentacao.data_hora <= data_fim)
+
+    query = query.order_by(Movimentacao.data_hora.desc()).limit(limit).offset(offset)
+
     resultado = await db.execute(query)
     movimentacoes = resultado.all()
-    
-    if not movimentacoes:
-        raise HTTPException(status_code=404, detail="Nenhuma movimentação encontrada.")
-        
+
     return [m._mapping for m in movimentacoes]
 
 # Rota para criar movimentação
