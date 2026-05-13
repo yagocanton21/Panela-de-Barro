@@ -6,7 +6,7 @@ from sqlalchemy.exc import IntegrityError
 from app.database import get_connection
 from app.auth import criar_token_acesso, obter_usuario_atual
 from app.models.usuario import Usuario, hash_password, verify_password
-from app.schemas.usuario import CriarUsuario, UsuarioResponse
+from app.schemas.usuario import CriarUsuario, EditarUsuario, UsuarioResponse
 from app.schemas.produto import MessageResponse
 from typing import List
 
@@ -48,10 +48,6 @@ async def get_usuarios(db: AsyncSession = Depends(get_connection), user: dict = 
     """Retorna a lista de todos os usuários cadastrados."""
     resultado = await db.execute(select(Usuario).order_by(Usuario.id))
     usuarios = resultado.scalars().all()
-    
-    if not usuarios:
-        raise HTTPException(status_code=404, detail="Nenhum usuário encontrado.")
-        
     return usuarios
 
 # Rota para autenticar usuário
@@ -86,18 +82,19 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: AsyncSessi
 
 # Rota para editar usuário
 @router.put("/usuarios/{id}", response_model=MessageResponse, summary="Editar usuário")
-async def update_usuario(id: int, dados: CriarUsuario, db: AsyncSession = Depends(get_connection), user: dict = Depends(verificar_admin)):
-    """Atualiza os dados de um usuário existente."""
+async def update_usuario(id: int, dados: EditarUsuario, db: AsyncSession = Depends(get_connection), user: dict = Depends(verificar_admin)):
+    """Atualiza os dados de um usuário existente. Senha é opcional — se omitida, mantém a atual."""
     resultado = await db.execute(select(Usuario).where(Usuario.id == id))
     usuario = resultado.scalars().first()
-    
+
     if not usuario:
         raise HTTPException(status_code=404, detail="Usuário não encontrado.")
-    
+
     try:
         usuario.nome_exibicao = dados.nome_exibicao
         usuario.usuario = dados.usuario
-        usuario.senha_hash = hash_password(dados.senha)
+        if dados.senha:
+            usuario.senha_hash = hash_password(dados.senha)
         usuario.is_admin = dados.is_admin
         await db.commit()
         return {"message": "Usuário editado com sucesso!"}
@@ -108,13 +105,23 @@ async def update_usuario(id: int, dados: CriarUsuario, db: AsyncSession = Depend
 # Rota para deletar usuário
 @router.delete("/usuarios/{id}", response_model=MessageResponse, summary="Deletar usuário")
 async def excluir_usuario(id: int, db: AsyncSession = Depends(get_connection), user: dict = Depends(verificar_admin)):
-    """Deleta permanentemente um usuário."""
+    """Deleta permanentemente um usuário. Bloqueia auto-exclusão e exclusão do último admin."""
+    if user.get("id") == id:
+        raise HTTPException(status_code=400, detail="Não é possível deletar o próprio usuário.")
+
     resultado = await db.execute(select(Usuario).where(Usuario.id == id))
     usuario = resultado.scalars().first()
-    
+
     if not usuario:
         raise HTTPException(status_code=404, detail="Usuário não encontrado.")
-    
+
+    if usuario.is_admin:
+        admins_restantes = await db.execute(
+            select(Usuario).where(Usuario.is_admin == True, Usuario.id != id)
+        )
+        if not admins_restantes.scalars().first():
+            raise HTTPException(status_code=400, detail="Não é possível deletar o último administrador.")
+
     await db.delete(usuario)
     await db.commit()
     return {"message": "Usuário deletado com sucesso!"}

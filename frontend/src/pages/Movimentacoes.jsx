@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
-import { ArrowUpDown, Package } from "lucide-react";
+import { ArrowUpDown, Package, Check, AlertTriangle } from "lucide-react";
 import { apiRequest } from "../api";
 
 function Movimentacoes() {
     const [produtos, setProdutos] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [mensagem, setMensagem] = useState(null);
 
     const [formData, setFormData] = useState({
         produto_id: "",
@@ -13,6 +14,13 @@ function Movimentacoes() {
         quantidade: "",
         motivo: ""
     });
+
+    useEffect(() => {
+        if (mensagem) {
+            const timer = setTimeout(() => setMensagem(null), 4000);
+            return () => clearTimeout(timer);
+        }
+    }, [mensagem]);
 
     const carregarProdutos = async () => {
         try {
@@ -49,14 +57,14 @@ function Movimentacoes() {
 
             if (response && response.ok) {
                 setFormData({ produto_id: "", produto_nome: "", tipo: "entrada", quantidade: "", motivo: "" });
+                setMensagem({ tipo: "sucesso", texto: "Movimentação registrada com sucesso!" });
                 carregarProdutos();
-                alert("Movimentação registrada com sucesso!");
             } else if (response) {
                 const dados = await response.json();
-                alert(dados.message || "Erro ao registrar.");
+                setMensagem({ tipo: "erro", texto: dados.message || dados.detail || "Erro ao registrar." });
             }
         } catch (err) {
-            alert("Erro de conexão com o servidor.");
+            setMensagem({ tipo: "erro", texto: "Erro de conexão com o servidor." });
         } finally {
             setLoading(false);
         }
@@ -80,6 +88,19 @@ function Movimentacoes() {
             </div>
 
             {/* Card de Registro */}
+            {mensagem && (
+                <div style={{
+                    marginBottom: '1.5rem', padding: '12px 20px', borderRadius: '14px',
+                    display: 'flex', alignItems: 'center', gap: '10px',
+                    backgroundColor: mensagem.tipo === "sucesso" ? '#f0faf4' : '#fef7f7',
+                    border: `1px solid ${mensagem.tipo === "sucesso" ? '#c6f0d6' : '#fce8e6'}`,
+                    color: mensagem.tipo === "sucesso" ? '#1a7f37' : '#d93025',
+                }}>
+                    {mensagem.tipo === "sucesso" ? <Check size={18} /> : <AlertTriangle size={18} />}
+                    <span style={{ fontSize: '0.9rem', fontWeight: '500' }}>{mensagem.texto}</span>
+                </div>
+            )}
+
             <div className="card" style={{ display: 'block', padding: '1.5rem', borderTop: '4px solid var(--terracota)' }}>
                 <h3 style={{ marginTop: 0, marginBottom: '1.5rem', color: 'var(--text-dark)' }}>Registrar Nova Entrada/Saída</h3>
 
