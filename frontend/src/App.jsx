@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Dashboard from "./pages/Dashboard";
 import CadastroProduto from "./pages/CadastroProduto";
 import Layout from "./components/Layout";
@@ -10,6 +10,7 @@ import EditarProduto from "./pages/EditarProduto";
 import ListaCompras from "./pages/ListaCompras";
 import Ajustes from "./pages/Ajustes";
 import Login from "./pages/Login";
+import Landing from "./pages/Landing";
 import PrivateRoute from "./components/PrivateRoute";
 
 // Rotas protegidas - só quem está logado pode acessar
@@ -17,8 +18,8 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Redireciona a raiz "/" para o login para garantir que o usuário se identifique */}
-        <Route path="/" element={<Navigate to="/login" replace />} />
+        {/* Landing page pública */}
+        <Route path="/" element={<Landing />} />
 
         <Route path="/login" element={<Login />} />
 

@@ -29,10 +29,6 @@ async def listar_produtos(db: AsyncSession = Depends(get_connection)):
     
     resultado = await db.execute(query)
     produtos = resultado.all()
-    
-    if not produtos:
-        raise HTTPException(status_code=404, detail="Nenhum produto encontrado.")
-    
     return [p._mapping for p in produtos]
 
 # Rota para listar produtos em falta
@@ -40,21 +36,17 @@ async def listar_produtos(db: AsyncSession = Depends(get_connection)):
 async def listar_produtos_em_falta(db: AsyncSession = Depends(get_connection)):
     """Retorna produtos com estoque baixo ou esgotado (quantidade <= quantidade mínima)."""
     query = select(
-        Produto.id, 
-        Produto.nome, 
-        Categoria.nome.label("categoria"), 
-        Produto.categoria_id, 
-        Produto.quantidade, 
-        Produto.quantidade_minima, 
+        Produto.id,
+        Produto.nome,
+        Categoria.nome.label("categoria"),
+        Produto.categoria_id,
+        Produto.quantidade,
+        Produto.quantidade_minima,
         Produto.unidade_medida
     ).outerjoin(Categoria, Produto.categoria_id == Categoria.id).where(Produto.quantidade <= Produto.quantidade_minima)
-    
+
     resultado = await db.execute(query)
     produtos = resultado.all()
-    
-    if not produtos:
-        raise HTTPException(status_code=404, detail="Nenhum produto em falta encontrado.")
-    
     return [p._mapping for p in produtos]
 
 # Rota para buscar produto por ID

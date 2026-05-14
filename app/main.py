@@ -2,14 +2,12 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
-from app.database import engine, Base
+from sqlalchemy import select
+from app.database import engine, Base, SessionLocal
 from app.routers import produto, categoria, movimentacao, usuario, lista_compras
+from app.models.usuario import Usuario, hash_password
 import logging
 import os
-from app.database import SessionLocal
-from app.models.usuario import Usuario, hash_password
-from sqlalchemy import select
-
 
 # Configuração de Logging
 logging.basicConfig(level=logging.INFO)
@@ -20,12 +18,8 @@ async def lifespan(app: FastAPI):
     # Cria as tabelas do banco de dados na inicialização
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
-    
-    # Criar usuário administrador inicial se não houver nenhum
-    from app.database import SessionLocal
-    from app.models.usuario import Usuario, hash_password
-    from sqlalchemy import select
 
+    # Criar usuário administrador inicial se não houver nenhum
     async with SessionLocal() as session:
         result = await session.execute(select(Usuario))
         if not result.scalars().first():
@@ -78,9 +72,10 @@ app = FastAPI(
 )
 
 # Middlewares de Segurança
-# Liberando hosts para funcionamento na VPS (Oracle Cloud)
+# allowed_hosts=["*"] aceita qualquer Host header — necessário pois a aplicação
+# roda atrás do Nginx em VPS (Oracle Cloud) e pode ser acessada por domínio ou IP.
 app.add_middleware(
-    TrustedHostMiddleware, 
+    TrustedHostMiddleware,
     allowed_hosts=["*"]
 )
 

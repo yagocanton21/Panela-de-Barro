@@ -21,8 +21,8 @@ async def listar_movimentacoes(
     db: AsyncSession = Depends(get_connection),
     tipo: Optional[Literal["entrada", "saida"]] = Query(None, description="Filtrar por tipo"),
     produto_id: Optional[int] = Query(None, description="Filtrar por produto"),
-    data_inicio: Optional[datetime] = Query(None, description="Data/hora mínima (ISO 8601)"),
-    data_fim: Optional[datetime] = Query(None, description="Data/hora máxima (ISO 8601)"),
+    data_inicio: Optional[datetime] = Query(None, description="Data/hora mínima"),
+    data_fim: Optional[datetime] = Query(None, description="Data/hora máxima"),
     limit: int = Query(100, ge=1, le=500, description="Máximo de registros"),
     offset: int = Query(0, ge=0, description="Deslocamento para paginação"),
 ):

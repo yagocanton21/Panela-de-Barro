@@ -2,10 +2,10 @@ import { Navigate } from "react-router-dom";
 
 // Componente "porteiro" que protege rotas
 function PrivateRoute({ children }) {
-    const usuarioLogado = localStorage.getItem("usuarioLogado");
+    const token = localStorage.getItem("access_token");
 
-    // Se não tem usuário logado, redireciona para o login
-    if (!usuarioLogado) {
+    // Sem token válido, redireciona para o login
+    if (!token) {
         return <Navigate to="/login" replace />;
     }
 
