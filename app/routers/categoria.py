@@ -19,12 +19,7 @@ router = APIRouter(
 async def listar_categorias(db: AsyncSession = Depends(get_connection)):
     """Retorna uma lista com todas as categorias ordenadas por ID."""
     resultado = await db.execute(select(Categoria).order_by(Categoria.id))
-    categorias = resultado.scalars().all()
-    
-    if not categorias:
-        raise HTTPException(status_code=404, detail="Nenhuma categoria encontrada.")
-    
-    return categorias
+    return resultado.scalars().all()
 
 # Rota para buscar categoria por nome
 @router.get("/categorias/{nome}", response_model=CategoriaResponse, summary="Buscar categoria pelo nome")
