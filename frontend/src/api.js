@@ -1,4 +1,5 @@
 // frontend/src/api.js
+import { clearAuth } from "./utils/auth";
 
 const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost/api";
 
@@ -25,9 +26,7 @@ export const apiRequest = async (endpoint, options = {}) => {
         if (response.status === 401 && !window.location.pathname.includes("/login")) {
             console.warn("Sessão expirada. Redirecionando para o login...");
 
-            // Limpa os dados de login salvos
-            localStorage.removeItem("access_token");
-            localStorage.removeItem("usuarioLogado");
+            clearAuth();
 
             // Redireciona para a página de login e mata a execução aqui
             window.location.href = "/login";
