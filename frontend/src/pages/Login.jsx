@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiRequest } from "../api";
+import { isAuthenticated } from "../utils/auth";
 import "./Login.css";
 
 // Função para fazer login
@@ -11,11 +12,9 @@ function Login() {
     const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
 
-    // Se o usuário já estiver logado, redireciona direto para o painel de admin
+    // Se já houver sessão válida (token não expirado), pula direto pro painel
     useEffect(() => {
-        const token = localStorage.getItem("access_token");
-        const usuarioLogado = localStorage.getItem("usuarioLogado");
-        if (token && usuarioLogado) {
+        if (isAuthenticated()) {
             navigate("/admin");
         }
     }, [navigate]);

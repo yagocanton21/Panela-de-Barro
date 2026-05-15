@@ -1,12 +1,12 @@
 import { LayoutGrid, Package, Settings, LogOut, Tag, ArrowUpDown, ClipboardList, Plus, ShoppingCart } from "lucide-react";
 import { NavLink, useNavigate } from "react-router-dom";
+import { clearAuth } from "../utils/auth";
 
 function Sidebar({ aberta, onClose }) {
     const navigate = useNavigate();
 
     const handleLogout = () => {
-        localStorage.removeItem("usuarioLogado");
-        localStorage.removeItem("access_token");
+        clearAuth();
         navigate("/login");
     };
 
