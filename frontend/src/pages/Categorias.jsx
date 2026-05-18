@@ -82,7 +82,7 @@ function Categorias() {
 
             {/* Voltar */}
             <button
-                onClick={() => navigate("/")}
+                onClick={() => navigate("/estoque")}
                 style={{
                     display: 'flex', alignItems: 'center', gap: '8px', background: 'none',
                     border: 'none', color: 'var(--text-muted)', cursor: 'pointer', marginBottom: '1.5rem',

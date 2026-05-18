@@ -60,7 +60,7 @@ async def sincronizar_com_estoque(db: AsyncSession = Depends(get_connection)):
     pendentes_subquery = select(ItemListaCompras.produto_id).where(
         ItemListaCompras.comprado == False,
         ItemListaCompras.produto_id.is_not(None)
-    ).scalar_subquery()
+    )
 
     query_faltando = select(Produto).where(
         Produto.quantidade <= Produto.quantidade_minima,
