@@ -52,7 +52,7 @@ function CadastroProduto() {
 
             if (response && response.ok) {
                 setSuccess(true);
-                setTimeout(() => navigate("/"), 2000);
+                setTimeout(() => navigate("/estoque"), 2000);
             } else if (response) {
                 const dados = await response.json();
                 setErro(dados.message || dados.detail || "Erro ao cadastrar. Verifique os dados.");
@@ -81,7 +81,7 @@ function CadastroProduto() {
 
             {/* Cabeçalho Superior - Breadcrumb / Voltar */}
             <button
-                onClick={() => navigate("/")}
+                onClick={() => navigate("/estoque")}
                 style={{
                     display: 'flex', alignItems: 'center', gap: '8px', background: 'none',
                     border: 'none', color: 'var(--text-muted)', cursor: 'pointer', marginBottom: '1.5rem',

@@ -1,5 +1,5 @@
 from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey
-from datetime import datetime, timezone
+from datetime import datetime
 from app.database import Base
 
 # Tabela que representa a lista de compras
@@ -11,4 +11,4 @@ class ItemListaCompras(Base):
     nome_avulso = Column(String(255), nullable=True)
     quantidade = Column(Integer, default=1)
     comprado = Column(Boolean, default=False)
-    data_criacao = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    data_criacao = Column(DateTime, default=datetime.now)
