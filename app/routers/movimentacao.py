@@ -56,27 +56,37 @@ async def listar_movimentacoes(
 # Rota para criar movimentação
 @router.post("/movimentacoes", response_model=MovimentacaoMessageResponse, status_code=status.HTTP_201_CREATED, summary="Registrar movimentação")
 async def criar_movimentacao(dados: CriarMovimentacao, db: AsyncSession = Depends(get_connection)):
-    """Cria uma nova movimentação e atualiza o saldo do produto no estoque."""
-    # Buscar o produto
-    resultado = await db.execute(select(Produto).where(Produto.id == dados.produto_id))
-    produto = resultado.scalars().first()
-    
-    if not produto:
-        raise HTTPException(status_code=404, detail="Produto não encontrado.")
-    
-    # Processar estoque
-    if dados.tipo == "entrada":
-        produto.quantidade += dados.quantidade
-    else: # saida
-        if produto.quantidade < dados.quantidade:
-            raise HTTPException(status_code=400, detail="Estoque insuficiente para esta saída.")
-        produto.quantidade -= dados.quantidade
-    
-    # Registrar movimentação
-    nova = Movimentacao(**dados.model_dump())
-    db.add(nova)
-    await db.commit()
-    
+    """Cria uma nova movimentação e atualiza o saldo do produto no estoque.
+
+    Usa SELECT ... FOR UPDATE para serializar atualizações concorrentes do estoque
+    e evitar race condition entre saídas simultâneas (over-depletion do saldo).
+    """
+    try:
+        resultado = await db.execute(
+            select(Produto).where(Produto.id == dados.produto_id).with_for_update()
+        )
+        produto = resultado.scalars().first()
+
+        if not produto:
+            raise HTTPException(status_code=404, detail="Produto não encontrado.")
+
+        if dados.tipo == "entrada":
+            produto.quantidade += dados.quantidade
+        else:  # saida
+            if produto.quantidade < dados.quantidade:
+                raise HTTPException(status_code=400, detail="Estoque insuficiente para esta saída.")
+            produto.quantidade -= dados.quantidade
+
+        nova = Movimentacao(**dados.model_dump())
+        db.add(nova)
+        await db.commit()
+    except HTTPException:
+        await db.rollback()
+        raise
+    except Exception:
+        await db.rollback()
+        raise
+
     return {"mensagem": f"Movimentação de {dados.tipo} realizada. Estoque atual: {produto.quantidade}"}
 
 # Rota para buscar movimentação por ID

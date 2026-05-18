@@ -135,7 +135,7 @@ function Landing() {
                     </div>
                     <div className="landing-stat-card">
                         <span className="landing-stat-num">0</span>
-                        <span className="landing-stat-label">Cadernos de papel</span>
+                        <span className="landing-stat-label">Papel para controle</span>
                     </div>
                     <div className="landing-stat-card">
                         <span className="landing-stat-num">&lt;1s</span>

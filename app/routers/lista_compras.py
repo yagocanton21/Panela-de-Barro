@@ -101,31 +101,50 @@ async def atualizar_status_item(
 # Rota para dar entrada nos itens comprados e limpar a lista
 @router.post("/finalizar", response_model=MessageResponse, summary="Finalizar compras")
 async def finalizar_compras(db: AsyncSession = Depends(get_connection)):
-    """Dá entrada no estoque de todos os itens marcados como comprados e os remove da lista."""
-    resultado = await db.execute(select(ItemListaCompras).where(ItemListaCompras.comprado == True))
-    itens_comprados = resultado.scalars().all()
-    
-    if not itens_comprados:
-        raise HTTPException(status_code=400, detail="Nenhum item comprado para finalizar.")
-        
-    count_entrada = 0
-    for item in itens_comprados:
-        if item.produto_id:
-            res_prod = await db.execute(select(Produto).where(Produto.id == item.produto_id))
-            produto = res_prod.scalars().first()
-            if produto:
-                produto.quantidade += item.quantidade
-                db.add(Movimentacao(
-                    produto_id=produto.id,
-                    tipo="entrada",
-                    quantidade=item.quantidade,
-                    motivo="Entrada via Finalização da Lista de Compras"
-                ))
-                count_entrada += 1
-        
-        await db.delete(item)
-        
-    await db.commit()
+    """Dá entrada no estoque de todos os itens marcados como comprados e os remove da lista.
+
+    Usa SELECT ... FOR UPDATE em lote nos produtos afetados para serializar com outras
+    movimentações concorrentes e evitar race condition no saldo do estoque.
+    """
+    try:
+        resultado = await db.execute(select(ItemListaCompras).where(ItemListaCompras.comprado == True))
+        itens_comprados = resultado.scalars().all()
+
+        if not itens_comprados:
+            raise HTTPException(status_code=400, detail="Nenhum item comprado para finalizar.")
+
+        produto_ids = {item.produto_id for item in itens_comprados if item.produto_id}
+        produtos_por_id: dict[int, Produto] = {}
+        if produto_ids:
+            res_prods = await db.execute(
+                select(Produto).where(Produto.id.in_(produto_ids)).with_for_update()
+            )
+            produtos_por_id = {p.id: p for p in res_prods.scalars().all()}
+
+        count_entrada = 0
+        for item in itens_comprados:
+            if item.produto_id:
+                produto = produtos_por_id.get(item.produto_id)
+                if produto:
+                    produto.quantidade += item.quantidade
+                    db.add(Movimentacao(
+                        produto_id=produto.id,
+                        tipo="entrada",
+                        quantidade=item.quantidade,
+                        motivo="Entrada via Finalização da Lista de Compras"
+                    ))
+                    count_entrada += 1
+
+            await db.delete(item)
+
+        await db.commit()
+    except HTTPException:
+        await db.rollback()
+        raise
+    except Exception:
+        await db.rollback()
+        raise
+
     return {"message": f"Compras finalizadas! {len(itens_comprados)} item(ns) removido(s) da lista ({count_entrada} entraram no estoque)."}
 
 # Rota para remover item da lista
