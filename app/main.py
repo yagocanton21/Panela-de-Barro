@@ -2,7 +2,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
-from sqlalchemy import select
+from sqlalchemy import select, text
 from app.database import engine, Base, SessionLocal
 from app.routers import produto, categoria, movimentacao, usuario, lista_compras
 from app.models.usuario import Usuario, hash_password
@@ -102,4 +102,17 @@ def read_root():
         "message": "API Panela de Barro (Modo Elite) ativa.",
         "version": "2.0.0"
     }
+
+@app.get("/health", tags=["Início"], include_in_schema=False)
+async def health_check():
+    try:
+        async with SessionLocal() as session:
+            await session.execute(text("SELECT 1"))
+        return {"status": "ok", "database": "ok"}
+    except Exception as exc:
+        logger.error(f"Healthcheck falhou: {exc}")
+        return JSONResponse(
+            status_code=503,
+            content={"status": "degraded", "database": "down"}
+        )
 

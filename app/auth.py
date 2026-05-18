@@ -4,6 +4,7 @@ from jose import JWTError, jwt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from dotenv import load_dotenv
+from datetime import timezone
 
 load_dotenv()
 
@@ -20,7 +21,6 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 def criar_token_acesso(dados: dict):
     """Gera um token JWT assinado."""
     a_copiar = dados.copy()
-    from datetime import timezone
     expira = datetime.now(timezone.utc) + timedelta(hours=ACCESS_TOKEN_EXPIRE_HOURS)
     a_copiar.update({"exp": expira})
     return jwt.encode(a_copiar, SECRET_KEY, algorithm=ALGORITHM)
