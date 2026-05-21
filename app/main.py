@@ -3,7 +3,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from sqlalchemy import select, text
-from app.database import engine, Base, SessionLocal
+from app.database import engine, SessionLocal
 from app.routers import produto, categoria, movimentacao, usuario, lista_compras
 from app.models.usuario import Usuario, hash_password
 import logging
@@ -15,10 +15,6 @@ logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Cria as tabelas do banco de dados na inicialização
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-
     # Criar usuário administrador inicial se não houver nenhum
     async with SessionLocal() as session:
         result = await session.execute(select(Usuario))
@@ -99,7 +95,7 @@ app.include_router(lista_compras.router)
 def read_root():
     return {
         "status": "online",
-        "message": "API Panela de Barro (Modo Elite) ativa.",
+        "message": "API Panela de Barro ativa.",
         "version": "2.0.0"
     }
 

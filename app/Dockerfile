@@ -16,9 +16,13 @@ RUN --mount=type=cache,target=/root/.cache/pip \
 
 # Copia a pasta app inteira para manter a estrutura de pacotes
 COPY app/ app/
+COPY alembic/ alembic/
+COPY alembic.ini .
+COPY entrypoint.sh .
+RUN chmod +x entrypoint.sh
 
 # Expõe a porta do FastAPI
 EXPOSE 8000
 
-# O comando agora utiliza o caminho do pacote app.main
+ENTRYPOINT ["./entrypoint.sh"]
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]

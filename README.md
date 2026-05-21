@@ -116,22 +116,83 @@ Panela-Barro/
 
 - [Docker Desktop](https://www.docker.com/products/docker-desktop/) (Windows/Mac) ou Docker Engine + Compose (Linux)
 
-### Setup rápido
+### Setup rápido (desenvolvimento local)
 
 ```bash
 # 1. Clone o repositório
 git clone https://github.com/yagocanton21/Panela-de-Barro.git
 cd Panela-de-Barro
 
-# 2. Configure as variáveis de ambiente
-cp .env.example .env
-# Edite o .env com suas credenciais
+# 2. Crie e configure o .env
+nano .env
+# Cole as variáveis e preencha com suas credenciais (veja a seção de variáveis abaixo)
+# Salvar: Ctrl+O → Enter → Ctrl+X
 
 # 3. Suba toda a stack
 docker compose up -d --build
 
 # 4. Acesse no navegador
 # http://localhost
+```
+
+---
+
+## ☁️ Deploy em Produção (VPS / EC2 Amazon)
+
+### 1. Instalar Docker (Ubuntu/Debian)
+
+```bash
+curl -fsSL https://get.docker.com | sh
+sudo usermod -aG docker $USER
+# Sair e entrar novamente na sessão SSH
+```
+
+### 2. Clonar e configurar
+
+```bash
+git clone https://github.com/yagocanton21/Panela-de-Barro.git
+cd Panela-de-Barro
+```
+
+Gere a SECRET_KEY — rode no terminal da VPS e copie o resultado:
+
+```bash
+openssl rand -hex 32
+```
+
+Crie o `.env`:
+
+```bash
+nano .env
+```
+
+Conteúdo do `.env`:
+
+```env
+POSTGRES_USER=admin
+POSTGRES_PASSWORD=senha_forte
+POSTGRES_DB=estoque_db
+SECRET_KEY=cole_aqui_o_resultado_do_openssl_rand
+ADMIN_USERNAME=admin
+ADMIN_PASSWORD=senha_forte
+ADMIN_DISPLAY_NAME=Admin
+```
+
+Salvar no nano: `Ctrl+O` → `Enter` → `Ctrl+X`
+
+### 3. Subir a aplicação
+
+```bash
+docker compose -f docker-compose.prod.yml up -d --build
+```
+
+Acesse em `http://<IP-da-VPS>`.
+
+### Atualizar para uma nova versão
+
+```bash
+git pull
+docker compose -f docker-compose.prod.yml up -d --build
 ```
 
 ### Credenciais iniciais
