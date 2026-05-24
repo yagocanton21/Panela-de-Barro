@@ -44,7 +44,7 @@
 | Frontend   | React 18 + Vite                       |
 | Backend    | FastAPI · Python 3.11 · async         |
 | Banco      | PostgreSQL 15                         |
-| ORM        | SQLAlchemy 2 (asyncpg)                |
+| ORM        | SQLAlchemy 2 (asyncpg) + Alembic      |
 | Auth       | JWT + OAuth2 (bcrypt)                 |
 | Proxy      | Nginx                                 |
 | Container  | Docker + Docker Compose               |
@@ -123,10 +123,7 @@ Panela-Barro/
 git clone https://github.com/yagocanton21/Panela-de-Barro.git
 cd Panela-de-Barro
 
-# 2. Crie e configure o .env
-nano .env
-# Cole as variáveis e preencha com suas credenciais (veja a seção de variáveis abaixo)
-# Salvar: Ctrl+O → Enter → Ctrl+X
+# 2. Adicione o arquivo .env enviado na raiz do projeto
 
 # 3. Suba toda a stack
 docker compose up -d --build
@@ -154,31 +151,7 @@ git clone https://github.com/yagocanton21/Panela-de-Barro.git
 cd Panela-de-Barro
 ```
 
-Gere a SECRET_KEY — rode no terminal da VPS e copie o resultado:
-
-```bash
-openssl rand -hex 32
-```
-
-Crie o `.env`:
-
-```bash
-nano .env
-```
-
-Conteúdo do `.env`:
-
-```env
-POSTGRES_USER=admin
-POSTGRES_PASSWORD=senha_forte
-POSTGRES_DB=estoque_db
-SECRET_KEY=cole_aqui_o_resultado_do_openssl_rand
-ADMIN_USERNAME=admin
-ADMIN_PASSWORD=senha_forte
-ADMIN_DISPLAY_NAME=Admin
-```
-
-Salvar no nano: `Ctrl+O` → `Enter` → `Ctrl+X`
+Copie o arquivo `.env` enviado diretamente para a raiz do projeto.
 
 ### 3. Subir a aplicação
 
@@ -211,22 +184,7 @@ O usuário admin é criado automaticamente no primeiro start, com base no `.env`
 
 ## ⚙️ Variáveis de Ambiente
 
-Copie `.env.example` para `.env` e ajuste os valores:
-
-```env
-# Banco de dados PostgreSQL
-POSTGRES_USER=admin
-POSTGRES_PASSWORD=trocar_em_producao
-POSTGRES_DB=estoque_db
-
-# JWT — gere com: openssl rand -hex 32
-SECRET_KEY=trocar_em_producao_use_openssl_rand_hex_32
-
-# Admin inicial
-ADMIN_USERNAME=admin
-ADMIN_PASSWORD=trocar_em_producao
-ADMIN_DISPLAY_NAME=Admin
-```
+As configurações sensíveis (como chaves de autenticação JWT e senhas do banco de dados) são gerenciadas através de um arquivo `.env` enviado diretamente de forma privada. Esse arquivo é omitido do Git para manter a segurança do projeto.
 
 ---
 
@@ -307,6 +265,18 @@ docker compose up -d --build backend
 # Reiniciar tudo do zero (⚠️ apaga dados)
 docker compose down -v
 docker compose up -d --build
+```
+
+### 🗄️ Migrações de Banco de Dados (Alembic)
+
+As migrações são rodadas automaticamente ao iniciar o container do backend (via `entrypoint.sh`). Para desenvolvimento local:
+
+```bash
+# Gerar uma nova migração após alterar um Model
+docker compose exec backend alembic revision --autogenerate -m "descricao_da_mudanca"
+
+# Aplicar migrações manualmente (se necessário)
+docker compose exec backend alembic upgrade head
 ```
 
 ---
