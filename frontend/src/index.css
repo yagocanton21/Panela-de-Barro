@@ -38,10 +38,11 @@ body {
   display: flex;
   flex-direction: column;
   padding: 1.5rem;
-  height: 100vh;
+  height: 100dvh;
   position: sticky;
   top: 0;
   color: white;
+  overflow-y: auto;
 }
 
 .main-content {
@@ -215,7 +216,7 @@ span {
     position: fixed;
     left: 0;
     top: 0;
-    height: 100vh;
+    height: 100dvh;
     width: 280px;
     transform: translateX(-100%);
     /* Começa fora da tela */
@@ -223,6 +224,7 @@ span {
     z-index: 1500;
     box-shadow: 10px 0 30px rgba(0, 0, 0, 0.2);
     border-right: none;
+    overflow-y: auto;
   }
 
   /* Classe que entra em ação quando o botão é clicado */
