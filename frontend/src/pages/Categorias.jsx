@@ -257,11 +257,14 @@ function Categorias() {
                                 <button
                                     onClick={() => handleEditar(cat)}
                                     style={{
+                                        flex: 1,
+                                        display: 'flex',
+                                        justifyContent: 'center',
                                         background: "#f8f9fa",
                                         border: "none",
                                         color: "#7d7569",
                                         cursor: "pointer",
-                                        padding: "10px",
+                                        padding: "12px",
                                         borderRadius: "12px",
                                         transition: "all 0.2s"
                                     }}
@@ -274,11 +277,14 @@ function Categorias() {
                                 <button
                                     onClick={() => handleDeletar(cat.id)}
                                     style={{
+                                        flex: 1,
+                                        display: 'flex',
+                                        justifyContent: 'center',
                                         background: "#f8f9fa",
                                         border: "none",
                                         color: "#7d7569",
                                         cursor: "pointer",
-                                        padding: "10px",
+                                        padding: "12px",
                                         borderRadius: "12px",
                                         transition: "all 0.2s"
                                     }}

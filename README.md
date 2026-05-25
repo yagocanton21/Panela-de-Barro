@@ -125,10 +125,16 @@ cd Panela-de-Barro
 
 # 2. Adicione o arquivo .env enviado na raiz do projeto
 
-# 3. Suba toda a stack
+# 3. Garanta que o script de inicialização tenha permissão de execução:
+# No Linux/Mac ou Git Bash (Windows):
+chmod +x entrypoint.sh
+# No Windows (Prompt/PowerShell), o Git pode aplicar essa permissão:
+git update-index --chmod=+x entrypoint.sh
+
+# 4. Suba toda a stack
 docker compose up -d --build
 
-# 4. Acesse no navegador
+# 5. Acesse no navegador
 # http://localhost
 ```
 

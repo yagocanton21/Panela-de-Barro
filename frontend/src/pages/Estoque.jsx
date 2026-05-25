@@ -40,7 +40,7 @@ const ProductCard = ({ p, status, onEdit, onDelete, onMove }) => (
             </div>
         </div>
 
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #f5f0e6', paddingTop: '0.8rem', zIndex: 1 }}>
+        <div className="card-footer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #f5f0e6', paddingTop: '0.8rem', zIndex: 1 }}>
             <div style={{ display: 'flex', gap: '8px' }}>
                 <button onClick={() => onEdit(p.id)} className="action-btn" title="Editar Produto"><Edit2 size={16} /></button>
                 <button onClick={() => onDelete(p.id)} className="action-btn delete" title="Excluir Produto"><Trash2 size={16} /></button>

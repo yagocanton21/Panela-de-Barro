@@ -63,7 +63,7 @@ function Sidebar({ aberta, onClose }) {
 
             {/* Rodapé */}
             <div style={{ marginTop: "auto", borderTop: "1px solid rgba(255,255,255,0.1)", paddingTop: "1rem" }}>
-                <NavLink to="/ajustes" className="sidebar-nav-item" style={navStyle}>
+                <NavLink to="/ajustes" className="sidebar-nav-item" style={navStyle} onClick={() => onClose && onClose()}>
                     <Settings size={20} />
                     <span>Ajustes</span>
                 </NavLink>

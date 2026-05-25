@@ -289,7 +289,23 @@ span {
 
   .inventory-card .move-btn {
     display: none;
-    /* Esconde o texto do botão para economizar espaço */
+  }
+
+  .inventory-card .card-footer {
+    justify-content: center !important;
+    width: 100% !important;
+  }
+
+  .inventory-card .card-footer > div {
+    width: 100% !important;
+    justify-content: space-between !important;
+    gap: 12px !important;
+  }
+
+  .inventory-card .action-btn {
+    flex: 1 !important;
+    justify-content: center !important;
+    padding: 12px !important;
   }
 
   .main-content {

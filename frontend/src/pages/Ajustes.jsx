@@ -74,9 +74,9 @@ function Ajustes() {
                 <div key={u.id} style={{
                     display: "flex", justifyContent: "space-between", alignItems: "center",
                     padding: "12px 16px", background: "#faf8f5", borderRadius: "8px",
-                    marginBottom: "8px", border: "1px solid #e8e0d5"
+                    marginBottom: "8px", border: "1px solid #e8e0d5", flexWrap: "wrap", gap: "12px"
                 }}>
-                    <div>
+                    <div style={{ flex: "1 1 200px" }}>
                         <strong style={{ color: "var(--text-dark)" }}>{u.nome_exibicao}</strong>
                         <span style={{ color: "#9da5ad", marginLeft: "8px" }}>@{u.usuario}</span>
                         {u.is_admin && (
@@ -85,16 +85,16 @@ function Ajustes() {
                             </span>
                         )}
                     </div>
-                    <div style={{ display: "flex", gap: "8px" }}>
+                    <div style={{ display: "flex", gap: "8px", flex: "1 1 100%" }}>
                         <button onClick={() => iniciarEdicao(u)} style={{
-                            background: "none", border: "1px solid var(--terracota)", color: "var(--terracota)",
-                            borderRadius: "6px", padding: "4px 12px", cursor: "pointer", fontSize: "14px"
+                            flex: 1, background: "none", border: "1px solid var(--terracota)", color: "var(--terracota)",
+                            borderRadius: "6px", padding: "10px 12px", cursor: "pointer", fontSize: "14px"
                         }}>
                             Editar
                         </button>
                         <button onClick={() => deletarUsuario(u.id)} style={{
-                            background: "none", border: "1px solid #e74c3c", color: "#e74c3c",
-                            borderRadius: "6px", padding: "4px 12px", cursor: "pointer", fontSize: "14px"
+                            flex: 1, background: "none", border: "1px solid #e74c3c", color: "#e74c3c",
+                            borderRadius: "6px", padding: "10px 12px", cursor: "pointer", fontSize: "14px"
                         }}>
                             Deletar
                         </button>
