@@ -7,6 +7,7 @@ class Movimentacao(Base):
     __tablename__ = "movimentacoes"
     id = Column(Integer, primary_key=True)
     produto_id = Column(Integer, ForeignKey("produtos.id", ondelete="CASCADE"), nullable=False)
+    usuario_id = Column(Integer, ForeignKey("usuarios.id", ondelete="SET NULL"), nullable=True)
     tipo = Column(String(10), nullable=False)
     quantidade = Column(Integer, nullable=False)
     data_hora = Column(DateTime, default=datetime.now)

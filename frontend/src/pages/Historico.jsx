@@ -1,39 +1,85 @@
-import { useState, useEffect } from "react";
-import { ClipboardList, ArrowUpCircle, ArrowDownCircle, Info } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import { ClipboardList, ArrowUpCircle, ArrowDownCircle, Info, User, Search, X } from "lucide-react";
 import { apiRequest } from "../api";
 
-const ITENS_POR_PAGINA = 5;
+const ITENS_POR_PAGINA = 10;
 
 function Historico() {
     const [todas, setTodas] = useState([]);
-    const [produtos, setProdutos] = useState([]);
-    const [filtro, setFiltro] = useState("todos");
+    const [usuarios, setUsuarios] = useState([]);
+    const [total, setTotal] = useState(0);
     const [pagina, setPagina] = useState(1);
+    const [carregando, setCarregando] = useState(false);
+
+    const [filtroTipo, setFiltroTipo] = useState("");
+    const [filtroUsuario, setFiltroUsuario] = useState("");
+    const [filtroDataInicio, setFiltroDataInicio] = useState("");
+    const [filtroDataFim, setFiltroDataFim] = useState("");
+
+    const carregarMovimentacoes = useCallback(async (pg = 1) => {
+        setCarregando(true);
+        setTodas([]); // limpa imediatamente para não mostrar dados velhos
+        const offset = (pg - 1) * ITENS_POR_PAGINA;
+        const params = new URLSearchParams();
+        params.set("limit", ITENS_POR_PAGINA);
+        params.set("offset", offset);
+        if (filtroTipo) params.set("tipo", filtroTipo);
+        if (filtroUsuario) params.set("usuario_id", filtroUsuario);
+        if (filtroDataInicio) params.set("data_inicio", filtroDataInicio + "T00:00:00");
+        if (filtroDataFim) params.set("data_fim", filtroDataFim + "T23:59:59");
+
+        try {
+            const r = await apiRequest(`/movimentacoes?${params.toString()}`);
+            if (!r) { setCarregando(false); return; }
+            const data = await r.json();
+            if (Array.isArray(data)) {
+                setTodas(data);
+                if (data.length < ITENS_POR_PAGINA) {
+                    setTotal(offset + data.length);
+                } else {
+                    setTotal(offset + data.length + 1);
+                }
+            } else {
+                setTodas([]);
+                setTotal(0);
+            }
+        } catch (err) {
+            console.error("Erro ao carregar histórico:", err);
+            setTodas([]);
+            setTotal(0);
+        } finally {
+            setCarregando(false);
+        }
+    }, [filtroTipo, filtroUsuario, filtroDataInicio, filtroDataFim]);
 
     useEffect(() => {
-        Promise.all([
-            apiRequest("/movimentacoes").then(r => r && r.json()),
-            apiRequest("/produtos").then(r => r && r.json())
-        ]).then(([movs, prods]) => {
-            if (Array.isArray(movs)) setTodas(movs);
-            if (Array.isArray(prods)) setProdutos(prods);
-        }).catch(err => console.error("Erro ao carregar histórico:", err));
+        // Carrega lista de usuários para o dropdown
+        apiRequest("/usuarios")
+            .then(r => r && r.json())
+            .then(data => { if (Array.isArray(data)) setUsuarios(data); })
+            .catch(() => {}); // silencia erro se não for admin
     }, []);
 
-    const getNomeProduto = (id) => {
-        const p = produtos.find(prod => prod.id === id);
-        return p ? p.nome : `Produto #${id}`;
-    };
-
-    const filtradas = filtro === "todos" ? todas : todas.filter(m => m.tipo === filtro);
-    const totalPaginas = Math.ceil(filtradas.length / ITENS_POR_PAGINA);
-    const inicio = (pagina - 1) * ITENS_POR_PAGINA;
-    const visiveis = filtradas.slice(inicio, inicio + ITENS_POR_PAGINA);
-
-    const mudarFiltro = (novoFiltro) => {
-        setFiltro(novoFiltro);
+    useEffect(() => {
         setPagina(1);
+        carregarMovimentacoes(1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [filtroTipo, filtroUsuario, filtroDataInicio, filtroDataFim]);
+
+    const mudarPagina = (pg) => {
+        setPagina(pg);
+        carregarMovimentacoes(pg);
     };
+
+    const limparFiltros = () => {
+        setFiltroTipo("");
+        setFiltroUsuario("");
+        setFiltroDataInicio("");
+        setFiltroDataFim("");
+    };
+
+    const temFiltros = filtroTipo || filtroUsuario || filtroDataInicio || filtroDataFim;
+    const totalPaginas = Math.ceil(total / ITENS_POR_PAGINA);
 
     return (
         <div style={{ maxWidth: '900px', margin: '0 auto', textAlign: 'left' }}>
@@ -53,30 +99,98 @@ function Historico() {
 
             <div className="card" style={{ display: 'block', padding: '1.5rem' }}>
                 {/* Filtros */}
-                <div style={{ display: 'flex', gap: '10px', marginBottom: '2rem', flexWrap: 'wrap' }}>
-                    {["todos", "entrada", "saida"].map(tipo => (
-                        <button
-                            key={tipo}
-                            onClick={() => mudarFiltro(tipo)}
-                            style={{
-                                padding: '8px 20px', borderRadius: '20px', border: 'none',
-                                cursor: 'pointer', fontWeight: '600', fontSize: '0.85rem',
-                                backgroundColor: filtro === tipo ? 'var(--terracota)' : '#f0ebe4',
-                                color: filtro === tipo ? 'white' : '#9da5ad',
-                                transition: 'all 0.2s'
-                            }}
-                        >
-                            {tipo === "todos" ? "Todos" : tipo === "entrada" ? "📈 Entradas" : "📉 Saídas"}
-                        </button>
-                    ))}
-                    <span style={{ marginLeft: '0', fontSize: '0.85rem', color: 'var(--text-muted)', alignSelf: 'center' }}>
-                        {filtradas.length} registro(s)
-                    </span>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '2rem' }}>
+                    {/* Linha 1: tipo */}
+                    <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
+                        {["", "entrada", "saida"].map(tipo => (
+                            <button
+                                key={tipo}
+                                onClick={() => setFiltroTipo(tipo)}
+                                style={{
+                                    padding: '8px 20px', borderRadius: '20px', border: 'none',
+                                    cursor: 'pointer', fontWeight: '600', fontSize: '0.85rem',
+                                    backgroundColor: filtroTipo === tipo ? 'var(--terracota)' : '#f0ebe4',
+                                    color: filtroTipo === tipo ? 'white' : '#9da5ad',
+                                    transition: 'all 0.2s'
+                                }}
+                            >
+                                {tipo === "" ? "Todos" : tipo === "entrada" ? "📈 Entradas" : "📉 Saídas"}
+                            </button>
+                        ))}
+
+                        {temFiltros && (
+                            <button
+                                onClick={limparFiltros}
+                                style={{
+                                    display: 'flex', alignItems: 'center', gap: '4px',
+                                    padding: '8px 14px', borderRadius: '20px', border: 'none',
+                                    cursor: 'pointer', fontSize: '0.82rem', fontWeight: '600',
+                                    backgroundColor: 'rgba(231,76,60,0.1)', color: '#e74c3c',
+                                    marginLeft: 'auto'
+                                }}
+                            >
+                                <X size={13} /> Limpar filtros
+                            </button>
+                        )}
+                    </div>
+
+                    {/* Linha 2: usuário + datas */}
+                    <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
+                        {usuarios.length > 0 && (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                <User size={14} style={{ color: 'var(--text-muted)' }} />
+                                <select
+                                    value={filtroUsuario}
+                                    onChange={e => setFiltroUsuario(e.target.value)}
+                                    style={{
+                                        padding: '7px 12px', borderRadius: '8px', fontSize: '0.85rem',
+                                        border: '1px solid var(--border-light)', backgroundColor: filtroUsuario ? 'var(--terracota)' : 'white',
+                                        color: filtroUsuario ? 'white' : 'var(--text-dark)', cursor: 'pointer',
+                                        outline: 'none'
+                                    }}
+                                >
+                                    <option value="">Todos os usuários</option>
+                                    {usuarios.map(u => (
+                                        <option key={u.id} value={u.id}>{u.nome_exibicao}</option>
+                                    ))}
+                                </select>
+                            </div>
+                        )}
+
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <Search size={14} style={{ color: 'var(--text-muted)' }} />
+                            <input
+                                type="date"
+                                value={filtroDataInicio}
+                                onChange={e => setFiltroDataInicio(e.target.value)}
+                                style={{
+                                    padding: '7px 10px', borderRadius: '8px', fontSize: '0.85rem',
+                                    border: `1px solid ${filtroDataInicio ? 'var(--terracota)' : 'var(--border-light)'}`,
+                                    outline: 'none', color: 'var(--text-dark)'
+                                }}
+                            />
+                            <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>até</span>
+                            <input
+                                type="date"
+                                value={filtroDataFim}
+                                onChange={e => setFiltroDataFim(e.target.value)}
+                                style={{
+                                    padding: '7px 10px', borderRadius: '8px', fontSize: '0.85rem',
+                                    border: `1px solid ${filtroDataFim ? 'var(--terracota)' : 'var(--border-light)'}`,
+                                    outline: 'none', color: 'var(--text-dark)'
+                                }}
+                            />
+                        </div>
+                    </div>
                 </div>
 
                 {/* Lista */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                    {visiveis.length > 0 ? visiveis.map(mov => (
+                    {carregando ? (
+                        <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>
+                            Carregando...
+                        </div>
+                    ) : todas.length > 0 ? todas.map(mov => (
                         <div key={mov.id} style={{
                             display: 'flex', alignItems: 'center', gap: '16px',
                             padding: '14px', borderRadius: '12px',
@@ -93,7 +207,7 @@ function Historico() {
                             <div style={{ flex: 1 }}>
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', marginBottom: '4px' }}>
                                     <span style={{ fontWeight: 'bold', color: 'var(--text-dark)' }}>
-                                        {getNomeProduto(mov.produto_id)}
+                                        {mov.produto_nome || `Produto #${mov.produto_id}`}
                                     </span>
                                     <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
                                         {new Date(mov.data_hora).toLocaleString('pt-BR')}
@@ -107,9 +221,16 @@ function Historico() {
                                     }}>
                                         {mov.tipo === 'entrada' ? '+' : '-'}{mov.quantidade}
                                     </span>
-                                    <span style={{ color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                        <Info size={13} /> {mov.motivo}
-                                    </span>
+                                    {mov.motivo && (
+                                        <span style={{ color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                            <Info size={13} /> {mov.motivo}
+                                        </span>
+                                    )}
+                                    {mov.usuario_nome && (
+                                        <span style={{ color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                            <User size={13} /> {mov.usuario_nome}
+                                        </span>
+                                    )}
                                 </div>
                             </div>
                         </div>
@@ -124,7 +245,7 @@ function Historico() {
                 {totalPaginas > 1 && (
                     <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', marginTop: '2rem', flexWrap: 'wrap' }}>
                         <button
-                            onClick={() => setPagina(p => Math.max(1, p - 1))}
+                            onClick={() => mudarPagina(pagina - 1)}
                             disabled={pagina === 1}
                             style={{
                                 padding: '8px 16px', borderRadius: '8px',
@@ -138,7 +259,7 @@ function Historico() {
                         {Array.from({ length: totalPaginas }, (_, i) => i + 1).map(n => (
                             <button
                                 key={n}
-                                onClick={() => setPagina(n)}
+                                onClick={() => mudarPagina(n)}
                                 style={{
                                     padding: '8px 14px', borderRadius: '8px', border: 'none',
                                     backgroundColor: pagina === n ? 'var(--terracota)' : '#f0ebe4',
@@ -150,7 +271,7 @@ function Historico() {
                         ))}
 
                         <button
-                            onClick={() => setPagina(p => Math.min(totalPaginas, p + 1))}
+                            onClick={() => mudarPagina(pagina + 1)}
                             disabled={pagina === totalPaginas}
                             style={{
                                 padding: '8px 16px', borderRadius: '8px',

@@ -18,5 +18,7 @@ class MovimentacaoResponse(MovimentacaoBase):
     id: int
     data_hora: datetime
     produto_nome: Optional[str] = None
-    
+    usuario_id: Optional[int] = None
+    usuario_nome: Optional[str] = None
+
     model_config = ConfigDict(from_attributes=True)
