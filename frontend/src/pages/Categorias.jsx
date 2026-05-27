@@ -114,8 +114,8 @@ function Categorias() {
 
             {/* Formulário de Cadastro/Edição */}
             <div className="card" style={{ display: 'block', padding: '2rem', marginBottom: "2rem", borderTop: '4px solid var(--terracota)' }}>
-                <form onSubmit={handleSalvar} style={{ display: "flex", gap: "20px", alignItems: "flex-end" }}>
-                    <div style={{ flex: 1 }}>
+                <form onSubmit={handleSalvar} style={{ display: "flex", flexWrap: "wrap", gap: "20px", alignItems: "flex-end" }}>
+                    <div style={{ flex: "1 1 200px" }}>
                         <label style={{ display: "block", marginBottom: "10px", fontWeight: 600, color: 'var(--text-dark)', fontSize: '0.9rem' }}>
                             {editandoId ? "EDITAR CATEGORIA" : "NOME DA CATEGORIA"}
                         </label>
@@ -187,126 +187,145 @@ function Categorias() {
 
                 <div style={{
                     display: "grid",
-                    gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))",
+                    gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))",
                     gap: "24px"
                 }}>
                     {categorias.length > 0 ? categorias.map(cat => (
                         <div key={cat.id} className="category-card" style={{
                             position: 'relative',
-                            padding: "2rem",
-                            borderRadius: "24px",
-                            backgroundColor: "#ffffff",
-                            border: "1px solid var(--border-light)",
+                            padding: "1.8rem",
+                            borderRadius: "20px",
+                            background: "linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 250, 248, 0.9) 100%)",
+                            border: "1px solid rgba(131, 62, 32, 0.1)",
                             display: 'flex',
                             flexDirection: 'column',
-                            alignItems: 'center',
-                            gap: '1.2rem',
-                            transition: "all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)",
-                            boxShadow: '0 4px 15px rgba(0, 0, 0, 0.02)',
-                            cursor: 'default',
+                            justifyContent: 'space-between',
+                            gap: '1.5rem',
+                            transition: "all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)",
+                            boxShadow: '0 8px 30px rgba(0, 0, 0, 0.04)',
+                            backdropFilter: 'blur(10px)',
                             overflow: 'hidden'
                         }}>
-                            {/* Círculo de fundo decorativo */}
+                            {/* Decorative background blur */}
                             <div style={{
                                 position: 'absolute',
-                                top: '-30px',
-                                right: '-30px',
-                                width: '80px',
-                                height: '80px',
-                                background: 'rgba(131, 62, 32, 0.03)',
+                                top: '-40px',
+                                right: '-40px',
+                                width: '120px',
+                                height: '120px',
+                                background: 'radial-gradient(circle, rgba(131, 62, 32, 0.15) 0%, rgba(255,255,255,0) 70%)',
                                 borderRadius: '50%',
-                                zIndex: 0
+                                zIndex: 0,
+                                pointerEvents: 'none'
                             }}></div>
 
-                            {/* Ícone de Categoria Decorativo */}
-                            <div style={{
-                                backgroundColor: 'rgba(131, 62, 32, 0.08)',
-                                padding: '16px',
-                                borderRadius: '20px',
-                                color: 'var(--terracota)',
-                                position: 'relative',
-                                zIndex: 1
-                            }}>
-                                <Tag size={28} />
-                            </div>
-
-                            <div style={{ textAlign: 'center', zIndex: 1 }}>
-                                <span style={{
-                                    fontWeight: '700',
-                                    fontSize: '1.1rem',
-                                    color: 'var(--text-dark)',
-                                    display: 'block',
-                                    marginBottom: '4px'
+                            {/* Header: Icon & Name */}
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '16px', zIndex: 1 }}>
+                                <div style={{
+                                    backgroundColor: 'white',
+                                    padding: '12px',
+                                    borderRadius: '16px',
+                                    color: 'var(--terracota)',
+                                    boxShadow: '0 4px 15px rgba(131, 62, 32, 0.1)',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center'
                                 }}>
-                                    {cat.nome}
-                                </span>
-                                <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: '500' }}>
-                                    Categoria Ativa
-                                </span>
+                                    <Tag size={24} />
+                                </div>
+                                <div style={{ flex: 1 }}>
+                                    <span style={{
+                                        fontWeight: '700',
+                                        fontSize: '1.15rem',
+                                        color: 'var(--text-dark)',
+                                        display: 'block',
+                                        wordBreak: 'break-word',
+                                        lineHeight: '1.3'
+                                    }}>
+                                        {cat.nome}
+                                    </span>
+                                    <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: '500' }}>
+                                        Categoria Ativa
+                                    </span>
+                                </div>
                             </div>
 
                             {/* Botões de Ação */}
-                            <div style={{
+                            <div className="category-actions" style={{
                                 display: "flex",
-                                gap: "10px",
-                                marginTop: '10px',
+                                gap: "12px",
+                                marginTop: 'auto',
                                 zIndex: 1,
-                                width: '100%',
-                                justifyContent: 'center'
+                                width: '100%'
                             }}>
                                 <button
                                     onClick={() => handleEditar(cat)}
+                                    className="action-btn edit-btn"
                                     style={{
                                         flex: 1,
                                         display: 'flex',
+                                        alignItems: 'center',
                                         justifyContent: 'center',
-                                        background: "#f8f9fa",
-                                        border: "none",
-                                        color: "#7d7569",
+                                        gap: '8px',
+                                        background: "white",
+                                        border: "1px solid rgba(131, 62, 32, 0.15)",
+                                        color: "var(--terracota)",
                                         cursor: "pointer",
-                                        padding: "12px",
+                                        padding: "10px",
                                         borderRadius: "12px",
-                                        transition: "all 0.2s"
+                                        fontWeight: '600',
+                                        fontSize: '0.9rem',
+                                        transition: "all 0.2s ease"
                                     }}
-                                    onMouseOver={(e) => { e.currentTarget.style.color = 'var(--terracota)'; e.currentTarget.style.backgroundColor = '#eef0f2'; }}
-                                    onMouseOut={(e) => { e.currentTarget.style.color = '#7d7569'; e.currentTarget.style.backgroundColor = '#f8f9fa'; }}
                                     title="Editar"
                                 >
-                                    <Edit2 size={18} />
+                                    <Edit2 size={16} /> Editar
                                 </button>
                                 <button
                                     onClick={() => handleDeletar(cat.id)}
+                                    className="action-btn delete-btn"
                                     style={{
                                         flex: 1,
                                         display: 'flex',
+                                        alignItems: 'center',
                                         justifyContent: 'center',
-                                        background: "#f8f9fa",
-                                        border: "none",
-                                        color: "#7d7569",
+                                        gap: '8px',
+                                        background: "white",
+                                        border: "1px solid rgba(231, 76, 60, 0.15)",
+                                        color: "#e74c3c",
                                         cursor: "pointer",
-                                        padding: "12px",
+                                        padding: "10px",
                                         borderRadius: "12px",
-                                        transition: "all 0.2s"
+                                        fontWeight: '600',
+                                        fontSize: '0.9rem',
+                                        transition: "all 0.2s ease"
                                     }}
-                                    onMouseOver={(e) => { e.currentTarget.style.color = '#e74c3c'; e.currentTarget.style.backgroundColor = '#faeaea'; }}
-                                    onMouseOut={(e) => { e.currentTarget.style.color = '#7d7569'; e.currentTarget.style.backgroundColor = '#f8f9fa'; }}
                                     title="Excluir"
                                 >
-                                    <Trash2 size={18} />
+                                    <Trash2 size={16} /> Excluir
                                 </button>
                             </div>
 
                             <style>{`
                                 .category-card:hover {
-                                    transform: translateY(-8px);
-                                    border-color: var(--terracota);
-                                    box-shadow: 0 15px 35px rgba(131, 62, 32, 0.08);
+                                    transform: translateY(-6px) scale(1.02);
+                                    border-color: rgba(131, 62, 32, 0.25) !important;
+                                    box-shadow: 0 15px 40px rgba(131, 62, 32, 0.12) !important;
+                                }
+                                .action-btn.edit-btn:hover {
+                                    background: var(--terracota) !important;
+                                    color: white !important;
+                                }
+                                .action-btn.delete-btn:hover {
+                                    background: #e74c3c !important;
+                                    color: white !important;
                                 }
                             `}</style>
                         </div>
                     )) : (
-                        <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>
-                            Nenhum produto encontrado.
+                        <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '60px', color: 'var(--text-muted)', background: 'rgba(0,0,0,0.02)', borderRadius: '20px' }}>
+                            <Tag size={40} style={{ opacity: 0.2, marginBottom: '10px' }} />
+                            <p style={{ margin: 0, fontSize: '1.1rem' }}>Nenhuma categoria encontrada.</p>
                         </div>
                     )}
                 </div>

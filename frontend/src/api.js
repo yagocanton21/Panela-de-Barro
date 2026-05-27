@@ -29,7 +29,7 @@ export const apiRequest = async (endpoint, options = {}) => {
             clearAuth();
 
             // Redireciona para a página de login e mata a execução aqui
-            window.location.href = "/login";
+            window.location.replace("/login");
             return;
         }
 

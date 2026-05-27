@@ -15,7 +15,7 @@ function Login() {
     // Se já houver sessão válida (token não expirado), pula direto pro painel
     useEffect(() => {
         if (isAuthenticated()) {
-            navigate("/admin");
+            navigate("/admin", { replace: true });
         }
     }, [navigate]);
 
@@ -46,7 +46,7 @@ function Login() {
                 localStorage.setItem("usuarioLogado", JSON.stringify(data.usuario));
 
                 // Redireciona para o painel de admin
-                navigate("/admin");
+                navigate("/admin", { replace: true });
             } else if (response) {
                 const errorData = await response.json().catch(() => ({}));
                 setErro(errorData.detail || "Usuário ou senha incorretos.");
