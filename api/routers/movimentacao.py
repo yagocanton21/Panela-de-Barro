@@ -2,13 +2,13 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from datetime import datetime
-from app.database import get_connection
-from app.auth import obter_usuario_atual
-from app.models.movimentacao import Movimentacao
-from app.models.produto import Produto
-from app.models.usuario import Usuario
-from app.schemas.movimentacao import CriarMovimentacao, MovimentacaoResponse
-from app.schemas.produto import MessageResponse, MovimentacaoMessageResponse
+from api.database import get_connection
+from api.auth import obter_usuario_atual
+from api.models.movimentacao import Movimentacao
+from api.models.produto import Produto
+from api.models.usuario import Usuario
+from api.schemas.movimentacao import CriarMovimentacao, MovimentacaoResponse
+from api.schemas.produto import MessageResponse, MovimentacaoMessageResponse
 from typing import List, Literal, Optional
 
 router = APIRouter(

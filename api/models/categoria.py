@@ -1,5 +1,5 @@
 from sqlalchemy import Column, Integer, String
-from app.database import Base
+from api.database import Base
 
 # Tabela categoria
 class Categoria(Base):

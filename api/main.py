@@ -3,9 +3,9 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from sqlalchemy import select, text
-from app.database import engine, SessionLocal
-from app.routers import produto, categoria, movimentacao, usuario, lista_compras
-from app.models.usuario import Usuario, hash_password
+from api.database import engine, SessionLocal
+from api.routers import produto, categoria, movimentacao, usuario, lista_compras
+from api.models.usuario import Usuario, hash_password
 import logging
 import os
 

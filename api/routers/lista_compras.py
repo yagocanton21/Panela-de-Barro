@@ -1,13 +1,13 @@
 from fastapi import APIRouter, Depends, HTTPException, Body
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, delete
-from app.database import get_connection
-from app.auth import obter_usuario_atual
-from app.models.lista_compras import ItemListaCompras
-from app.models.produto import Produto
-from app.models.movimentacao import Movimentacao
-from app.schemas.lista_compras import CriarItemLista, ItemListaResponse
-from app.schemas.produto import MessageResponse
+from api.database import get_connection
+from api.auth import obter_usuario_atual
+from api.models.lista_compras import ItemListaCompras
+from api.models.produto import Produto
+from api.models.movimentacao import Movimentacao
+from api.schemas.lista_compras import CriarItemLista, ItemListaResponse
+from api.schemas.produto import MessageResponse
 
 router = APIRouter(
     prefix="/lista-compras",

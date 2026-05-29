@@ -1,7 +1,7 @@
 from sqlalchemy import Column, Integer, String, Boolean, DateTime
 from datetime import datetime
 from passlib.context import CryptContext
-from app.database import Base
+from api.database import Base
 
 # Configuração do Passlib para hash de senha
 pwd_context = CryptContext(schemes=["pbkdf2_sha256", "bcrypt"], deprecated="auto")

@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey
 from datetime import datetime
-from app.database import Base
+from api.database import Base
 
 # Tabela que representa a lista de compras
 class ItemListaCompras(Base):
