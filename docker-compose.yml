@@ -18,7 +18,7 @@ services:
   backend:
     build:
       context: .
-      dockerfile: app/Dockerfile
+      dockerfile: api/Dockerfile
     restart: always
     expose:
       - "8000"
@@ -44,12 +44,12 @@ services:
 
   frontend:
     build:
-      context: ./frontend
+      context: ./web
     restart: always
     expose:
       - "5173"
     volumes:
-      - ./frontend:/app
+      - ./web:/app
       - /app/node_modules
     environment:
       - VITE_API_URL=/api

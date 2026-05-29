@@ -16,7 +16,7 @@ services:
   backend:
     build:
       context: .
-      dockerfile: app/Dockerfile.prod
+      dockerfile: api/Dockerfile.prod
     expose:
       - "8000"
     env_file:
@@ -38,7 +38,7 @@ services:
 
   frontend:
     build:
-      context: ./frontend
+      context: ./web
       dockerfile: Dockerfile.prod
       args:
         VITE_API_URL: /api

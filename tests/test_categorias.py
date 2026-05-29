@@ -1,6 +1,6 @@
 import pytest
 from httpx import AsyncClient, ASGITransport
-from app.main import app
+from api.main import app
 
 @pytest.mark.asyncio
 async def test_categorias_seed_inicial():

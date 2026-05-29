@@ -11,12 +11,12 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Import all models so autogenerate can detect them
-from app.database import Base
-import app.models.usuario
-import app.models.categoria
-import app.models.produto
-import app.models.movimentacao
-import app.models.lista_compras
+from api.database import Base
+import api.models.usuario
+import api.models.categoria
+import api.models.produto
+import api.models.movimentacao
+import api.models.lista_compras
 
 config = context.config
 

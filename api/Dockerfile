@@ -1,8 +1,8 @@
-FROM python:3.10-alpine
+FROM python:3.11-alpine
 
 WORKDIR /backend
 
-# Adiciona dependências do sistema e limpa o cache em uma única camada
+# Adiciona dependências do sistema necessárias para o psycopg2
 RUN apk update && apk add --no-cache \
     postgresql-dev \
     gcc \
@@ -10,12 +10,14 @@ RUN apk update && apk add --no-cache \
     curl \
     && rm -rf /var/cache/apk/*
 
+# Copia o requirements.txt da raiz (ajustado pelo contexto do Compose)
 COPY requirements.txt .
 
 RUN --mount=type=cache,target=/root/.cache/pip \
-    pip install --no-cache-dir -r requirements.txt
+    pip install -r requirements.txt
 
-COPY app/ app/
+# Copia a pasta api para dentro do container
+COPY api/ api/
 COPY alembic/ alembic/
 COPY alembic.ini .
 COPY entrypoint.sh .
@@ -25,7 +27,8 @@ RUN chmod +x entrypoint.sh
 RUN adduser -D appuser && chown -R appuser:appuser /backend
 USER appuser
 
+# Expõe a porta do FastAPI
 EXPOSE 8000
 
 ENTRYPOINT ["./entrypoint.sh"]
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "2"]
+CMD ["uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
