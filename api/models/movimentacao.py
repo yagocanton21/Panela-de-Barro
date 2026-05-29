@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, CheckConstraint
 from datetime import datetime
-from app.database import Base
+from api.database import Base
 
 # Tabela movimentação
 class Movimentacao(Base):

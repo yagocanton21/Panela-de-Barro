@@ -5,8 +5,8 @@ import pytest
 import pytest_asyncio
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy.pool import StaticPool, NullPool
-from app.database import Base, get_connection
-import app.database as db_module
+from api.database import Base, get_connection
+import api.database as db_module
 
 # URL do banco de dados de teste usando SQLite em memória para rodar rápido e sem dependências
 DATABASE_URL = os.getenv(
@@ -69,8 +69,8 @@ async def setup_database(_test_engine, _test_session_factory):
         await conn.run_sync(Base.metadata.create_all)
 
     # 3. Bootstrap: criar admin e categorias iniciais (simula o lifespan)
-    from app.models.usuario import Usuario, hash_password
-    from app.models.categoria import Categoria
+    from api.models.usuario import Usuario, hash_password
+    from api.models.categoria import Categoria
     from sqlalchemy import select
 
     async with _test_session_factory() as session:
@@ -106,7 +106,7 @@ async def override_dependencies(_test_session_factory):
     Injeta uma sessão de teste fresca nas rotas do FastAPI para cada teste.
     Cada chamada de dependência recebe sua própria sessão limpa.
     """
-    from app.main import app
+    from api.main import app
 
     async def _get_test_db():
         async with _test_session_factory() as session:

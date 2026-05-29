@@ -3,11 +3,11 @@ from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
-from app.database import get_connection
-from app.auth import criar_token_acesso, obter_usuario_atual
-from app.models.usuario import Usuario, hash_password, verify_password
-from app.schemas.usuario import CriarUsuario, EditarUsuario, UsuarioResponse
-from app.schemas.produto import MessageResponse
+from api.database import get_connection
+from api.auth import criar_token_acesso, obter_usuario_atual
+from api.models.usuario import Usuario, hash_password, verify_password
+from api.schemas.usuario import CriarUsuario, EditarUsuario, UsuarioResponse
+from api.schemas.produto import MessageResponse
 from typing import List
 
 router = APIRouter(
