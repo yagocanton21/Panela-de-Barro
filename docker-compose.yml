@@ -1,15 +1,25 @@
 services:
   db:
     image: postgres:15
+    restart: always
     env_file:
       - .env
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    networks:
+      - panela_net
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "${POSTGRES_USER}", "-d", "${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
   backend:
     build:
       context: .
       dockerfile: app/Dockerfile
+    restart: always
     expose:
       - "8000"
     volumes:
@@ -20,13 +30,22 @@ services:
       - POSTGRES_HOST=db
       - POSTGRES_PORT=5432
       - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+    networks:
+      - panela_net
     depends_on:
-      - db
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/docs"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
 
   frontend:
     build:
       context: ./frontend
-    # Removida porta 5173 externa, o Nginx lidará com isso na porta 80
+    restart: always
     expose:
       - "5173"
     volumes:
@@ -34,17 +53,41 @@ services:
       - /app/node_modules
     environment:
       - VITE_API_URL=/api
+    networks:
+      - panela_net
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5173"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
   nginx:
     build:
       context: ./nginx
+    restart: always
     ports:
-      - "80:80"
+      - "80:8080"
+    networks:
+      - panela_net
     depends_on:
-      - frontend
-      - backend
+      frontend:
+        condition: service_healthy
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+networks:
+  panela_net:
+    driver: bridge
 
 volumes:
   postgres_data:

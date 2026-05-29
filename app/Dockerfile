@@ -1,12 +1,14 @@
-FROM python:3.11-slim
+FROM python:3.11-alpine
 
 WORKDIR /backend
 
-# Instala dependências do sistema necessárias para o psycopg2
-RUN apt-get update && apt-get install -y \
-    libpq-dev \
+# Adiciona dependências do sistema necessárias para o psycopg2
+RUN apk update && apk add --no-cache \
+    postgresql-dev \
     gcc \
-    && rm -rf /var/lib/apt/lists/*
+    musl-dev \
+    curl \
+    && rm -rf /var/cache/apk/*
 
 # Copia o requirements.txt da raiz (ajustado pelo contexto do Compose)
 COPY requirements.txt .
@@ -20,6 +22,10 @@ COPY alembic/ alembic/
 COPY alembic.ini .
 COPY entrypoint.sh .
 RUN chmod +x entrypoint.sh
+
+# Cria usuário não-root e ajusta permissões
+RUN adduser -D appuser && chown -R appuser:appuser /backend
+USER appuser
 
 # Expõe a porta do FastAPI
 EXPOSE 8000
