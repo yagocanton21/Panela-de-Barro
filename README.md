@@ -104,7 +104,7 @@ Panela-Barro/
 ├── tests/                      # Testes automatizados (pytest)
 ├── .github/workflows/          # CI — GitHub Actions
 ├── docker-compose.yml          # Orquestração dos containers
-├── .env.example                # Template de variáveis de ambiente
+├── .env                        # Variáveis de ambiente (não versionado)
 └── requirements.txt            # Dependências Python
 ```
 
@@ -140,38 +140,32 @@ docker compose up -d --build
 
 ---
 
-## ☁️ Deploy em Produção (VPS / EC2 Amazon)
+## ☁️ Deploy em Produção (EC2 Amazon)
 
-### 1. Instalar Docker (Ubuntu/Debian)
+O deploy é totalmente automatizado via `infra/user-data.sh`.
 
-```bash
-curl -fsSL https://get.docker.com | sh
-sudo usermod -aG docker $USER
-# Sair e entrar novamente na sessão SSH
-```
+### 1. Configurar o script
 
-### 2. Clonar e configurar
+Antes de usar, edite o bloco `.env` dentro do `user-data.sh` com as credenciais e a `LICENSE_KEY` fornecida.
 
-```bash
-git clone https://github.com/yagocanton21/Panela-de-Barro.git
-cd Panela-de-Barro
-```
+### 2. Criar a instância EC2
 
-Copie o arquivo `.env` enviado diretamente para a raiz do projeto.
+Cole o conteúdo do `user-data.sh` no campo **User Data** ao criar a instância EC2 (Ubuntu 22.04, t3.small ou superior).
 
-### 3. Subir a aplicação
+O script cuida automaticamente de:
+- Instalar Docker
+- Clonar o repositório
+- Configurar o `.env`
+- Subir toda a stack
 
-```bash
-docker compose -f docker-compose.prod.yml up -d --build
-```
-
-Acesse em `http://<IP-da-VPS>`.
+Acesse em `http://<IP-da-instância>` após ~5 minutos.
 
 ### Atualizar para uma nova versão
 
+Acesse a instância via SSH e execute:
+
 ```bash
-git pull
-docker compose -f docker-compose.prod.yml up -d --build
+cd ~/app && git pull && docker compose -f docker-compose.prod.yml up -d --build
 ```
 
 ### Credenciais iniciais
@@ -308,3 +302,259 @@ Este projeto é de uso privado.
   Feito com ☕ e 🍲 por<br/>
   <a href="https://github.com/yagocanton21">Yago Canton</a> · Marcello Esteves · Gustavo Fernandes
 </p>
+
+---
+
+---
+
+# Documentação Acadêmica — TCC Implementação de Sistemas (UniFAAT)
+
+## 1. Detalhes da Aplicação
+
+### 1.1 Visão Geral
+
+**Panela de Barro** é um sistema web fullstack de gestão de estoque para ambientes de cozinha e restaurantes. Permite cadastro de produtos e categorias, registro de movimentações (entradas e saídas), lista de compras integrada e controle de acesso por perfil de usuário (admin/operador).
+
+### 1.2 Arquitetura de Serviços
+
+```
+                        ┌─────────────────────┐
+                        │   Usuário (Browser)  │
+                        └──────────┬──────────┘
+                                   │ HTTP :80
+                        ┌──────────▼──────────┐
+                        │   Nginx (Alpine)     │  Proxy reverso
+                        │   Porta interna 8080 │  + serve estático (prod)
+                        └──────┬──────────┬───┘
+               /               │          │           /api/
+        ┌──────▼──────┐        │   ┌──────▼──────────┐
+        │  Frontend    │        │   │    Backend        │
+        │ React + Vite │        │   │  FastAPI (async)  │
+        │ Node Alpine  │        │   │  Python Alpine    │
+        └─────────────┘        │   └────────┬──────────┘
+                                │            │ SQL (asyncpg)
+                        rede panela_net       │
+                                │   ┌────────▼──────────┐
+                                │   │  PostgreSQL 15     │
+                                └───│  Volume nomeado    │
+                                    └────────────────────┘
+```
+
+Todos os serviços compartilham a rede `panela_net` (driver `bridge`). O banco de dados **não expõe portas ao host** — acessível apenas pelos containers na mesma rede via DNS interno do Docker (`db:5432`).
+
+### 1.3 Decisões Técnicas
+
+| Decisão | Justificativa |
+|---|---|
+| Imagem base `*-alpine` | Minimiza superfície de ataque e tamanho da imagem (~5 MB base vs ~900 MB debian) |
+| Usuário não-root em todos os containers | Princípio do menor privilégio; processo não pode escrever fora de `/backend` ou `/app` |
+| `RUN apk add && rm -rf /var/cache/apk/*` em camada única | Evita que o cache de pacotes persista em camada intermediária, reduzindo o tamanho final |
+| `restart: unless-stopped` | Recuperação automática sem intervenção manual; para apenas em shutdown explícito |
+| `healthcheck` + `depends_on: condition: service_healthy` | Garante que serviços dependentes só iniciem após o serviço upstream estar funcional |
+| `start_period` no healthcheck | Grace period para evitar falsos negativos durante o boot lento da aplicação |
+| Volume nomeado `postgres_data` | Dados sobrevivem a `docker compose down` (mas não a `docker compose down -v`) |
+| `--mount=type=cache` no `pip install` | BuildKit cache: reinstalações não baixam pacotes novamente — acelera builds iterativos |
+| Multi-stage build (web prod) | Stage `build` (Node) descartado; imagem final contém apenas arquivos estáticos + nginx |
+| Alembic migrations no `entrypoint.sh` | Migrations aplicadas automaticamente a cada deploy; idempotente com `upgrade head` |
+| JWT + bcrypt | Autenticação stateless; senhas nunca armazenadas em texto puro |
+
+### 1.4 Modelo de Segurança (Blast Radius)
+
+- **Rede isolada**: `panela_net` (bridge) — containers não podem alcançar serviços externos não mapeados
+- **Banco sem porta exposta**: `db` usa `expose` (somente interno), nunca `ports`
+- **Sem credenciais no código**: todas as variáveis sensíveis via `.env` (excluído do Git via `.gitignore`)
+- **Sem usuário root em runtime**: `appuser` (api), `node` (frontend), `nginx` (proxy)
+
+---
+
+## 2. Manual de Execução e Limpeza
+
+### 2.1 Pré-requisitos
+
+- Docker Engine ≥ 24 ou Docker Desktop (Mac/Windows)
+- Docker Compose Plugin v2 (`docker compose` — não `docker-compose`)
+- Git
+
+### 2.2 Ambiente de Desenvolvimento (Local)
+
+```bash
+# 1. Clonar o repositório
+git clone https://github.com/yagocanton21/Panela-de-Barro.git
+cd Panela-de-Barro
+
+# 2. Criar o arquivo de variáveis de ambiente
+#    (solicitar o .env ao responsável pelo projeto)
+
+# 3. Garantir permissão de execução no entrypoint (Linux/Mac)
+chmod +x entrypoint.sh
+
+# 4. Subir a stack completa (build + start)
+docker compose up -d --build
+
+# 5. Aguardar todos os serviços ficarem healthy (~60s)
+docker compose ps
+
+# 6. Acessar a aplicação
+#    http://localhost
+#    http://localhost/api/docs  (Swagger)
+```
+
+**Verificar status dos containers:**
+
+```bash
+docker compose ps
+# Todos devem exibir "healthy" na coluna STATUS
+```
+
+**Acompanhar logs em tempo real:**
+
+```bash
+docker compose logs -f backend
+docker compose logs -f frontend
+```
+
+**Testar conectividade DNS interna entre containers:**
+
+```bash
+# Confirma que o backend resolve o hostname "db" via DNS interno Docker
+docker compose exec backend ping -c 3 db
+
+# Confirma que o nginx alcança o backend pelo nome do serviço
+docker compose exec nginx curl -s http://backend:8000/docs | head -5
+
+# Confirma que o banco rejeita conexão de fora da rede (sem porta exposta)
+# O comando abaixo DEVE falhar — prova do isolamento de rede:
+curl -v localhost:5432
+# Esperado: "Connection refused" (porta não publicada no host)
+```
+
+### 2.3 Ambiente de Produção (EC2 / VPS)
+
+```bash
+# SSH na instância
+ssh -i chave.pem ubuntu@<IP-EC2>
+
+# Clonar e configurar
+git clone https://github.com/yagocanton21/Panela-de-Barro.git
+cd Panela-de-Barro
+
+# Copiar .env com credenciais de produção
+# (NUNCA use as credenciais de desenvolvimento em produção)
+nano .env
+
+# Subir stack de produção
+docker compose -f docker-compose.prod.yml up -d --build
+
+# Verificar saúde dos serviços
+docker compose -f docker-compose.prod.yml ps
+```
+
+**Alternativa com User Data (bootstrap automático EC2):**
+
+O arquivo `infra/user-data.sh` realiza todo o bootstrap automaticamente ao criar a instância. Cole o conteúdo do arquivo no campo **User data** ao lançar a EC2 no console AWS. A instância instalará Docker, clonará o repositório e subirá a stack sem intervenção manual.
+
+### 2.4 Atualizar para Nova Versão
+
+```bash
+git pull
+docker compose -f docker-compose.prod.yml up -d --build
+# Compose só rebuild serviços com imagem alterada
+```
+
+### 2.5 Procedimento de Limpeza (Cleanup)
+
+**Parar e remover containers (preserva dados):**
+
+```bash
+docker compose down
+# ou para produção:
+docker compose -f docker-compose.prod.yml down
+```
+
+**Remoção completa (containers + volumes — APAGA TODOS OS DADOS):**
+
+```bash
+docker compose down -v
+# Remove: containers, redes, volume postgres_data
+```
+
+**Limpeza total de imagens e cache de build:**
+
+```bash
+docker system prune -af --volumes
+```
+
+**Se usando AWS — evitar cobranças após avaliação:**
+
+Deletar na ordem abaixo para evitar custos residuais:
+
+1. NAT Gateways (cobrado por hora mesmo sem tráfego)
+2. Elastic IPs não associados
+3. Instâncias EC2 (terminate — não apenas stop)
+4. AMIs (Actions → Deregister) + Snapshots associados
+5. RDS instances (sem snapshot final se não necessário)
+6. Load Balancers
+7. S3 buckets (esvaziar antes de deletar)
+
+> **Atenção:** NAT Gateways esquecidos são a principal causa de estouro do Free Tier. Verificar em VPC → NAT Gateways após a avaliação.
+
+### 2.6 Credenciais Iniciais
+
+O usuário admin é criado automaticamente no primeiro start pelo `entrypoint.sh`, baseado nas variáveis do `.env`:
+
+| Variável | Descrição |
+|---|---|
+| `ADMIN_USERNAME` | Login do administrador |
+| `ADMIN_PASSWORD` | Senha do administrador |
+| `ADMIN_DISPLAY_NAME` | Nome exibido na interface |
+
+Após o primeiro login, gerencie usuários pela tela **Ajustes**.
+
+---
+
+## 3. Sistema de Licença
+
+O backend valida uma chave de licença no startup. Sem `LICENSE_KEY` válida no `.env`, a aplicação recusa inicializar.
+
+### 3.1 Como funciona
+
+A licença é um JWT assinado com chave RSA-2048. A chave privada fica exclusivamente com o emissor — o código embute apenas a chave pública para verificação.
+
+```
+Emissor (chave privada)  →  gera LICENSE_KEY  →  entrega ao operador
+Servidor (chave pública) →  valida LICENSE_KEY no startup
+```
+
+### 3.2 Gerar uma licença
+
+Execute na máquina do emissor (requer `infra/license_private.pem`):
+
+```bash
+python3 infra/generate-license.py --client "Nome do Cliente" --days 365
+```
+
+O script imprime a `LICENSE_KEY` a ser adicionada no `.env` do servidor.
+
+### 3.3 Configurar no servidor
+
+Antes de executar o `user-data.sh`, substitua o placeholder no bloco `.env` do script:
+
+```env
+LICENSE_KEY=<chave gerada pelo script>
+```
+
+O bootstrap cuida do restante automaticamente.
+
+### 3.4 Comportamento sem licença
+
+| Situação | Resultado |
+|---|---|
+| `LICENSE_KEY` ausente | `RuntimeError` no startup — container não sobe |
+| Chave inválida / adulterada | `RuntimeError` no startup — container não sobe |
+| Chave expirada | `RuntimeError` no startup — container não sobe |
+
+### 3.5 Renovação
+
+Gere uma nova chave com `--days` maior e atualize o `.env` do servidor.
+
+---

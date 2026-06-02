@@ -36,3 +36,6 @@ Thumbs.db
 antigravity-awesome-skills/
 .claude
 MANUTENCAO.md
+# Licença — NUNCA comitar
+infra/license_private.pem
+infra/generate-license.py
