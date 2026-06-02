@@ -6,6 +6,7 @@ from sqlalchemy import select, text
 from api.database import engine, SessionLocal
 from api.routers import produto, categoria, movimentacao, usuario, lista_compras
 from api.models.usuario import Usuario, hash_password
+from api.license import validate_license
 import logging
 import os
 
@@ -15,6 +16,7 @@ logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    validate_license()
     # Criar usuário administrador inicial se não houver nenhum
     async with SessionLocal() as session:
         result = await session.execute(select(Usuario))
