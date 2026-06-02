@@ -8,25 +8,26 @@ from api.auth import criar_token_acesso, obter_usuario_atual
 from api.models.usuario import Usuario, hash_password, verify_password
 from api.schemas.usuario import CriarUsuario, EditarUsuario, UsuarioResponse
 from api.schemas.produto import MessageResponse
+from api.utils import get_or_404
 from typing import List
 
 router = APIRouter(
     tags=["Usuários"]
 )
 
-# Dependência de Segurança
+# Função para verificar se o usuário é admin
 def verificar_admin(user: dict = Depends(obter_usuario_atual)):
     """Verifica se o usuário logado possui privilégios de administrador."""
     if not user.get("is_admin"):
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, 
+            status_code=status.HTTP_403_FORBIDDEN,
             detail="Acesso negado. Apenas administradores podem realizar esta operação."
         )
     return user
 
 # Rota para criar novo usuário
-@router.post("/usuarios", response_model=MessageResponse, status_code=status.HTTP_201_CREATED, summary="Criar novo usuário")
-async def registrar_usuario(dados: CriarUsuario, db: AsyncSession = Depends(get_connection), current_user: dict = Depends(verificar_admin)):
+@router.post("/usuarios", response_model=MessageResponse, status_code=status.HTTP_201_CREATED, summary="Criar novo usuário", dependencies=[Depends(verificar_admin)])
+async def registrar_usuario(dados: CriarUsuario, db: AsyncSession = Depends(get_connection)):
     """Apenas admins podem criar novos usuários."""
     try:
         novo = Usuario(
@@ -43,12 +44,11 @@ async def registrar_usuario(dados: CriarUsuario, db: AsyncSession = Depends(get_
         raise HTTPException(status_code=400, detail="Este usuário já existe.")
 
 # Rota para listar todos os usuários
-@router.get("/usuarios", response_model=List[UsuarioResponse], summary="Listar todos os usuários")
-async def get_usuarios(db: AsyncSession = Depends(get_connection), user: dict = Depends(verificar_admin)):
+@router.get("/usuarios", response_model=List[UsuarioResponse], summary="Listar todos os usuários", dependencies=[Depends(verificar_admin)])
+async def get_usuarios(db: AsyncSession = Depends(get_connection)):
     """Retorna a lista de todos os usuários cadastrados."""
     resultado = await db.execute(select(Usuario).order_by(Usuario.id))
-    usuarios = resultado.scalars().all()
-    return usuarios
+    return resultado.scalars().all()
 
 # Rota para autenticar usuário
 @router.post("/login", summary="Autenticar usuário")
@@ -62,7 +62,7 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: AsyncSessi
 
     if not db_user or not verify_password(senha_pura, db_user.senha_hash):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Usuário ou senha incorretos.")
-    
+
     access_token = criar_token_acesso(dados={
         "sub": db_user.usuario,
         "id": db_user.id,
@@ -81,15 +81,10 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: AsyncSessi
     }
 
 # Rota para editar usuário
-@router.put("/usuarios/{id}", response_model=MessageResponse, summary="Editar usuário")
-async def update_usuario(id: int, dados: EditarUsuario, db: AsyncSession = Depends(get_connection), user: dict = Depends(verificar_admin)):
+@router.put("/usuarios/{id}", response_model=MessageResponse, summary="Editar usuário", dependencies=[Depends(verificar_admin)])
+async def update_usuario(id: int, dados: EditarUsuario, db: AsyncSession = Depends(get_connection)):
     """Atualiza os dados de um usuário existente. Senha é opcional — se omitida, mantém a atual."""
-    resultado = await db.execute(select(Usuario).where(Usuario.id == id))
-    usuario = resultado.scalars().first()
-
-    if not usuario:
-        raise HTTPException(status_code=404, detail="Usuário não encontrado.")
-
+    usuario = await get_or_404(db, Usuario, id, "Usuário não encontrado.")
     try:
         usuario.nome_exibicao = dados.nome_exibicao
         usuario.usuario = dados.usuario
@@ -109,11 +104,7 @@ async def excluir_usuario(id: int, db: AsyncSession = Depends(get_connection), u
     if user.get("id") == id:
         raise HTTPException(status_code=400, detail="Não é possível deletar o próprio usuário.")
 
-    resultado = await db.execute(select(Usuario).where(Usuario.id == id))
-    usuario = resultado.scalars().first()
-
-    if not usuario:
-        raise HTTPException(status_code=404, detail="Usuário não encontrado.")
+    usuario = await get_or_404(db, Usuario, id, "Usuário não encontrado.")
 
     if usuario.is_admin:
         admins_restantes = await db.execute(
@@ -125,4 +116,3 @@ async def excluir_usuario(id: int, db: AsyncSession = Depends(get_connection), u
     await db.delete(usuario)
     await db.commit()
     return {"message": "Usuário deletado com sucesso!"}
-

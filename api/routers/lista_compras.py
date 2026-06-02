@@ -8,6 +8,7 @@ from api.models.produto import Produto
 from api.models.movimentacao import Movimentacao
 from api.schemas.lista_compras import CriarItemLista, ItemListaResponse
 from api.schemas.produto import MessageResponse
+from api.utils import get_or_404
 
 router = APIRouter(
     prefix="/lista-compras",
@@ -15,11 +16,9 @@ router = APIRouter(
     dependencies=[Depends(obter_usuario_atual)]
 )
 
-# Rotas de lista de compras
-@router.get("/", response_model=list[ItemListaResponse], summary="Listar itens da lista de compras")
-async def listar_itens(db: AsyncSession = Depends(get_connection)):
-    """Retorna todos os itens da lista de compras, ordenados por status (pendentes primeiro)."""
-    query = select(
+# Função para consultar itens da lista de compras
+def _item_lista_query():
+    return select(
         ItemListaCompras.id,
         ItemListaCompras.produto_id,
         ItemListaCompras.nome_avulso,
@@ -27,12 +26,18 @@ async def listar_itens(db: AsyncSession = Depends(get_connection)):
         ItemListaCompras.comprado,
         ItemListaCompras.data_criacao,
         Produto.nome.label("nome_produto")
-    ).outerjoin(Produto, ItemListaCompras.produto_id == Produto.id).order_by(ItemListaCompras.comprado.asc())
+    ).outerjoin(Produto, ItemListaCompras.produto_id == Produto.id)
 
-    resultado = await db.execute(query)
+# Rota para listar itens da lista de compras
+@router.get("/", response_model=list[ItemListaResponse], summary="Listar itens da lista de compras")
+async def listar_itens(db: AsyncSession = Depends(get_connection)):
+    """Retorna todos os itens da lista de compras, ordenados por status (pendentes primeiro)."""
+    resultado = await db.execute(
+        _item_lista_query().order_by(ItemListaCompras.comprado.asc())
+    )
     return resultado.mappings().all()
 
-# Rota para adicionar novo item à lista
+# Rota para adicionar item à lista
 @router.post("/", response_model=ItemListaResponse, summary="Adicionar item à lista")
 async def adicionar_item(dados: CriarItemLista, db: AsyncSession = Depends(get_connection)):
     """Adiciona um novo item à lista de compras (manual ou vinculado a um produto)."""
@@ -41,19 +46,12 @@ async def adicionar_item(dados: CriarItemLista, db: AsyncSession = Depends(get_c
     await db.commit()
     await db.refresh(novo_item)
 
-    query = select(
-        ItemListaCompras.id,
-        ItemListaCompras.produto_id,
-        ItemListaCompras.nome_avulso,
-        ItemListaCompras.quantidade,
-        ItemListaCompras.comprado,
-        ItemListaCompras.data_criacao,
-        Produto.nome.label("nome_produto")
-    ).outerjoin(Produto, ItemListaCompras.produto_id == Produto.id).where(ItemListaCompras.id == novo_item.id)
-    resultado = await db.execute(query)
+    resultado = await db.execute(
+        _item_lista_query().where(ItemListaCompras.id == novo_item.id)
+    )
     return resultado.mappings().first()
 
-# Rota para sincronizar lista de compras com o estoque
+# Rota para sincronizar com estoque
 @router.post("/sincronizar", response_model=MessageResponse, summary="Sincronizar com estoque")
 async def sincronizar_com_estoque(db: AsyncSession = Depends(get_connection)):
     """Busca produtos com estoque baixo e adiciona automaticamente à lista de compras."""
@@ -75,7 +73,7 @@ async def sincronizar_com_estoque(db: AsyncSession = Depends(get_connection)):
     await db.commit()
     return {"message": f"Sincronização concluída. {len(produtos_faltando)} novos itens adicionados."}
 
-# Rota para atualizar status do item (comprado ou não)
+# Rota para marcar item como comprado
 @router.patch("/{id}", response_model=MessageResponse, summary="Marcar item como comprado")
 async def atualizar_status_item(
     id: int,
@@ -84,21 +82,16 @@ async def atualizar_status_item(
     db: AsyncSession = Depends(get_connection)
 ):
     """Atualiza o status de compra e/ou a quantidade do item na lista."""
-    resultado = await db.execute(select(ItemListaCompras).where(ItemListaCompras.id == id))
-    item = resultado.scalars().first()
-
-    if not item:
-        raise HTTPException(status_code=404, detail="Item não encontrado.")
+    item = await get_or_404(db, ItemListaCompras, id, "Item não encontrado.")
 
     if quantidade is not None and quantidade > 0:
         item.quantidade = quantidade
 
     item.comprado = comprado
     await db.commit()
-
     return {"message": "Status atualizado."}
 
-# Rota para dar entrada nos itens comprados e limpar a lista
+# Rota para finalizar compras
 @router.post("/finalizar", response_model=MessageResponse, summary="Finalizar compras")
 async def finalizar_compras(db: AsyncSession = Depends(get_connection)):
     """Dá entrada no estoque de todos os itens marcados como comprados e os remove da lista.
