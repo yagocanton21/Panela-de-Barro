@@ -9,12 +9,28 @@ from api.models.produto import Produto
 from api.models.usuario import Usuario
 from api.schemas.movimentacao import CriarMovimentacao, MovimentacaoResponse
 from api.schemas.produto import MessageResponse, MovimentacaoMessageResponse
+from api.utils import get_or_404
 from typing import List, Literal, Optional
 
 router = APIRouter(
     tags=["Movimentações"],
     dependencies=[Depends(obter_usuario_atual)]
 )
+
+# Função para consultar movimentações
+def _movimentacao_query():
+    return select(
+        Movimentacao.id,
+        Movimentacao.produto_id,
+        Movimentacao.usuario_id,
+        Movimentacao.tipo,
+        Movimentacao.quantidade,
+        Movimentacao.data_hora,
+        Movimentacao.motivo,
+        Produto.nome.label("produto_nome"),
+        Usuario.nome_exibicao.label("usuario_nome")
+    ).outerjoin(Produto, Movimentacao.produto_id == Produto.id)\
+     .outerjoin(Usuario, Movimentacao.usuario_id == Usuario.id)
 
 # Rota para listar movimentações
 @router.get("/movimentacoes", response_model=List[MovimentacaoResponse], summary="Listar histórico")
@@ -29,18 +45,7 @@ async def listar_movimentacoes(
     offset: int = Query(0, ge=0, description="Deslocamento para paginação"),
 ):
     """Retorna movimentações com filtros opcionais por tipo, produto e período."""
-    query = select(
-        Movimentacao.id,
-        Movimentacao.produto_id,
-        Movimentacao.usuario_id,
-        Movimentacao.tipo,
-        Movimentacao.quantidade,
-        Movimentacao.data_hora,
-        Movimentacao.motivo,
-        Produto.nome.label("produto_nome"),
-        Usuario.nome_exibicao.label("usuario_nome")
-    ).outerjoin(Produto, Movimentacao.produto_id == Produto.id)\
-     .outerjoin(Usuario, Movimentacao.usuario_id == Usuario.id)
+    query = _movimentacao_query()
 
     if tipo is not None:
         query = query.where(Movimentacao.tipo == tipo)
@@ -54,11 +59,8 @@ async def listar_movimentacoes(
         query = query.where(Movimentacao.data_hora <= data_fim)
 
     query = query.order_by(Movimentacao.data_hora.desc()).limit(limit).offset(offset)
-
     resultado = await db.execute(query)
-    movimentacoes = resultado.all()
-
-    return [m._mapping for m in movimentacoes]
+    return [m._mapping for m in resultado.all()]
 
 # Rota para criar movimentação
 @router.post("/movimentacoes", response_model=MovimentacaoMessageResponse, status_code=status.HTTP_201_CREATED, summary="Registrar movimentação")
@@ -96,43 +98,21 @@ async def criar_movimentacao(dados: CriarMovimentacao, db: AsyncSession = Depend
 
     return {"mensagem": f"Movimentação de {dados.tipo} realizada. Estoque atual: {produto.quantidade}"}
 
-# Rota para buscar movimentação por ID
+# Rota para consultar movimentação por ID
 @router.get("/movimentacoes/{id}", response_model=MovimentacaoResponse, summary="Consultar movimentação por ID")
 async def buscar_movimentacao(id: int, db: AsyncSession = Depends(get_connection)):
     """Busca os detalhes de uma movimentação específica."""
-    query = select(
-        Movimentacao.id,
-        Movimentacao.produto_id,
-        Movimentacao.usuario_id,
-        Movimentacao.tipo,
-        Movimentacao.quantidade,
-        Movimentacao.data_hora,
-        Movimentacao.motivo,
-        Produto.nome.label("produto_nome"),
-        Usuario.nome_exibicao.label("usuario_nome")
-    ).outerjoin(Produto, Movimentacao.produto_id == Produto.id)\
-     .outerjoin(Usuario, Movimentacao.usuario_id == Usuario.id)\
-     .where(Movimentacao.id == id)
-    
-    resultado = await db.execute(query)
+    resultado = await db.execute(_movimentacao_query().where(Movimentacao.id == id))
     movimentacao = resultado.first()
-    
     if not movimentacao:
         raise HTTPException(status_code=404, detail="Movimentação não encontrada.")
-        
     return movimentacao._mapping
 
 # Rota para deletar movimentação
 @router.delete("/movimentacoes/{id}", response_model=MessageResponse, summary="Deletar movimentação")
 async def deletar_movimentacao(id: int, db: AsyncSession = Depends(get_connection)):
     """Deleta permanentemente um registro de movimentação."""
-    resultado = await db.execute(select(Movimentacao).where(Movimentacao.id == id))
-    movimentacao = resultado.scalars().first()
-    
-    if not movimentacao:
-        raise HTTPException(status_code=404, detail="Movimentação não encontrada.")
-    
+    movimentacao = await get_or_404(db, Movimentacao, id, "Movimentação não encontrada.")
     await db.delete(movimentacao)
     await db.commit()
     return {"message": "Registro de movimentação deletado com sucesso!"}
-
