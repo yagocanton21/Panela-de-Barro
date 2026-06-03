@@ -11,273 +11,123 @@
   <img src="https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB" alt="React" />
   <img src="https://img.shields.io/badge/PostgreSQL-316192?style=for-the-badge&logo=postgresql&logoColor=white" alt="PostgreSQL" />
   <img src="https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white" alt="Docker" />
-  <img src="https://img.shields.io/badge/Nginx-009639?style=for-the-badge&logo=nginx&logoColor=white" alt="Nginx" />
+  <img src="https://img.shields.io/badge/AWS-232F3E?style=for-the-badge&logo=amazonaws&logoColor=white" alt="AWS" />
 </p>
 
 ---
 
 ## 📋 Sobre o Projeto
 
-**Panela de Barro** é uma aplicação web fullstack para gestão de estoque, movimentações, lista de compras e controle de usuários. Projetada para ambientes de cozinha e restaurantes, a aplicação roda inteiramente em containers Docker com um único comando.
-
----
-
-## ⚡ Stack Tecnológica
-
-```
-┌─────────────────────────────────────────────────┐
-│                    Nginx :80                     │
-│               (Proxy Reverso)                    │
-├────────────────────┬────────────────────────────┤
-│   Frontend :5173   │      Backend :8000          │
-│   React + Vite     │      FastAPI (async)        │
-│                    │      SQLAlchemy 2            │
-│                    │      JWT + OAuth2            │
-├────────────────────┴────────────────────────────┤
-│              PostgreSQL 15                       │
-│           (rede interna Docker)                  │
-└─────────────────────────────────────────────────┘
-```
+**Panela de Barro** é uma aplicação web fullstack para gestão de estoque, movimentações, lista de compras e controle de usuários. Projetada para ambientes de cozinha e restaurantes.
 
 | Camada     | Tecnologia                            |
 | ---------- | ------------------------------------- |
 | Frontend   | React 18 + Vite                       |
 | Backend    | FastAPI · Python 3.11 · async         |
-| Banco      | PostgreSQL 15                         |
+| Banco      | PostgreSQL 15 (AWS RDS)               |
 | ORM        | SQLAlchemy 2 (asyncpg) + Alembic      |
 | Auth       | JWT + OAuth2 (bcrypt)                 |
 | Proxy      | Nginx                                 |
 | Container  | Docker + Docker Compose               |
-| CI         | GitHub Actions (pytest + PostgreSQL)  |
+| Rede       | VPC custom · subnets pública/privadas |
+| CDN        | S3 + CloudFront (HTTPS)               |
+| Infra      | EC2 + RDS + Secrets Manager (AWS)     |
 
 ---
 
 ## ✨ Funcionalidades
 
-| Módulo            | Descrição                                                                  |
-| ----------------- | -------------------------------------------------------------------------- |
-| 🔐 Autenticação   | Login JWT, hash bcrypt, rotas protegidas por role                         |
-| 📦 Produtos       | CRUD completo, listagem de itens em falta (abaixo do mínimo)              |
-| 🏷️ Categorias     | CRUD com categorias pré-cadastradas                                       |
-| 🔄 Movimentações  | Entradas e saídas com ajuste automático do estoque                        |
-| 🛒 Lista de Compras | Sincroniza com produtos em falta, finalização gera entrada automática   |
-| 👥 Usuários       | CRUD restrito a admins, edição com senha opcional, proteção contra auto-exclusão |
-| 📊 Dashboard      | Visão geral do estoque com indicadores                                    |
-| 📜 Histórico      | Registro de todas as movimentações realizadas                             |
+| Módulo              | Descrição                                                                        |
+| ------------------- | -------------------------------------------------------------------------------- |
+| 🔐 Autenticação     | Login JWT, hash bcrypt, rotas protegidas por role                                |
+| 📦 Produtos         | CRUD completo, listagem de itens em falta (abaixo do mínimo)                     |
+| 🏷️ Categorias       | CRUD com categorias pré-cadastradas                                              |
+| 🔄 Movimentações    | Entradas e saídas com ajuste automático do estoque                               |
+| 🛒 Lista de Compras | Sincroniza com produtos em falta, finalização gera entrada automática            |
+| 👥 Usuários         | CRUD restrito a admins, edição com senha opcional, proteção contra auto-exclusão |
+| 📊 Dashboard        | Visão geral do estoque com indicadores                                           |
+| 📜 Histórico        | Registro de todas as movimentações realizadas                                    |
 
 ---
 
-## 📁 Estrutura do Projeto
+## ☁️ Deploy em Produção (VPC + EC2 + RDS + CloudFront)
 
-```
-Panela-Barro/
-├── app/                        # Backend FastAPI
-│   ├── routers/                # Rotas da API
-│   │   ├── produto.py          #   CRUD de produtos
-│   │   ├── categoria.py        #   CRUD de categorias
-│   │   ├── movimentacao.py     #   Entradas/saídas de estoque
-│   │   ├── lista_compras.py    #   Lista de compras
-│   │   └── usuario.py          #   Gestão de usuários (admin)
-│   ├── models/                 # Models SQLAlchemy
-│   ├── schemas/                # Schemas Pydantic
-│   ├── auth.py                 # JWT + dependências de auth
-│   ├── database.py             # Engine e sessão async
-│   ├── main.py                 # Entrypoint FastAPI
-│   └── Dockerfile
-│
-├── frontend/
-│   └── src/
-│       ├── pages/
-│       │   ├── Login.jsx       # Tela de login
-│       │   ├── Dashboard.jsx   # Painel principal
-│       │   ├── Estoque.jsx     # Gestão de produtos
-│       │   ├── CadastroProduto.jsx
-│       │   ├── EditarProduto.jsx
-│       │   ├── Categorias.jsx  # Gestão de categorias
-│       │   ├── Movimentacoes.jsx # Entradas/saídas
-│       │   ├── ListaCompras.jsx  # Lista de compras
-│       │   ├── Historico.jsx   # Histórico de movimentações
-│       │   └── Ajustes.jsx     # Gestão de usuários
-│       └── api.js              # Cliente HTTP centralizado
-│
-├── nginx/                      # Proxy reverso (porta 80)
-├── tests/                      # Testes automatizados (pytest)
-├── .github/workflows/          # CI — GitHub Actions
-├── docker-compose.yml          # Orquestração dos containers
-├── .env                        # Variáveis de ambiente (não versionado)
-└── requirements.txt            # Dependências Python
-```
+**Pré-requisitos:** AWS CLI configurado (`aws configure`) · Node.js ≥ 18 · `LICENSE_KEY` do time.
 
----
-
-## 🚀 Como Rodar
-
-### Pré-requisitos
-
-- [Docker Desktop](https://www.docker.com/products/docker-desktop/) (Windows/Mac) ou Docker Engine + Compose (Linux)
-
-### Setup rápido (desenvolvimento local)
+### Passo a passo (em ordem)
 
 ```bash
-# 1. Clone o repositório
-git clone https://github.com/yagocanton21/Panela-de-Barro.git
-cd Panela-de-Barro
+# 1. Provisiona VPC + subnets + RDS + EC2 (imprime o IP da EC2 ao final)
+ADMIN_PASSWORD=<senha-do-admin> LICENSE_KEY=<chave-fornecida> bash infra/setup-rds.sh
 
-# 2. Adicione o arquivo .env enviado na raiz do projeto
-
-# 3. Garanta que o script de inicialização tenha permissão de execução:
-# No Linux/Mac ou Git Bash (Windows):
-chmod +x entrypoint.sh
-# No Windows (Prompt/PowerShell), o Git pode aplicar essa permissão:
-git update-index --chmod=+x entrypoint.sh
-
-# 4. Suba toda a stack
-docker compose up -d --build
-
-# 5. Acesse no navegador
-# http://localhost
+# 2. Publica o frontend em S3 + CloudFront (HTTPS) — use o IP impresso no passo 1
+EC2_PUBLIC_IP=<ip-da-ec2> bash infra/setup-s3-cloudfront.sh
 ```
 
----
+Pronto. O passo 1 imprime `http://<IP>` (backend) e o passo 2 imprime `https://<dominio>.cloudfront.net` (app). Total ~25 min (RDS ~15 + CloudFront ~10).
 
-## ☁️ Deploy em Produção (EC2 Amazon)
-
-O deploy é totalmente automatizado via `infra/user-data.sh`.
-
-### 1. Configurar o script
-
-Antes de usar, edite o bloco `.env` dentro do `user-data.sh` com as credenciais e a `LICENSE_KEY` fornecida.
-
-### 2. Criar a instância EC2
-
-Cole o conteúdo do `user-data.sh` no campo **User Data** ao criar a instância EC2 (Ubuntu 22.04, t3.small ou superior).
-
-O script cuida automaticamente de:
-- Instalar Docker
-- Clonar o repositório
-- Configurar o `.env`
-- Subir toda a stack
-
-Acesse em `http://<IP-da-instância>` após ~5 minutos.
-
-### Atualizar para uma nova versão
-
-Acesse a instância via SSH e execute:
+### Comandos auxiliares
 
 ```bash
+# Golden Image (opcional, acelera próximos deploys)
+INSTANCE_ID=<i-xxxx> bash infra/create-ami.sh
+
+# Atualizar para nova versão
+ssh -i ~/.ssh/panela-prod-key.pem ubuntu@<IP-EC2>
 cd ~/app && git pull && docker compose -f docker-compose.prod.yml up -d --build
+
+# Limpar tudo (evitar cobrança)
+bash infra/cleanup-aws.sh             # remove tudo
+bash infra/cleanup-aws.sh --dry-run   # prévia
 ```
 
-### Credenciais iniciais
-
-O usuário admin é criado automaticamente no primeiro start, com base no `.env`:
-
-| Variável             | Descrição                   |
-| -------------------- | --------------------------- |
-| `ADMIN_USERNAME`     | Login do admin              |
-| `ADMIN_PASSWORD`     | Senha do admin              |
-| `ADMIN_DISPLAY_NAME` | Nome de exibição            |
-
-> **Dica:** Após o primeiro login, gerencie os usuários pela tela **Ajustes**.
-
----
-
-## ⚙️ Variáveis de Ambiente
-
-As configurações sensíveis (como chaves de autenticação JWT e senhas do banco de dados) são gerenciadas através de um arquivo `.env` enviado diretamente de forma privada. Esse arquivo é omitido do Git para manter a segurança do projeto.
+> **SSH** restrito ao seu IP público (auto-detect; force com `ADMIN_IP=1.2.3.4`). Sem **NAT Gateway**. Cleanup remove: CloudFront → S3 → EC2 → AMI/Snapshots → RDS → Subnet Group → SGs → VPC → Secrets → IAM → Key Pair.
 
 ---
 
 ## 📡 API — Endpoints Principais
 
-> Documentação interativa (Swagger): **http://localhost/api/docs**
+> Documentação interativa (Swagger): **http://\<IP-EC2\>/api/docs**
 
 ### Autenticação
 
-| Rota          | Método | Auth  | Descrição              |
-| ------------- | ------ | ----- | ---------------------- |
-| `/api/login`  | POST   | —     | Login OAuth2, retorna JWT |
+| Rota          | Método | Auth | Descrição                 |
+| ------------- | ------ | ---- | ------------------------- |
+| `/api/login`  | POST   | —    | Login OAuth2, retorna JWT |
 
 ### Produtos
 
-| Rota                     | Método     | Auth | Descrição                       |
-| ------------------------ | ---------- | ---- | ------------------------------- |
-| `/api/produtos`          | GET / POST | user | Listar / criar produtos         |
-| `/api/produtos/em-falta` | GET        | user | Produtos abaixo do estoque mínimo |
+| Rota                     | Método     | Auth | Descrição                          |
+| ------------------------ | ---------- | ---- | ---------------------------------- |
+| `/api/produtos`          | GET / POST | user | Listar / criar produtos            |
+| `/api/produtos/em-falta` | GET        | user | Produtos abaixo do estoque mínimo  |
 
 ### Categorias
 
-| Rota               | Método     | Auth | Descrição                  |
-| ------------------ | ---------- | ---- | -------------------------- |
-| `/api/categorias`  | GET / POST | user | Listar / criar categorias  |
+| Rota              | Método     | Auth | Descrição                 |
+| ----------------- | ---------- | ---- | ------------------------- |
+| `/api/categorias` | GET / POST | user | Listar / criar categorias |
 
 ### Movimentações
 
-| Rota                 | Método     | Auth | Descrição             |
-| -------------------- | ---------- | ---- | --------------------- |
-| `/api/movimentacoes` | GET / POST | user | Entradas e saídas     |
+| Rota                 | Método     | Auth | Descrição         |
+| -------------------- | ---------- | ---- | ----------------- |
+| `/api/movimentacoes` | GET / POST | user | Entradas e saídas |
 
 ### Lista de Compras
 
-| Rota                              | Método | Auth | Descrição                          |
-| --------------------------------- | ------ | ---- | ---------------------------------- |
-| `/api/lista-compras/`             | GET / POST | user | Itens da lista                 |
-| `/api/lista-compras/sincronizar`  | POST   | user | Sincroniza com produtos em falta   |
-| `/api/lista-compras/finalizar`    | POST   | user | Finaliza e gera entrada no estoque |
+| Rota                             | Método     | Auth | Descrição                          |
+| -------------------------------- | ---------- | ---- | ---------------------------------- |
+| `/api/lista-compras/`            | GET / POST | user | Itens da lista                     |
+| `/api/lista-compras/sincronizar` | POST       | user | Sincroniza com produtos em falta   |
+| `/api/lista-compras/finalizar`   | POST       | user | Finaliza e gera entrada no estoque |
 
 ### Usuários (Admin)
 
-| Rota                  | Método        | Auth  | Descrição                              |
-| --------------------- | ------------- | ----- | -------------------------------------- |
-| `/api/usuarios`       | GET / POST    | admin | Listar / criar usuários                |
-| `/api/usuarios/{id}`  | PUT / DELETE  | admin | Editar (senha opcional) / deletar      |
-
----
-
-## 🧪 Testes
-
-```bash
-# Rodar testes dentro do container
-docker compose exec \
-  -e DATABASE_URL="postgresql+asyncpg://admin:admin@db:5432/estoque_db" \
-  backend pytest
-
-# CI: roda automaticamente em push via GitHub Actions com service PostgreSQL
-```
-
----
-
-## 🛠️ Desenvolvimento
-
-| Recurso             | Descrição                                        |
-| -------------------- | ------------------------------------------------ |
-| **HMR Frontend**     | Vite recarrega ao salvar arquivos em `frontend/src/` |
-| **Hot Reload Backend** | Uvicorn com `--reload` ao salvar em `app/`       |
-
-```bash
-# Acompanhar logs em tempo real
-docker compose logs -f backend
-docker compose logs -f frontend
-
-# Reconstruir apenas o backend
-docker compose up -d --build backend
-
-# Reiniciar tudo do zero (⚠️ apaga dados)
-docker compose down -v
-docker compose up -d --build
-```
-
-### 🗄️ Migrações de Banco de Dados (Alembic)
-
-As migrações são rodadas automaticamente ao iniciar o container do backend (via `entrypoint.sh`). Para desenvolvimento local:
-
-```bash
-# Gerar uma nova migração após alterar um Model
-docker compose exec backend alembic revision --autogenerate -m "descricao_da_mudanca"
-
-# Aplicar migrações manualmente (se necessário)
-docker compose exec backend alembic upgrade head
-```
+| Rota                 | Método       | Auth  | Descrição                         |
+| -------------------- | ------------ | ----- | --------------------------------- |
+| `/api/usuarios`      | GET / POST   | admin | Listar / criar usuários           |
+| `/api/usuarios/{id}` | PUT / DELETE | admin | Editar (senha opcional) / deletar |
 
 ---
 
@@ -286,7 +136,12 @@ docker compose exec backend alembic upgrade head
 - ✅ Senhas armazenadas com **hash bcrypt** (nunca em texto puro)
 - ✅ Tokens **JWT assinados**, expiração de 24h
 - ✅ Rotas administrativas protegidas — apenas admins
-- ✅ Banco de dados **não exposto externamente** — rede interna Docker
+- ✅ **VPC custom** com subnets privadas isolando o RDS (sem rota para internet)
+- ✅ RDS **sem acesso público** — porta 5432 liberada apenas para o SG da EC2
+- ✅ **SSH restrito ao IP do administrador** (porta 22 nunca aberta a `0.0.0.0/0`)
+- ✅ Frontend em **S3 privado** (OAC) servido só via CloudFront, **HTTPS obrigatório**
+- ✅ Credenciais no **AWS Secrets Manager** — nunca em texto claro no disco
+- ✅ IAM com **permissão mínima** — EC2 acessa apenas o secret específico do projeto
 - ✅ `.env` no `.gitignore` — credenciais nunca versionadas
 - ✅ Proteção contra **auto-exclusão** e exclusão do último admin
 
@@ -321,26 +176,33 @@ Este projeto é de uso privado.
                         ┌─────────────────────┐
                         │   Usuário (Browser)  │
                         └──────────┬──────────┘
-                                   │ HTTP :80
-                        ┌──────────▼──────────┐
-                        │   Nginx (Alpine)     │  Proxy reverso
-                        │   Porta interna 8080 │  + serve estático (prod)
-                        └──────┬──────────┬───┘
-               /               │          │           /api/
-        ┌──────▼──────┐        │   ┌──────▼──────────┐
-        │  Frontend    │        │   │    Backend        │
-        │ React + Vite │        │   │  FastAPI (async)  │
-        │ Node Alpine  │        │   │  Python Alpine    │
-        └─────────────┘        │   └────────┬──────────┘
-                                │            │ SQL (asyncpg)
-                        rede panela_net       │
-                                │   ┌────────▼──────────┐
-                                │   │  PostgreSQL 15     │
-                                └───│  Volume nomeado    │
-                                    └────────────────────┘
+                                   │ HTTPS
+                        ┌──────────▼──────────────┐
+                        │   CloudFront (CDN/HTTPS) │  redirect HTTP→HTTPS
+                        └──────┬───────────────┬───┘
+                    /          │               │  /api/*
+            ┌───────▼────────┐ │      ┌────────▼─────────────────────────┐
+            │  S3 (privado)   │ │      │  VPC 10.0.0.0/16                  │
+            │  React estático │ │      │  ┌────────────────────────────┐  │
+            │  via OAC        │ │      │  │ Subnet pública 10.0.1.0/24 │  │
+            └────────────────┘ │      │  │  ┌──────────────────────┐  │  │
+                                │      │  │  │ EC2 (gateway + API)  │  │  │
+                                │      │  │  │ Docker Compose       │  │  │
+                                │      │  │  └──────────┬───────────┘  │  │
+                                │      │  └─────────────│──────────────┘  │
+                                │      │   SG: 5432 só da EC2 │            │
+                                │      │  ┌───────────────────▼─────────┐ │
+                                │      │  │ Subnets privadas            │ │
+                                │      │  │ 10.0.2.0/24 · 10.0.3.0/24   │ │
+                                │      │  │  ┌────────────────────────┐ │ │
+                                │      │  │  │ RDS PostgreSQL 15      │ │ │
+                                │      │  │  │ sem acesso público     │ │ │
+                                │      │  │  └────────────────────────┘ │ │
+                                │      │  └─────────────────────────────┘ │
+                                │      └──────────────────────────────────┘
 ```
 
-Todos os serviços compartilham a rede `panela_net` (driver `bridge`). O banco de dados **não expõe portas ao host** — acessível apenas pelos containers na mesma rede via DNS interno do Docker (`db:5432`).
+A EC2 fica em subnet **pública** (acesso via Internet Gateway, sem NAT); o RDS fica em subnets **privadas** (sem rota para internet), acessível apenas pela EC2 via Security Group. O frontend é servido por **S3 + CloudFront** sobre HTTPS; o CloudFront roteia `/api/*` para a EC2 no mesmo domínio. Credenciais gerenciadas pelo AWS Secrets Manager — EC2 busca no boot via IAM Role com permissão mínima.
 
 ### 1.3 Decisões Técnicas
 
@@ -348,11 +210,17 @@ Todos os serviços compartilham a rede `panela_net` (driver `bridge`). O banco d
 |---|---|
 | Imagem base `*-alpine` | Minimiza superfície de ataque e tamanho da imagem (~5 MB base vs ~900 MB debian) |
 | Usuário não-root em todos os containers | Princípio do menor privilégio; processo não pode escrever fora de `/backend` ou `/app` |
-| `RUN apk add && rm -rf /var/cache/apk/*` em camada única | Evita que o cache de pacotes persista em camada intermediária, reduzindo o tamanho final |
 | `restart: unless-stopped` | Recuperação automática sem intervenção manual; para apenas em shutdown explícito |
 | `healthcheck` + `depends_on: condition: service_healthy` | Garante que serviços dependentes só iniciem após o serviço upstream estar funcional |
 | `start_period` no healthcheck | Grace period para evitar falsos negativos durante o boot lento da aplicação |
-| Volume nomeado `postgres_data` | Dados sobrevivem a `docker compose down` (mas não a `docker compose down -v`) |
+| VPC custom (10.0.0.0/16) | Isolamento de rede; EC2 em subnet pública, RDS em subnets privadas sem rota para internet (reduz blast radius) |
+| Sem NAT Gateway | RDS não inicia conexões de saída → NAT desnecessário; evita o principal custo do Free Tier |
+| SSH só do IP do admin | Porta 22 restrita a `/32` do administrador; reduz superfície de ataque |
+| S3 privado + CloudFront (OAC) | Estático fora da EC2, distribuído por CDN com HTTPS; bucket nunca exposto publicamente |
+| CloudFront com 2 origens | `/` → S3, `/api/*` → EC2 no mesmo domínio HTTPS — elimina mixed content |
+| Golden Image (AMI) | AMI pós-bootstrap acelera escalonamento horizontal (sem reexecutar user-data) |
+| AWS RDS | Banco gerenciado: backups automáticos (1 dia no Free Tier; até 35 em conta paga), storage encrypted, sem container de DB pra manter |
+| AWS Secrets Manager | Credenciais nunca em texto claro no disco; EC2 busca via IAM Role com permissão mínima |
 | `--mount=type=cache` no `pip install` | BuildKit cache: reinstalações não baixam pacotes novamente — acelera builds iterativos |
 | Multi-stage build (web prod) | Stage `build` (Node) descartado; imagem final contém apenas arquivos estáticos + nginx |
 | Alembic migrations no `entrypoint.sh` | Migrations aplicadas automaticamente a cada deploy; idempotente com `upgrade head` |
@@ -360,10 +228,10 @@ Todos os serviços compartilham a rede `panela_net` (driver `bridge`). O banco d
 
 ### 1.4 Modelo de Segurança (Blast Radius)
 
-- **Rede isolada**: `panela_net` (bridge) — containers não podem alcançar serviços externos não mapeados
-- **Banco sem porta exposta**: `db` usa `expose` (somente interno), nunca `ports`
-- **Sem credenciais no código**: todas as variáveis sensíveis via `.env` (excluído do Git via `.gitignore`)
-- **Sem usuário root em runtime**: `appuser` (api), `node` (frontend), `nginx` (proxy)
+- **RDS isolado**: sem acesso público — porta 5432 liberada apenas para o Security Group da EC2
+- **Secrets Manager**: credenciais nunca em disco; IAM inline policy permite `GetSecretValue` apenas no ARN específico do projeto
+- **Sem credenciais no código**: variáveis sensíveis via `.env` (excluído do Git) gerado no boot a partir do secret
+- **Sem usuário root em runtime**: `appuser` (api), `nginx` (proxy)
 
 ---
 
@@ -371,142 +239,72 @@ Todos os serviços compartilham a rede `panela_net` (driver `bridge`). O banco d
 
 ### 2.1 Pré-requisitos
 
-- Docker Engine ≥ 24 ou Docker Desktop (Mac/Windows)
-- Docker Compose Plugin v2 (`docker compose` — não `docker-compose`)
+- AWS CLI ≥ 2 configurado (`aws configure`) com permissões: EC2, VPC, RDS, IAM, Secrets Manager, SSM, S3, CloudFront
+- Node.js ≥ 18 + npm (para buildar o frontend do S3/CloudFront)
+- Python 3 (para gerar licença)
 - Git
 
-### 2.2 Ambiente de Desenvolvimento (Local)
+### 2.2 Deploy Completo (AWS)
+
+**Passo único — Executar o deploy:**
 
 ```bash
-# 1. Clonar o repositório
-git clone https://github.com/yagocanton21/Panela-de-Barro.git
-cd Panela-de-Barro
-
-# 2. Criar o arquivo de variáveis de ambiente
-#    (solicitar o .env ao responsável pelo projeto)
-
-# 3. Garantir permissão de execução no entrypoint (Linux/Mac)
-chmod +x entrypoint.sh
-
-# 4. Subir a stack completa (build + start)
-docker compose up -d --build
-
-# 5. Aguardar todos os serviços ficarem healthy (~60s)
-docker compose ps
-
-# 6. Acessar a aplicação
-#    http://localhost
-#    http://localhost/api/docs  (Swagger)
+ADMIN_PASSWORD=<senha-do-admin> LICENSE_KEY=<chave-fornecida-pelo-time> bash infra/setup-rds.sh
 ```
 
-**Verificar status dos containers:**
+O script executa em ordem:
 
-```bash
-docker compose ps
-# Todos devem exibir "healthy" na coluna STATUS
-```
-
-**Acompanhar logs em tempo real:**
-
-```bash
-docker compose logs -f backend
-docker compose logs -f frontend
-```
-
-**Testar conectividade DNS interna entre containers:**
-
-```bash
-# Confirma que o backend resolve o hostname "db" via DNS interno Docker
-docker compose exec backend ping -c 3 db
-
-# Confirma que o nginx alcança o backend pelo nome do serviço
-docker compose exec nginx curl -s http://backend:8000/docs | head -5
-
-# Confirma que o banco rejeita conexão de fora da rede (sem porta exposta)
-# O comando abaixo DEVE falhar — prova do isolamento de rede:
-curl -v localhost:5432
-# Esperado: "Connection refused" (porta não publicada no host)
-```
-
-### 2.3 Ambiente de Produção (EC2 / VPS)
-
-```bash
-# SSH na instância
-ssh -i chave.pem ubuntu@<IP-EC2>
-
-# Clonar e configurar
-git clone https://github.com/yagocanton21/Panela-de-Barro.git
-cd Panela-de-Barro
-
-# Copiar .env com credenciais de produção
-# (NUNCA use as credenciais de desenvolvimento em produção)
-nano .env
-
-# Subir stack de produção
-docker compose -f docker-compose.prod.yml up -d --build
-
-# Verificar saúde dos serviços
-docker compose -f docker-compose.prod.yml ps
-```
-
-**Alternativa com User Data (bootstrap automático EC2):**
-
-O arquivo `infra/user-data.sh` realiza todo o bootstrap automaticamente ao criar a instância. Cole o conteúdo do arquivo no campo **User data** ao lançar a EC2 no console AWS. A instância instalará Docker, clonará o repositório e subirá a stack sem intervenção manual.
-
-### 2.4 Atualizar para Nova Versão
-
-```bash
-git pull
-docker compose -f docker-compose.prod.yml up -d --build
-# Compose só rebuild serviços com imagem alterada
-```
-
-### 2.5 Procedimento de Limpeza (Cleanup)
-
-**Parar e remover containers (preserva dados):**
-
-```bash
-docker compose down
-# ou para produção:
-docker compose -f docker-compose.prod.yml down
-```
-
-**Remoção completa (containers + volumes — APAGA TODOS OS DADOS):**
-
-```bash
-docker compose down -v
-# Remove: containers, redes, volume postgres_data
-```
-
-**Limpeza total de imagens e cache de build:**
-
-```bash
-docker system prune -af --volumes
-```
-
-**Se usando AWS — evitar cobranças após avaliação:**
-
-Deletar na ordem abaixo para evitar custos residuais:
-
-1. NAT Gateways (cobrado por hora mesmo sem tráfego)
-2. Elastic IPs não associados
-3. Instâncias EC2 (terminate — não apenas stop)
-4. AMIs (Actions → Deregister) + Snapshots associados
-5. RDS instances (sem snapshot final se não necessário)
-6. Load Balancers
-7. S3 buckets (esvaziar antes de deletar)
-
-> **Atenção:** NAT Gateways esquecidos são a principal causa de estouro do Free Tier. Verificar em VPC → NAT Gateways após a avaliação.
-
-### 2.6 Credenciais Iniciais
-
-O usuário admin é criado automaticamente no primeiro start pelo `entrypoint.sh`, baseado nas variáveis do `.env`:
-
-| Variável | Descrição |
+| Etapa | O que faz |
 |---|---|
-| `ADMIN_USERNAME` | Login do administrador |
-| `ADMIN_PASSWORD` | Senha do administrador |
-| `ADMIN_DISPLAY_NAME` | Nome exibido na interface |
+| VPC | Cria VPC `10.0.0.0/16` com DNS habilitado |
+| Subnets + IGW | Subnet pública `10.0.1.0/24` (EC2) + privadas `10.0.2.0/24` e `10.0.3.0/24` (RDS); Internet Gateway e route table pública. Sem NAT |
+| Security Groups | SG EC2 (80/443 públicos, **22 só do IP do admin**) e SG RDS (5432 só da EC2) |
+| DB Subnet Group | Agrupa as subnets privadas (2 AZs) para o RDS |
+| RDS | PostgreSQL 15, db.t3.micro, 20GB, encrypted, **backups automáticos** 1 dia/Free Tier (janela 03:00-04:00 UTC; `BACKUP_RETENTION` ajusta) |
+| Secrets Manager | Armazena host, usuário, senha e nome do banco em JSON |
+| IAM | Role + instance profile com acesso mínimo ao secret |
+| Key Pair | Gera chave SSH em `~/.ssh/panela-prod-key.pem` |
+| AMI | Usa Ubuntu 22.04 stock, ou `GOLDEN_AMI_ID` se informada (boot acelerado) |
+| EC2 | Lança na subnet pública, injeta user-data que instala Docker, clona o repo, busca o secret e sobe a stack |
+
+Duração total: ~15 minutos. No final imprime o IP e a URL de acesso.
+
+**Frontend (S3 + CloudFront):** rode `EC2_PUBLIC_IP=<ip> bash infra/setup-s3-cloudfront.sh` para publicar o React em S3 privado distribuído por CloudFront com HTTPS obrigatório.
+
+**Verificar após o script concluir:**
+
+```bash
+ssh -i ~/.ssh/panela-prod-key.pem ubuntu@<IP-EC2>
+docker compose -f ~/app/docker-compose.prod.yml ps
+# Todos devem exibir "healthy"
+```
+
+### 2.3 Atualizar para Nova Versão
+
+```bash
+ssh -i ~/.ssh/panela-prod-key.pem ubuntu@<IP-EC2>
+cd ~/app && git pull && docker compose -f docker-compose.prod.yml up -d --build
+```
+
+### 2.4 Procedimento de Limpeza (Cleanup)
+
+```bash
+bash infra/cleanup-aws.sh           # remove todos os recursos AWS
+bash infra/cleanup-aws.sh --dry-run # prévia sem executar
+```
+
+Remove em ordem: CloudFront → S3 → EC2 → AMI/Snapshots → RDS → DB Subnet Group → Security Groups → VPC (subnets, IGW, route tables) → Secrets Manager → IAM Role/Profile → Key Pair.
+
+> **Atenção:** a deleção do CloudFront leva ~10-15 min (desabilita → aguarda `Deployed` → deleta). Este projeto **não cria NAT Gateway**. Verifique no console se restaram Elastic IPs ou Snapshots EBS/RDS órfãos — geram cobrança mesmo sem uso.
+
+### 2.5 Credenciais Iniciais
+
+O usuário admin é criado automaticamente no primeiro start pelo `entrypoint.sh`, com base nas variáveis passadas ao `setup-rds.sh`:
+
+| Variável | Valor |
+|---|---|
+| Login | `admin` |
+| Senha | valor de `ADMIN_PASSWORD` passado ao script |
 
 Após o primeiro login, gerencie usuários pela tela **Ajustes**.
 
@@ -525,27 +323,11 @@ Emissor (chave privada)  →  gera LICENSE_KEY  →  entrega ao operador
 Servidor (chave pública) →  valida LICENSE_KEY no startup
 ```
 
-### 3.2 Gerar uma licença
+### 3.2 Obter uma licença
 
-Execute na máquina do emissor (requer `infra/license_private.pem`):
+A `LICENSE_KEY` é gerada pelo time do projeto e entregue ao operador. Sem a chave privada RSA do emissor não é possível gerar uma chave válida.
 
-```bash
-python3 infra/generate-license.py --client "Nome do Cliente" --days 365
-```
-
-O script imprime a `LICENSE_KEY` a ser adicionada no `.env` do servidor.
-
-### 3.3 Configurar no servidor
-
-Antes de executar o `user-data.sh`, substitua o placeholder no bloco `.env` do script:
-
-```env
-LICENSE_KEY=<chave gerada pelo script>
-```
-
-O bootstrap cuida do restante automaticamente.
-
-### 3.4 Comportamento sem licença
+### 3.3 Comportamento sem licença
 
 | Situação | Resultado |
 |---|---|
@@ -553,8 +335,14 @@ O bootstrap cuida do restante automaticamente.
 | Chave inválida / adulterada | `RuntimeError` no startup — container não sobe |
 | Chave expirada | `RuntimeError` no startup — container não sobe |
 
-### 3.5 Renovação
+### 3.4 Renovação
 
-Gere uma nova chave com `--days` maior e atualize o `.env` do servidor.
+Gere uma nova chave com `--days` maior. Conecte via SSH na EC2, atualize `LICENSE_KEY` no `~/app/.env` e reinicie o backend:
+
+```bash
+ssh -i ~/.ssh/panela-prod-key.pem ubuntu@<IP-EC2>
+nano ~/app/.env  # atualiza LICENSE_KEY
+docker compose -f ~/app/docker-compose.prod.yml restart backend
+```
 
 ---
