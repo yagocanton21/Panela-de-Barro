@@ -85,6 +85,47 @@ bash infra/cleanup-aws.sh --dry-run   # prévia
 
 ---
 
+## 🎓 Para o Avaliador
+
+Duas formas de avaliar:
+
+### Opção 1 — Avaliação por evidências (recomendado)
+Sem precisar de conta AWS. Confira os artefatos da entrega:
+- **Vídeo de demonstração**: deploy funcional + teste de conectividade entre serviços
+- **Prints**: `docker compose ps` (status `healthy`), `aws sts get-caller-identity`, regras de entrada dos Security Groups
+- **Este repositório**: scripts em [`infra/`](infra/), Dockerfiles e `docker-compose.prod.yml`
+
+### Opção 2 — Reproduzir o deploy na sua conta AWS
+
+**Pré-requisitos:** AWS CLI configurado (`aws configure`, Free Tier serve) · Node.js ≥ 18 · `git` · o arquivo **`.env`** entregue junto com o projeto.
+
+```bash
+# 1. Clonar o repositório
+git clone https://github.com/yagocanton21/Panela-de-Barro.git
+cd Panela-de-Barro
+
+# 2. Colocar na raiz do projeto o arquivo .env enviado pelo aluno
+#    (contém ADMIN_PASSWORD e LICENSE_KEY — não vai no repositório).
+#    O modelo das variáveis está em .env.example
+cp /caminho/do/.env .env
+
+# 3. Rede + backend (VPC, RDS, EC2). Lê o .env automaticamente.
+#    Imprime o IP da EC2 ao final (~15 min)
+bash infra/setup-rds.sh
+
+# 4. Frontend em S3 + CloudFront (HTTPS). Imprime a URL da CDN (~10 min)
+EC2_PUBLIC_IP=<ip-impresso-no-passo-3> bash infra/setup-s3-cloudfront.sh
+
+# 5. Ao terminar a avaliação — remove TUDO para não gerar custo
+bash infra/cleanup-aws.sh
+```
+
+> ⚠️ **O `.env` é obrigatório.** O backend recusa iniciar sem uma `LICENSE_KEY` válida. A chave privada que assina licenças **não está no repositório** (por segurança) e o `.env` é gitignored — por isso o aluno o entrega separadamente (anexo/vídeo), nunca versionado. O `setup-rds.sh` lê o `.env` da raiz sozinho; basta colocá-lo lá.
+>
+> O `user-data` da EC2 clona automaticamente este repositório público, então o deploy funciona mesmo executando a partir de outra conta AWS.
+
+---
+
 ## 📡 API — Endpoints Principais
 
 > Documentação interativa (Swagger): **http://\<IP-EC2\>/api/docs**

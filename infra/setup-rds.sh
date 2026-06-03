@@ -1,7 +1,14 @@
 #!/bin/bash
 # Deploy completo: VPC + Subnets + RDS + Security Groups + Secrets Manager + IAM + Key Pair + EC2
 #
-# Uso:
+# Uso simples (recomendado): coloque um arquivo .env na raiz do projeto e rode:
+#   bash infra/setup-rds.sh
+#
+# O .env precisa conter, no mínimo:
+#   ADMIN_PASSWORD=<senha-do-admin>
+#   LICENSE_KEY=<chave-de-licenca>
+#
+# Alternativa: passar via variável de ambiente na linha de comando:
 #   ADMIN_PASSWORD=minhasenha LICENSE_KEY=abc123 bash infra/setup-rds.sh
 #
 # Variáveis opcionais:
@@ -14,6 +21,17 @@ set -e
 
 export AWS_PAGER=""
 
+# ---------- Carrega o .env da raiz (se existir) ----------
+# Permite ao avaliador só clonar o repo, soltar o .env enviado e rodar o script.
+ENV_FILE="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/.env"
+if [ -f "$ENV_FILE" ]; then
+  echo "==> Carregando variáveis de $ENV_FILE"
+  set -a
+  # shellcheck disable=SC1090
+  . "$ENV_FILE"
+  set +a
+fi
+
 # ---------- Validação ----------
 ADMIN_PASSWORD="${ADMIN_PASSWORD:-}"
 LICENSE_KEY="${LICENSE_KEY:-}"
@@ -21,7 +39,8 @@ LICENSE_KEY="${LICENSE_KEY:-}"
 if [ -z "$ADMIN_PASSWORD" ] || [ -z "$LICENSE_KEY" ]; then
   echo "ERRO: ADMIN_PASSWORD e LICENSE_KEY são obrigatórios."
   echo ""
-  echo "Uso: ADMIN_PASSWORD=minhasenha LICENSE_KEY=abc123 bash infra/setup-rds.sh"
+  echo "Coloque um .env na raiz do projeto (com ADMIN_PASSWORD e LICENSE_KEY)"
+  echo "ou passe via env: ADMIN_PASSWORD=senha LICENSE_KEY=chave bash infra/setup-rds.sh"
   exit 1
 fi
 
