@@ -36,7 +36,7 @@ echo "==> Criando AMI '$AMI_NAME' a partir de $INSTANCE_ID..."
 AMI_ID=$(aws ec2 create-image --region "$REGION" \
   --instance-id "$INSTANCE_ID" \
   --name "$AMI_NAME" \
-  --description "Golden Image ${APP} (Docker + stack pré-instalada)" \
+  --description "Golden Image ${APP} (Docker + stack pre-instalada)" \
   --no-reboot \
   --tag-specifications \
     "ResourceType=image,Tags=[{Key=App,Value=${APP}},{Key=Name,Value=${AMI_NAME}}]" \

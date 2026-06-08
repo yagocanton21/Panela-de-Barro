@@ -13,18 +13,26 @@
 #
 # Variáveis opcionais:
 #   DB_PASSWORD    — senha do banco (gera automaticamente se omitida)
-#   EC2_TYPE       — tipo da instância (padrão: t3.small)
+#   EC2_TYPE       — tipo da instância (padrão: t3.micro, free tier)
 #   ADMIN_IP       — IP liberado para SSH (auto-detecta o IP público atual se omitido)
 #   GOLDEN_AMI_ID  — AMI pré-configurada (Golden Image). Se omitida, usa Ubuntu 22.04 stock
 
-set -e
+set -euo pipefail
 
 export AWS_PAGER=""
 
 # ---------- Carrega o .env da raiz (se existir) ----------
 # Permite ao avaliador só clonar o repo, soltar o .env enviado e rodar o script.
+ENV_FILE_PROD="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/.env.prod"
 ENV_FILE="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/.env"
-if [ -f "$ENV_FILE" ]; then
+
+if [ -f "$ENV_FILE_PROD" ]; then
+  echo "==> Carregando variáveis de $ENV_FILE_PROD"
+  set -a
+  # shellcheck disable=SC1090
+  . "$ENV_FILE_PROD"
+  set +a
+elif [ -f "$ENV_FILE" ]; then
   echo "==> Carregando variáveis de $ENV_FILE"
   set -a
   # shellcheck disable=SC1090
@@ -36,11 +44,19 @@ fi
 ADMIN_PASSWORD="${ADMIN_PASSWORD:-}"
 LICENSE_KEY="${LICENSE_KEY:-}"
 
-if [ -z "$ADMIN_PASSWORD" ] || [ -z "$LICENSE_KEY" ]; then
-  echo "ERRO: ADMIN_PASSWORD e LICENSE_KEY são obrigatórios."
-  echo ""
-  echo "Coloque um .env na raiz do projeto (com ADMIN_PASSWORD e LICENSE_KEY)"
-  echo "ou passe via env: ADMIN_PASSWORD=senha LICENSE_KEY=chave bash infra/setup-rds.sh"
+if [ -z "$ADMIN_PASSWORD" ] || [ "$ADMIN_PASSWORD" = "defina-uma-senha" ]; then
+  ADMIN_PASSWORD=$(openssl rand -hex 8)
+  echo "Aviso: ADMIN_PASSWORD não configurada ou usando placeholder. Gerada aleatoriamente: $ADMIN_PASSWORD"
+fi
+
+if [ -z "$LICENSE_KEY" ] || [ "$LICENSE_KEY" = "cole-aqui-a-chave-de-licenca" ]; then
+  echo "ERRO: LICENSE_KEY inválida ou usando placeholder."
+  echo "Por favor, cole a chave de licença válida no arquivo .env antes de rodar este script."
+  exit 1
+fi
+
+if [ -z "$ADMIN_PASSWORD" ]; then
+  echo "ERRO: ADMIN_PASSWORD é obrigatório e a geração automática falhou."
   exit 1
 fi
 
@@ -53,9 +69,11 @@ DB_PASSWORD="${DB_PASSWORD:-$(openssl rand -hex 16)}"
 DB_CLASS="db.t3.micro"
 # Free Tier limita retencao de backup (use 1; conta paga aceita ate 35)
 BACKUP_RETENTION="${BACKUP_RETENTION:-1}"
-EC2_TYPE="${EC2_TYPE:-t3.small}"
+EC2_TYPE="${EC2_TYPE:-t3.micro}"
 KEY_NAME="panela-prod-key"
 KEY_FILE="$HOME/.ssh/${KEY_NAME}.pem"
+# Repo clonado pela EC2 no boot. Override se for fork/repo privado.
+REPO_URL="${REPO_URL:-https://github.com/yagocanton21/Panela-de-Barro.git}"
 
 # VPC / Subnets (CIDRs exigidos pela arquitetura)
 VPC_CIDR="10.0.0.0/16"
@@ -184,14 +202,14 @@ RDS_SG_ID=$(aws ec2 create-security-group --region "$REGION" \
     --filters "Name=group-name,Values=${APP}-rds-sg" "Name=vpc-id,Values=$VPC_ID" \
     --query "SecurityGroups[0].GroupId" --output text)
 
-aws ec2 authorize-security-group-ingress --region "$REGION" \
-  --group-id "$RDS_SG_ID" --protocol tcp --port 5432 \
-  --source-group "$EC2_SG_ID" 2>/dev/null || true
-
 if [ "$RDS_SG_ID" = "None" ] || [ -z "$RDS_SG_ID" ]; then
   echo "ERRO: Falha ao criar ou encontrar o Security Group do RDS."
   exit 1
 fi
+
+aws ec2 authorize-security-group-ingress --region "$REGION" \
+  --group-id "$RDS_SG_ID" --protocol tcp --port 5432 \
+  --source-group "$EC2_SG_ID" 2>/dev/null || true
 
 echo "    EC2 SG: $EC2_SG_ID | RDS SG: $RDS_SG_ID"
 
@@ -264,7 +282,9 @@ SECRET_VALUE=$(cat <<JSON
   "password": "${DB_PASSWORD}",
   "host": "${RDS_ENDPOINT}",
   "dbname": "${DB_NAME}",
-  "port": "5432"
+  "port": "5432",
+  "admin_password": "${ADMIN_PASSWORD}",
+  "license_key": "${LICENSE_KEY}"
 }
 JSON
 )
@@ -392,9 +412,11 @@ DB_HOST=\$(echo "\$SECRET_JSON" | python3 -c "import json,sys; print(json.load(s
 DB_PASSWORD=\$(echo "\$SECRET_JSON" | python3 -c "import json,sys; print(json.load(sys.stdin)['password'])")
 DB_USER=\$(echo "\$SECRET_JSON" | python3 -c "import json,sys; print(json.load(sys.stdin)['username'])")
 DB_NAME=\$(echo "\$SECRET_JSON" | python3 -c "import json,sys; print(json.load(sys.stdin)['dbname'])")
+ADMIN_PASSWORD=\$(echo "\$SECRET_JSON" | python3 -c "import json,sys; print(json.load(sys.stdin)['admin_password'])")
+LICENSE_KEY=\$(echo "\$SECRET_JSON" | python3 -c "import json,sys; print(json.load(sys.stdin)['license_key'])")
 
 APP_DIR="/home/ubuntu/app"
-git clone "https://github.com/yagocanton21/Panela-de-Barro.git" "\$APP_DIR"
+git clone "${REPO_URL}" "\$APP_DIR"
 chown -R ubuntu:ubuntu "\$APP_DIR"
 
 SECRET_KEY=\$(openssl rand -hex 32)
@@ -407,9 +429,9 @@ POSTGRES_HOST=\${DB_HOST}
 POSTGRES_PORT=5432
 SECRET_KEY=\${SECRET_KEY}
 ADMIN_USERNAME=admin
-ADMIN_PASSWORD=${ADMIN_PASSWORD}
+ADMIN_PASSWORD=\${ADMIN_PASSWORD}
 ADMIN_DISPLAY_NAME=Admin
-LICENSE_KEY=${LICENSE_KEY}
+LICENSE_KEY=\${LICENSE_KEY}
 ENV
 
 cd "\$APP_DIR"
@@ -417,24 +439,47 @@ docker compose -f docker-compose.prod.yml up -d --build
 USERDATA
 )
 
-echo "    Aguardando IAM profile propagar (15s)..."
-sleep 15
+# IAM instance profile leva alguns segundos para propagar. run-instances pode
+# falhar "Invalid IAM Instance Profile" nesse meio-tempo — tenta com backoff.
+echo "    Lançando EC2 (retry até IAM profile propagar)..."
+INSTANCE_ID=""
+for attempt in 1 2 3 4 5 6; do
+  INSTANCE_ID=$(aws ec2 run-instances --region "$REGION" \
+    --image-id "$AMI_ID" \
+    --instance-type "$EC2_TYPE" \
+    --key-name "$KEY_NAME" \
+    --security-group-ids "$EC2_SG_ID" \
+    --subnet-id "$PUBLIC_SUBNET_ID" \
+    --iam-instance-profile Name="${APP}-ec2-profile" \
+    --user-data "$USER_DATA" \
+    --tag-specifications \
+      "ResourceType=instance,Tags=[{Key=Name,Value=${APP}-prod},{Key=App,Value=${APP}}]" \
+    --query "Instances[0].InstanceId" --output text 2>/dev/null) && [ -n "$INSTANCE_ID" ] && break
+  echo "    Tentativa $attempt falhou (IAM profile ainda propagando), aguardando 5s..."
+  sleep 5
+done
 
-INSTANCE_ID=$(aws ec2 run-instances --region "$REGION" \
-  --image-id "$AMI_ID" \
-  --instance-type "$EC2_TYPE" \
-  --key-name "$KEY_NAME" \
-  --security-group-ids "$EC2_SG_ID" \
-  --subnet-id "$PUBLIC_SUBNET_ID" \
-  --iam-instance-profile Name="${APP}-ec2-profile" \
-  --user-data "$USER_DATA" \
-  --tag-specifications \
-    "ResourceType=instance,Tags=[{Key=Name,Value=${APP}-prod},{Key=App,Value=${APP}}]" \
-  --query "Instances[0].InstanceId" --output text)
+if [ -z "$INSTANCE_ID" ]; then
+  echo "ERRO: Falha ao lançar EC2 após múltiplas tentativas."
+  exit 1
+fi
 
 echo "    EC2 lançada: $INSTANCE_ID"
 echo "    Aguardando instância ficar running..."
 aws ec2 wait instance-running --region "$REGION" --instance-ids "$INSTANCE_ID"
+
+# Elastic IP: IP estável que sobrevive a stop/start (origin do CloudFront não quebra).
+echo "    Alocando/associando Elastic IP..."
+EIP_ALLOC_ID=$(aws ec2 describe-addresses --region "$REGION" \
+  --filters "Name=tag:App,Values=${APP}" \
+  --query "Addresses[0].AllocationId" --output text 2>/dev/null || echo "None")
+if [ "$EIP_ALLOC_ID" = "None" ] || [ -z "$EIP_ALLOC_ID" ]; then
+  EIP_ALLOC_ID=$(aws ec2 allocate-address --region "$REGION" --domain vpc \
+    --tag-specifications "$(tag_spec elastic-ip ${APP}-eip)" \
+    --query "AllocationId" --output text)
+fi
+aws ec2 associate-address --region "$REGION" \
+  --instance-id "$INSTANCE_ID" --allocation-id "$EIP_ALLOC_ID" >/dev/null
 
 PUBLIC_IP=$(aws ec2 describe-instances --region "$REGION" \
   --instance-ids "$INSTANCE_ID" \
