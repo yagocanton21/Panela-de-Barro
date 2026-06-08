@@ -5,13 +5,13 @@
 # Remove (em ordem segura):
 #   CloudFront → S3 → EC2 → AMI/Snapshots → RDS → DB Subnet Group →
 #   Security Groups → VPC (subnets, IGW, route tables) →
-#   Secrets Manager → IAM Role/Profile → Key Pair
+#   Secrets Manager → IAM Role/Profile → Key Pair → Billing Alarm + SNS
 
-set -e
+set -euo pipefail
 export AWS_PAGER=""
 
 DRY_RUN=false
-[[ "$1" == "--dry-run" ]] && DRY_RUN=true
+[[ "${1:-}" == "--dry-run" ]] && DRY_RUN=true
 
 RED='\033[0;31m'
 YELLOW='\033[1;33m'
@@ -34,7 +34,7 @@ $DRY_RUN && echo -e "${YELLOW}Modo dry-run: nenhuma ação será executada.${NC}
 
 # ---------- CloudFront ----------
 echo ""
-echo "[1/11] Buscando distribuições CloudFront (${APP})..."
+echo "[1/12] Buscando distribuições CloudFront (${APP})..."
 DIST_IDS=$(aws cloudfront list-distributions \
   --query "DistributionList.Items[?starts_with(Comment, '${APP}')].Id" \
   --output text 2>/dev/null || echo "")
@@ -80,7 +80,7 @@ fi
 
 # ---------- S3 ----------
 echo ""
-echo "[2/11] Buscando bucket S3 do frontend..."
+echo "[2/12] Buscando bucket S3 do frontend..."
 ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
 BUCKET="${APP}-web-${ACCOUNT_ID}"
 if aws s3api head-bucket --bucket "$BUCKET" 2>/dev/null; then
@@ -94,7 +94,7 @@ fi
 
 # ---------- EC2 ----------
 echo ""
-echo "[3/11] Buscando instâncias EC2 (tag App=${APP})..."
+echo "[3/12] Buscando instâncias EC2 (tag App=${APP})..."
 INSTANCE_IDS=$(aws ec2 describe-instances --region "$REGION" \
   --filters "Name=tag:App,Values=${APP}" \
             "Name=instance-state-name,Values=running,stopped,stopping" \
@@ -113,9 +113,22 @@ else
     echo "Nenhuma instância encontrada."
 fi
 
+# ---------- Elastic IP ----------
+# EIP não associado GERA custo. Libera após terminar a EC2 (terminate já desassocia).
+EIP_ALLOC_ID=$(aws ec2 describe-addresses --region "$REGION" \
+  --filters "Name=tag:App,Values=${APP}" \
+  --query "Addresses[0].AllocationId" --output text 2>/dev/null || echo "None")
+if [[ "$EIP_ALLOC_ID" != "None" && -n "$EIP_ALLOC_ID" ]]; then
+    echo -e "${RED}Liberando Elastic IP: $EIP_ALLOC_ID${NC}"
+    run "aws ec2 release-address --region $REGION --allocation-id $EIP_ALLOC_ID"
+    echo -e "${GREEN}Elastic IP liberado.${NC}"
+else
+    echo "Nenhum Elastic IP do projeto encontrado."
+fi
+
 # ---------- AMIs (Golden Images) + Snapshots ----------
 echo ""
-echo "[4/11] Buscando AMIs (Golden Images) e snapshots (tag App=${APP})..."
+echo "[4/12] Buscando AMIs (Golden Images) e snapshots (tag App=${APP})..."
 AMI_IDS=$(aws ec2 describe-images --region "$REGION" --owners self \
   --filters "Name=tag:App,Values=${APP}" \
   --query "Images[*].ImageId" --output text)
@@ -137,7 +150,7 @@ done
 
 # ---------- RDS ----------
 echo ""
-echo "[5/11] Buscando instância RDS (${APP}-db)..."
+echo "[5/12] Buscando instância RDS (${APP}-db)..."
 RDS_STATUS=$(aws rds describe-db-instances --region "$REGION" \
   --db-instance-identifier "${APP}-db" \
   --query "DBInstances[0].DBInstanceStatus" --output text 2>/dev/null || echo "not-found")
@@ -160,7 +173,7 @@ fi
 
 # ---------- DB Subnet Group ----------
 echo ""
-echo "[6/11] Buscando DB Subnet Group (${APP}-subnet-group)..."
+echo "[6/12] Buscando DB Subnet Group (${APP}-subnet-group)..."
 SUBNET_GROUP=$(aws rds describe-db-subnet-groups --region "$REGION" \
   --query "DBSubnetGroups[?DBSubnetGroupName=='${APP}-subnet-group'].DBSubnetGroupName" \
   --output text 2>/dev/null || echo "")
@@ -180,7 +193,7 @@ VPC_ID=$(aws ec2 describe-vpcs --region "$REGION" \
 
 # ---------- Security Groups ----------
 echo ""
-echo "[7/11] Buscando Security Groups (${APP}-ec2-sg, ${APP}-rds-sg)..."
+echo "[7/12] Buscando Security Groups (${APP}-ec2-sg, ${APP}-rds-sg)..."
 for SG_NAME in "${APP}-rds-sg" "${APP}-ec2-sg"; do
     SG_ID=$(aws ec2 describe-security-groups --region "$REGION" \
       --filters "Name=group-name,Values=${SG_NAME}" "Name=vpc-id,Values=$VPC_ID" \
@@ -197,7 +210,7 @@ done
 
 # ---------- VPC teardown ----------
 echo ""
-echo "[8/11] Desmontando VPC ($VPC_ID)..."
+echo "[8/12] Desmontando VPC ($VPC_ID)..."
 if [[ "$VPC_ID" != "None" && -n "$VPC_ID" ]]; then
     # Internet Gateway: detach + delete
     IGW_ID=$(aws ec2 describe-internet-gateways --region "$REGION" \
@@ -236,7 +249,7 @@ fi
 
 # ---------- Secrets Manager ----------
 echo ""
-echo "[9/11] Deletando secret (${APP}/db-credentials)..."
+echo "[9/12] Deletando secret (${APP}/db-credentials)..."
 SECRET_EXISTS=$(aws secretsmanager describe-secret --region "$REGION" \
   --secret-id "${APP}/db-credentials" \
   --query "Name" --output text 2>/dev/null || echo "")
@@ -253,7 +266,7 @@ fi
 
 # ---------- IAM ----------
 echo ""
-echo "[10/11] Limpando IAM Role/Profile (${APP}-ec2-role)..."
+echo "[10/12] Limpando IAM Role/Profile (${APP}-ec2-role)..."
 
 PROFILE_EXISTS=$(aws iam get-instance-profile \
   --instance-profile-name "${APP}-ec2-profile" \
@@ -284,7 +297,7 @@ fi
 
 # ---------- Key Pair ----------
 echo ""
-echo "[11/11] Buscando Key Pair (panela-prod-key)..."
+echo "[11/12] Buscando Key Pair (panela-prod-key)..."
 KEY_EXISTS=$(aws ec2 describe-key-pairs --region "$REGION" \
   --filters "Name=key-name,Values=panela-prod-key" \
   --query "KeyPairs[0].KeyName" --output text 2>/dev/null || echo "None")
@@ -296,6 +309,37 @@ if [[ "$KEY_EXISTS" != "None" && -n "$KEY_EXISTS" ]]; then
     echo -e "${GREEN}Key pair deletada.${NC}"
 else
     echo "Key pair não encontrada."
+fi
+
+# ---------- Billing Alarm + SNS ----------
+# Não geram custo (Free Tier cobre), mas removemos para não deixar órfãos.
+echo ""
+echo "[12/12] Buscando Billing Alarm + tópico SNS..."
+ALARM_PREFIX="${APP}-billing-over-"
+ALARM_NAMES=$(aws cloudwatch describe-alarms --region "$REGION" \
+  --alarm-name-prefix "$ALARM_PREFIX" \
+  --query "MetricAlarms[*].AlarmName" --output text 2>/dev/null || echo "")
+[[ "$ALARM_NAMES" == "None" ]] && ALARM_NAMES=""
+
+if [[ -n "$ALARM_NAMES" ]]; then
+    echo -e "${RED}Deletando alarme(s): $ALARM_NAMES${NC}"
+    run "aws cloudwatch delete-alarms --region $REGION --alarm-names $ALARM_NAMES"
+    echo -e "${GREEN}Alarme(s) deletado(s).${NC}"
+else
+    echo "Nenhum billing alarm encontrado."
+fi
+
+TOPIC_ARN=$(aws sns list-topics --region "$REGION" \
+  --query "Topics[?contains(TopicArn, '${APP}-billing-alerts')].TopicArn" \
+  --output text 2>/dev/null || echo "")
+[[ "$TOPIC_ARN" == "None" ]] && TOPIC_ARN=""
+
+if [[ -n "$TOPIC_ARN" ]]; then
+    echo -e "${RED}Deletando tópico SNS: $TOPIC_ARN${NC}"
+    run "aws sns delete-topic --region $REGION --topic-arn $TOPIC_ARN"
+    echo -e "${GREEN}Tópico SNS deletado.${NC}"
+else
+    echo "Nenhum tópico SNS de billing encontrado."
 fi
 
 # ---------- Fim ----------
