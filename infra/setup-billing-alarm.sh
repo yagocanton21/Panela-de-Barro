@@ -25,7 +25,7 @@ export AWS_PAGER=""
 REGION="us-east-1"
 APP="panela-de-barro"
 THRESHOLD="${THRESHOLD:-5}"
-ALERT_EMAIL="${ALERT_EMAIL:-yagocanton123@gmail.com}"
+ALERT_EMAIL="${ALERT_EMAIL:-}" #Coloque seu email depois do - 
 
 TOPIC_NAME="${APP}-billing-alerts"
 ALARM_NAME="${APP}-billing-over-${THRESHOLD}usd"
