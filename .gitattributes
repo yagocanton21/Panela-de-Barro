@@ -1,6 +1,8 @@
 # Normaliza fins de linha de texto no repo
 * text=auto
 
-# Força LF em scripts shell e entrypoints — evita erro $'\r' no Linux/WSL/Docker
+# Força LF em scripts shell e arquivos lidos pelo bash no Linux/WSL/Docker
 *.sh   text eol=lf
 *.bash text eol=lf
+.env   text eol=lf
+.env.* text eol=lf
