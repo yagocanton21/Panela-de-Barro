@@ -26,6 +26,57 @@ Internet
 > - **Opção 1 (Mais fácil):** Abra e use o **Git Bash** para rodar os scripts, garantindo que o AWS CLI e o `jq` para Windows estejam instalados.
 > - **Opção 2 (Recomendada):** Instale o Ubuntu rodando `wsl --install` no PowerShell como administrador. Entre no Ubuntu, instale as dependências (`sudo apt install awscli jq -y`) e rode os scripts de dentro do terminal do Linux.
 
+## Configurar o AWS CLI
+
+Se você ainda não tem o AWS CLI instalado e autenticado, siga os passos abaixo antes de rodar qualquer script.
+
+### 1. Instalar
+
+Veja o guia oficial para o seu sistema: <https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html>
+
+```bash
+# macOS (Homebrew)
+brew install awscli
+
+# Ubuntu / WSL
+sudo apt install awscli -y
+
+# Verifique a instalação
+aws --version
+```
+
+### 2. Criar uma access key
+
+1. Acesse o **IAM** no console da AWS.
+2. **Users** → selecione (ou crie) seu usuário → aba **Security credentials**.
+3. Em **Access keys**, clique em **Create access key** → escolha **Command Line Interface (CLI)**.
+4. Guarde o **Access key ID** e o **Secret access key** — o secret só aparece uma vez.
+
+> O usuário precisa de permissões para EC2, RDS, S3, CloudFront, IAM e Secrets Manager (veja os Pré-requisitos).
+
+### 3. Autenticar
+
+```bash
+aws configure
+```
+
+Preencha:
+
+| Campo                  | Valor                    |
+|------------------------|--------------------------|
+| AWS Access Key ID      | sua access key           |
+| AWS Secret Access Key  | seu secret               |
+| Default region name    | `us-east-1`              |
+| Default output format  | `json`                   |
+
+### 4. Verificar
+
+```bash
+aws sts get-caller-identity
+```
+
+Deve retornar o `Account`, `UserId` e `Arn` da sua conta. Se aparecer erro de credencial, refaça o `aws configure`.
+
 ## Ordem de execução
 
 Execute os scripts nessa ordem:
