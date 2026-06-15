@@ -21,6 +21,11 @@ Internet
 - Arquivo `.env` na raiz com `ADMIN_PASSWORD` e `LICENSE_KEY` preenchidos
 - `openssl` disponível no shell
 
+> **Aviso para usuários de Windows:** Os scripts na pasta `infra/` são scripts `.sh` (Shell Script para Linux). Se você tentar executá-los diretamente no PowerShell e encontrar erros como `execvpe(/bin/bash) failed`, significa que o WSL não está configurado corretamente. 
+> Para resolver:
+> - **Opção 1 (Mais fácil):** Abra e use o **Git Bash** para rodar os scripts, garantindo que o AWS CLI e o `jq` para Windows estejam instalados.
+> - **Opção 2 (Recomendada):** Instale o Ubuntu rodando `wsl --install` no PowerShell como administrador. Entre no Ubuntu, instale as dependências (`sudo apt install awscli jq -y`) e rode os scripts de dentro do terminal do Linux.
+
 ## Ordem de execução
 
 Execute os scripts nessa ordem:
