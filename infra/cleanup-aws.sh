@@ -100,6 +100,7 @@ INSTANCE_IDS=$(aws ec2 describe-instances --region "$REGION" \
             "Name=instance-state-name,Values=running,stopped,stopping" \
   --query "Reservations[*].Instances[*].InstanceId" \
   --output text)
+INSTANCE_IDS=$(echo $INSTANCE_IDS)  # achata newlines/tabs em espaços (eval-safe)
 
 if [[ -n "$INSTANCE_IDS" ]]; then
     echo -e "${RED}Terminando EC2:${NC} $INSTANCE_IDS"
