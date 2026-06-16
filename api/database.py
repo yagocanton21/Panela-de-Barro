@@ -23,7 +23,7 @@ if not all([POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_DB, POSTGRES_HOST, POSTGR
 DATABASE_URL = f"postgresql+asyncpg://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_HOST}:{POSTGRES_PORT}/{POSTGRES_DB}"
 
 # RDS exige SSL por padrão; banco local (docker-compose/localhost) não tem SSL configurado
-CONNECT_ARGS = {} if POSTGRES_HOST in ("db", "localhost", "127.0.0.1") else {"ssl": ssl.create_default_context()}
+CONNECT_ARGS = {} if POSTGRES_HOST in ("db", "localhost", "127.0.0.1") else {"ssl": ssl.create_default_context(cafile="/backend/rds-global-bundle.pem")}
 
 # Comunicação com o banco de dados
 engine = create_async_engine(
