@@ -19,6 +19,9 @@ RUN --mount=type=cache,target=/root/.cache/pip \
 COPY api/ api/
 RUN chmod +x api/entrypoint.sh
 
+# CA bundle da AWS RDS (a CA do RDS não está no trust store padrão da imagem)
+RUN curl -fsSL https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem -o /backend/rds-global-bundle.pem
+
 # Cria usuário não-root e ajusta permissões
 RUN adduser -D appuser && chown -R appuser:appuser /backend
 USER appuser

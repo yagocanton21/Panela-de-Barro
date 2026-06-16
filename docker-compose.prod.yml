@@ -31,7 +31,7 @@ services:
     networks:
       - panela_net
     healthcheck:
-      test: ["CMD", "wget", "-q", "--spider", "http://localhost/docs"]
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1/docs"]
       interval: 15s
       timeout: 5s
       retries: 3

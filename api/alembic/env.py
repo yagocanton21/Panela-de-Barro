@@ -41,7 +41,7 @@ def get_connect_args() -> dict:
     # RDS exige SSL por padrão; banco local (docker-compose/localhost) não tem SSL configurado
     if host in ("db", "localhost", "127.0.0.1"):
         return {}
-    return {"ssl": ssl.create_default_context()}
+    return {"ssl": ssl.create_default_context(cafile="/backend/rds-global-bundle.pem")}
 
 
 def run_migrations_offline() -> None:
