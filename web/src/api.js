@@ -1,7 +1,10 @@
 // frontend/src/api.js
 import { clearAuth } from "./utils/auth";
 
-const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost/api";
+// Padrão relativo "/api": correto em dev (nginx faz proxy de /api -> backend) e
+// em prod (CloudFront roteia /api/* -> EC2). Nunca use URL absoluta como fallback:
+// "http://localhost/api" quebra silenciosamente em qualquer build de produção.
+const BASE_URL = import.meta.env.VITE_API_URL || "/api";
 
 export const apiRequest = async (endpoint, options = {}) => {
     const token = localStorage.getItem("access_token");
