@@ -21,10 +21,11 @@ Internet
 - Arquivo `.env` na raiz com `ADMIN_PASSWORD` e `LICENSE_KEY` preenchidos
 - `openssl` disponível no shell
 
-> **Aviso para usuários de Windows:** Os scripts na pasta `infra/` são scripts `.sh` (Shell Script para Linux). Se você tentar executá-los diretamente no PowerShell e encontrar erros como `execvpe(/bin/bash) failed`, significa que o WSL não está configurado corretamente. 
-> Para resolver:
-> - **Opção 1 (Mais fácil):** Abra e use o **Git Bash** para rodar os scripts, garantindo que o AWS CLI e o `jq` para Windows estejam instalados.
-> - **Opção 2 (Recomendada):** Instale o Ubuntu rodando `wsl --install` no PowerShell como administrador. Entre no Ubuntu, instale as dependências (`sudo apt install awscli jq -y`) e rode os scripts de dentro do terminal do Linux.
+> **Aviso para usuários de Windows (PowerShell vs Bash):** Os scripts na pasta `infra/` são scripts `.sh` (Linux). Executá-los no PowerShell pode causar erros (como `execvpe(/bin/bash) failed`), e a sintaxe de passar variáveis temporárias (`VAR=valor bash script.sh`) **não funciona** no PowerShell.
+> Como executar dependendo do seu terminal:
+> - **Linux / Mac / WSL (Recomendado):** Use a sintaxe nativa `VAR=valor bash script.sh`. *(Para instalar o WSL no Windows, rode `wsl --install` no PowerShell como admin, e no Ubuntu instale as dependências: `sudo apt install awscli jq -y`)*.
+> - **Git Bash (Windows):** Permite usar a sintaxe nativa do Linux: `VAR=valor bash script.sh`. (Requer AWS CLI e `jq` instalados).
+> - **PowerShell (Windows):** Você precisa declarar a variável de ambiente **antes** de rodar o comando. Exemplo: `$env:VAR="valor"; bash script.sh`
 
 ## Configurar o AWS CLI
 
@@ -100,7 +101,7 @@ O que faz (11 etapas):
 10. User data: clona o repo, sobe Docker Compose em modo produção
 11. Exibe IP público da EC2
 
-> Região padrão: `us-east-1`. Override: `AWS_DEFAULT_REGION=...`
+> Região padrão: `us-east-1`. Override via bash: `AWS_DEFAULT_REGION=... bash infra/setup-rds.sh` ou PowerShell: `$env:AWS_DEFAULT_REGION="..."; bash infra/setup-rds.sh`
 
 **Variáveis opcionais:**
 
@@ -114,8 +115,14 @@ O que faz (11 etapas):
 
 ### 2. Frontend (S3 + CloudFront)
 
+**Bash (Linux/Mac/WSL/Git Bash):**
 ```bash
-bash infra/setup-s3-cloudfront.sh
+EC2_PUBLIC_IP=<seu-ip> bash infra/setup-s3-cloudfront.sh
+```
+
+**PowerShell (Windows):**
+```powershell
+$env:EC2_PUBLIC_IP="<seu-ip>"; bash infra/setup-s3-cloudfront.sh
 ```
 
 O que faz:
@@ -127,13 +134,20 @@ O que faz:
 
 ### 3. Alarme de billing (opcional mas recomendado)
 
+**Bash (Linux/Mac/WSL/Git Bash):**
 ```bash
 ALERT_EMAIL=seu@email.com bash infra/setup-billing-alarm.sh
 ```
 
+**PowerShell (Windows):**
+```powershell
+$env:ALERT_EMAIL="seu@email.com"; bash infra/setup-billing-alarm.sh
+```
+
 Cria alarme CloudWatch que envia e-mail se o custo estimado mensal ultrapassar US$5. Após rodar, **confirme a inscrição clicando no link que a AWS envia para o e-mail informado** — sem isso o alarme não dispara.
 
-> Limite customizável: `THRESHOLD=10 ALERT_EMAIL=seu@email.com bash infra/setup-billing-alarm.sh`
+> Limite customizável no Bash: `THRESHOLD=10 ALERT_EMAIL=seu@email.com bash infra/setup-billing-alarm.sh`
+> Limite customizável no PowerShell: `$env:THRESHOLD="10"; $env:ALERT_EMAIL="seu@email.com"; bash infra/setup-billing-alarm.sh`
 
 ## Atualizar IP para SSH
 

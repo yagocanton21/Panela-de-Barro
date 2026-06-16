@@ -33,6 +33,7 @@ Edite o `.env`:
 | `ADMIN_DISPLAY_NAME`| Nome exibido do administrador                      | `Admin`                  |
 | `LICENSE_KEY`       | Chave de licença (entregue pelo time)              | fornecida separadamente  |
 
+> **`POSTGRES_HOST` / `POSTGRES_PORT`:** no Docker Compose são injetados automaticamente (`db` / `5432`) — não precisa no `.env`. Se rodar o backend **sem Docker** (uvicorn direto), defina `POSTGRES_HOST=localhost` e `POSTGRES_PORT=5432`, senão o backend falha com `Faltam configurações do banco de dados`.
 
 ## 3. Subir os serviços
 
@@ -84,6 +85,10 @@ pip install -r requirements.txt
 
 # Suba só o banco via Docker
 docker compose up db -d
+
+# Aponte o backend para o banco local (fora do Docker, não há injeção do compose)
+export POSTGRES_HOST=localhost
+export POSTGRES_PORT=5432
 
 # Rode as migrações
 alembic -c api/alembic.ini upgrade head

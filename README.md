@@ -22,7 +22,7 @@
 
 | Camada     | Tecnologia                            |
 | ---------- | ------------------------------------- |
-| Frontend   | React 18 + Vite                       |
+| Frontend   | React 19 + Vite                       |
 | Backend    | FastAPI · Python 3.11 · async         |
 | Banco      | PostgreSQL 15 (AWS RDS)               |
 | ORM        | SQLAlchemy 2 (asyncpg) + Alembic      |
@@ -63,7 +63,7 @@
 
 ## 📡 API
 
-Documentação interativa (Swagger): **http://localhost/docs** (local) ou **http://\<IP-EC2\>/api/docs** (produção).
+Documentação interativa (Swagger): **http://localhost/docs** (local) ou **http://\<IP-EC2\>/docs** (produção).
 
 ---
 

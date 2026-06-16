@@ -1,14 +1,12 @@
-FROM python:3.11-alpine
+FROM python:3.11-slim
 
 WORKDIR /backend
 
-# Adiciona dependências do sistema necessárias para o psycopg2
-RUN apk update && apk add --no-cache \
-    postgresql-dev \
-    gcc \
-    musl-dev \
+# Base Debian (glibc): asyncpg e psycopg2-binary instalam como wheel pré-compilado,
+# sem toolchain (gcc/musl-dev). Só curl para o healthcheck.
+RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
-    && rm -rf /var/cache/apk/*
+    && rm -rf /var/lib/apt/lists/*
 
 # Copia só o requirements primeiro para aproveitar cache de camadas
 COPY api/requirements.txt .
@@ -22,7 +20,7 @@ COPY api/ api/
 RUN chmod +x api/entrypoint.sh
 
 # Cria usuário não-root e ajusta permissões
-RUN adduser -D appuser && chown -R appuser:appuser /backend
+RUN useradd -m appuser && chown -R appuser:appuser /backend
 USER appuser
 
 # Expõe a porta do FastAPI
