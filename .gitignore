@@ -20,7 +20,6 @@ htmlcov/
 # Docker
 docker_data/
 .docker/
-.dockerignore
 
 # IDE e Editores
 .vscode/
