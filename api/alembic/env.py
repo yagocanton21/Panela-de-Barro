@@ -1,5 +1,6 @@
 import asyncio
 import os
+import ssl
 from logging.config import fileConfig
 
 from sqlalchemy.ext.asyncio import create_async_engine
@@ -35,6 +36,14 @@ def get_url() -> str:
     return f"postgresql+asyncpg://{user}:{password}@{host}:{port}/{db}"
 
 
+def get_connect_args() -> dict:
+    host = os.getenv("POSTGRES_HOST", "localhost")
+    # RDS exige SSL por padrão; banco local (docker-compose/localhost) não tem SSL configurado
+    if host in ("db", "localhost", "127.0.0.1"):
+        return {}
+    return {"ssl": ssl.create_default_context()}
+
+
 def run_migrations_offline() -> None:
     url = get_url()
     context.configure(
@@ -54,7 +63,7 @@ def do_run_migrations(connection):
 
 
 async def run_migrations_online() -> None:
-    engine = create_async_engine(get_url(), poolclass=pool.NullPool)
+    engine = create_async_engine(get_url(), poolclass=pool.NullPool, connect_args=get_connect_args())
     async with engine.connect() as connection:
         await connection.run_sync(do_run_migrations)
     await engine.dispose()

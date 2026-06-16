@@ -1,4 +1,5 @@
 import os
+import ssl
 from typing import AsyncGenerator
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 from sqlalchemy.orm import declarative_base
@@ -21,6 +22,9 @@ if not all([POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_DB, POSTGRES_HOST, POSTGR
 # Endereço do banco de dados
 DATABASE_URL = f"postgresql+asyncpg://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_HOST}:{POSTGRES_PORT}/{POSTGRES_DB}"
 
+# RDS exige SSL por padrão; banco local (docker-compose/localhost) não tem SSL configurado
+CONNECT_ARGS = {} if POSTGRES_HOST in ("db", "localhost", "127.0.0.1") else {"ssl": ssl.create_default_context()}
+
 # Comunicação com o banco de dados
 engine = create_async_engine(
     DATABASE_URL,
@@ -29,6 +33,7 @@ engine = create_async_engine(
     pool_pre_ping=True,
     pool_recycle=1800,
     echo=False,
+    connect_args=CONNECT_ARGS,
 )
 
 # Cria uma conexão para cada pessoa que acessar a API

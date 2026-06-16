@@ -55,7 +55,7 @@ echo ""
 
 # ---------- [1/6] Build do frontend ----------
 echo "==> [1/6] Buildando frontend (VITE_API_URL=/api)..."
-# Carrega o NVM caso o script tenha sido invocado do PowerShell sem o bash_profile
+# Carrega o NVM caso o script tenha sido invocado sem o bash_profile
 if [ -s "$HOME/.nvm/nvm.sh" ]; then
   export NVM_DIR="$HOME/.nvm"
   \. "$NVM_DIR/nvm.sh"
