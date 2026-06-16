@@ -353,6 +353,8 @@ KEY_EXISTS=$(aws ec2 describe-key-pairs --region "$REGION" \
   --query "KeyPairs[0].KeyName" --output text 2>/dev/null || echo "")
 
 if [ -z "$KEY_EXISTS" ] || [ "$KEY_EXISTS" = "None" ]; then
+  rm -f "$KEY_FILE"  # remove .pem órfão (chmod 400 bloqueia redirect)
+  mkdir -p "$(dirname "$KEY_FILE")"
   aws ec2 create-key-pair --region "$REGION" \
     --key-name "$KEY_NAME" \
     --query "KeyMaterial" --output text > "$KEY_FILE"
