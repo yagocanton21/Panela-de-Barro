@@ -15,157 +15,174 @@ Internet
            RDS PostgreSQL (subnet privada, sem acesso direto)
 ```
 
-## Pré-requisitos
+## Pré-requisitos (qualquer sistema)
 
 - AWS CLI configurado (`aws configure`) com permissões para EC2, RDS, S3, CloudFront, IAM, Secrets Manager
-- Arquivo `.env` na raiz com `ADMIN_PASSWORD` e `LICENSE_KEY` preenchidos
+- Arquivo `.env` na raiz do projeto com `ADMIN_PASSWORD` e `LICENSE_KEY` preenchidos
 - `openssl` disponível no shell
+- Os scripts em `infra/` são `.sh` (bash). **Windows: use WSL** — PowerShell puro e Git Bash dão dor de cabeça com PATH/`aws` não encontrado.
 
-> **Aviso para usuários de Windows (PowerShell vs Bash):** Os scripts na pasta `infra/` são scripts `.sh` (Linux). Executá-los no PowerShell pode causar erros (como `execvpe(/bin/bash) failed`), e a sintaxe de passar variáveis temporárias (`VAR=valor bash script.sh`) **não funciona** no PowerShell.
-> Como executar dependendo do seu terminal:
-> - **Linux / Mac / WSL (Recomendado):** Use a sintaxe nativa `VAR=valor bash script.sh`. *(Para instalar o WSL no Windows, rode `wsl --install` no PowerShell como admin, e no Ubuntu instale as dependências: `sudo apt install awscli jq -y`)*.
-> - **Git Bash (Windows):** Permite usar a sintaxe nativa do Linux: `VAR=valor bash script.sh`. (Requer AWS CLI e `jq` instalados).
-> - **PowerShell (Windows):** Você precisa declarar a variável de ambiente **antes** de rodar o comando. Exemplo: `$env:VAR="valor"; bash script.sh`
-
-## Configurar o AWS CLI
-
-Se você ainda não tem o AWS CLI instalado e autenticado, siga os passos abaixo antes de rodar qualquer script.
-
-### 1. Instalar
-
-Veja o guia oficial para o seu sistema: <https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html>
-
-```bash
-# macOS (Homebrew)
-brew install awscli
-
-# Ubuntu / WSL
-sudo apt install awscli -y
-
-# Verifique a instalação
-aws --version
-```
-
-### 2. Criar uma access key
+## Criar uma access key (igual em qualquer sistema)
 
 1. Acesse o **IAM** no console da AWS.
 2. **Users** → selecione (ou crie) seu usuário → aba **Security credentials**.
 3. Em **Access keys**, clique em **Create access key** → escolha **Command Line Interface (CLI)**.
 4. Guarde o **Access key ID** e o **Secret access key** — o secret só aparece uma vez.
 
-> O usuário precisa de permissões para EC2, RDS, S3, CloudFront, IAM e Secrets Manager (veja os Pré-requisitos).
+> O usuário precisa de permissões para EC2, RDS, S3, CloudFront, IAM e Secrets Manager.
 
-### 3. Autenticar
+---
+
+## 🍎 Sessão macOS
+
+### 1. Instalar AWS CLI
+
+```bash
+brew install awscli
+aws --version
+```
+
+### 2. Autenticar
 
 ```bash
 aws configure
 ```
 
-Preencha:
+| Campo                  | Valor           |
+|------------------------|------------------|
+| AWS Access Key ID      | sua access key  |
+| AWS Secret Access Key  | seu secret       |
+| Default region name    | `us-east-1`      |
+| Default output format  | `json`           |
 
-| Campo                  | Valor                    |
-|------------------------|--------------------------|
-| AWS Access Key ID      | sua access key           |
-| AWS Secret Access Key  | seu secret               |
-| Default region name    | `us-east-1`              |
-| Default output format  | `json`                   |
-
-### 4. Verificar
+Verificar:
 
 ```bash
 aws sts get-caller-identity
 ```
 
-Deve retornar o `Account`, `UserId` e `Arn` da sua conta. Se aparecer erro de credencial, refaça o `aws configure`.
-
-## Ordem de execução
-
-Execute os scripts nessa ordem:
-
-### 1. Infraestrutura principal (VPC + RDS + EC2)
+### 3. Rodar o deploy
 
 ```bash
+# 1. Infraestrutura (VPC + RDS + EC2) — ~8-10 min
 bash infra/setup-rds.sh
+
+# 2. Frontend (S3 + CloudFront) — use o IP exibido no passo 1
+EC2_PUBLIC_IP=<seu-ip> bash infra/setup-s3-cloudfront.sh
+
+# 3. Alarme de billing (opcional, recomendado)
+ALERT_EMAIL=seu@email.com bash infra/setup-billing-alarm.sh
 ```
 
-O que faz (11 etapas):
-1. VPC `10.0.0.0/16`
-2. Subnets: pública `10.0.1.0/24`, privadas `10.0.2.0/24` e `10.0.3.0/24`
-3. Internet Gateway + tabela de rotas
-4. Security Groups (SSH restrito ao seu IP, HTTP/HTTPS aberto, RDS só via EC2)
-5. RDS PostgreSQL `db.t3.micro` na subnet privada
-6. Secrets Manager com credenciais do banco
-7. Key Pair SSH (`~/.ssh/panela-prod-key.pem`)
-8. IAM Role + Instance Profile para a EC2 acessar Secrets Manager
-9. EC2 `t3.micro` na subnet pública
-10. User data: clona o repo, sobe Docker Compose em modo produção
-11. Exibe IP público da EC2
+> Override de região: `AWS_DEFAULT_REGION=... bash infra/setup-rds.sh`
 
-> Região padrão: `us-east-1`. Override via bash: `AWS_DEFAULT_REGION=... bash infra/setup-rds.sh` ou PowerShell: `$env:AWS_DEFAULT_REGION="..."; bash infra/setup-rds.sh`
+### 4. Acessar via SSH
 
-**Variáveis opcionais:**
+```bash
+ssh -i ~/.ssh/panela-prod-key.pem ubuntu@<IP_DA_EC2>
+```
+
+### 5. Se seu IP mudar (perde SSH)
+
+```bash
+bash infra/update-ssh-ip.sh
+```
+
+### 6. Limpeza (destruir tudo, irreversível)
+
+```bash
+bash infra/cleanup-aws.sh
+```
+
+---
+
+## 🐧 Sessão WSL (Ubuntu)
+
+> Instalar WSL primeiro (PowerShell como admin): `wsl --install`. Depois abra o Ubuntu.
+
+### 1. Instalar dependências
+
+```bash
+sudo apt update
+sudo apt install -y awscli jq
+aws --version
+```
+
+### 2. Autenticar
+
+```bash
+aws configure
+```
+
+| Campo                  | Valor           |
+|------------------------|------------------|
+| AWS Access Key ID      | sua access key  |
+| AWS Secret Access Key  | seu secret       |
+| Default region name    | `us-east-1`      |
+| Default output format  | `json`           |
+
+Verificar:
+
+```bash
+aws sts get-caller-identity
+```
+
+### 3. Rodar o deploy
+
+```bash
+# 1. Infraestrutura (VPC + RDS + EC2) — ~8-10 min
+bash infra/setup-rds.sh
+
+# 2. Frontend (S3 + CloudFront) — use o IP exibido no passo 1
+EC2_PUBLIC_IP=<seu-ip> bash infra/setup-s3-cloudfront.sh
+
+# 3. Alarme de billing (opcional, recomendado)
+ALERT_EMAIL=seu@email.com bash infra/setup-billing-alarm.sh
+```
+
+> Override de região: `AWS_DEFAULT_REGION=... bash infra/setup-rds.sh`
+
+### 4. Acessar via SSH
+
+```bash
+ssh -i ~/.ssh/panela-prod-key.pem ubuntu@<IP_DA_EC2>
+```
+
+> Repo clonado no Windows e aberto via WSL? Cuidado com `.env` salvo em CRLF (Notepad) — quebra o `source` do bash. Edite com VSCode ou rode `dos2unix .env` antes.
+
+### 5. Se seu IP mudar (perde SSH)
+
+```bash
+bash infra/update-ssh-ip.sh
+```
+
+### 6. Limpeza (destruir tudo, irreversível)
+
+```bash
+bash infra/cleanup-aws.sh
+```
+
+---
+
+## 🪟 Windows
+
+**Use a [sessão WSL](#-sessão-wsl-ubuntu) acima.** PowerShell puro não interpreta `.sh`, e Git Bash costuma dar `aws: command not found` por problema de PATH entre os dois ambientes. WSL evita essa dor de cabeça — é um Linux de verdade.
+
+Se nunca instalou: abra PowerShell como admin e rode `wsl --install`, reinicie, abra "Ubuntu" no menu Iniciar e siga a sessão WSL.
+
+---
+
+## Variáveis opcionais do `setup-rds.sh`
 
 | Variável        | Padrão               | Descrição                              |
-|-----------------|----------------------|----------------------------------------|
+|-----------------|----------------------|------------------------------------------|
 | `DB_PASSWORD`   | gerada automaticamente | Senha do RDS                          |
 | `EC2_TYPE`      | `t3.micro`           | Tipo da instância EC2                  |
 | `ADMIN_IP`      | IP público detectado | IP liberado para SSH                   |
 | `GOLDEN_AMI_ID` | Ubuntu 22.04 stock   | AMI pré-configurada (Golden Image)     |
 | `REPO_URL`      | repo público         | URL do repositório clonado pela EC2    |
 
-### 2. Frontend (S3 + CloudFront)
-
-**Bash (Linux/Mac/WSL/Git Bash):**
-```bash
-EC2_PUBLIC_IP=<seu-ip> bash infra/setup-s3-cloudfront.sh
-```
-
-**PowerShell (Windows):**
-```powershell
-$env:EC2_PUBLIC_IP="<seu-ip>"; bash infra/setup-s3-cloudfront.sh
-```
-
-O que faz:
-- Cria bucket S3 privado
-- Faz build do React (`npm run build`)
-- Faz upload do `dist/` para o S3
-- Cria distribuição CloudFront apontando para o bucket
-- Exibe a URL do CloudFront ao final
-
-### 3. Alarme de billing (opcional mas recomendado)
-
-**Bash (Linux/Mac/WSL/Git Bash):**
-```bash
-ALERT_EMAIL=seu@email.com bash infra/setup-billing-alarm.sh
-```
-
-**PowerShell (Windows):**
-```powershell
-$env:ALERT_EMAIL="seu@email.com"; bash infra/setup-billing-alarm.sh
-```
-
-Cria alarme CloudWatch que envia e-mail se o custo estimado mensal ultrapassar US$5. Após rodar, **confirme a inscrição clicando no link que a AWS envia para o e-mail informado** — sem isso o alarme não dispara.
-
-> Limite customizável no Bash: `THRESHOLD=10 ALERT_EMAIL=seu@email.com bash infra/setup-billing-alarm.sh`
-> Limite customizável no PowerShell: `$env:THRESHOLD="10"; $env:ALERT_EMAIL="seu@email.com"; bash infra/setup-billing-alarm.sh`
-
-## Atualizar IP para SSH
-
-Se seu IP mudou e perdeu acesso SSH à EC2:
-
-```bash
-bash infra/update-ssh-ip.sh
-```
-
-Detecta seu IP atual e atualiza o Security Group automaticamente.
-
-## Acessar a EC2 via SSH
-
-```bash
-ssh -i ~/.ssh/panela-prod-key.pem ubuntu@<IP_DA_EC2>
-```
-
-O IP é exibido ao final do `setup-rds.sh`. Para consultar novamente:
+## Consultar o IP da EC2 novamente
 
 ```bash
 aws ec2 describe-instances \
@@ -173,14 +190,6 @@ aws ec2 describe-instances \
   --query "Reservations[0].Instances[0].PublicIpAddress" \
   --output text
 ```
-
-## Limpeza (destruir tudo)
-
-```bash
-bash infra/cleanup-aws.sh
-```
-
-Remove todos os recursos criados pelos scripts (EC2, RDS, VPC, S3, CloudFront, Secrets Manager, IAM). **Irreversível — apaga dados do banco.**
 
 ## Checklist de deploy
 
