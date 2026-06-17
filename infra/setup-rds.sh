@@ -29,14 +29,16 @@ ENV_FILE="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/.env"
 if [ -f "$ENV_FILE_PROD" ]; then
   echo "==> Carregando variáveis de $ENV_FILE_PROD"
   set -a
+  # Remove CRLF (\r) ao carregar: arquivos .env salvos no Windows deixam um
+  # \r no fim de cada valor, que corrompe o JSON do segredo no Secrets Manager.
   # shellcheck disable=SC1090
-  . "$ENV_FILE_PROD"
+  . <(tr -d '\r' < "$ENV_FILE_PROD")
   set +a
 elif [ -f "$ENV_FILE" ]; then
   echo "==> Carregando variáveis de $ENV_FILE"
   set -a
   # shellcheck disable=SC1090
-  . "$ENV_FILE"
+  . <(tr -d '\r' < "$ENV_FILE")
   set +a
 fi
 
