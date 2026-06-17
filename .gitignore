@@ -40,3 +40,5 @@ MANUTENCAO.md
 # Licença — NUNCA comitar
 infra/license_private.pem
 infra/generate-license.py
+
+api/.venv/
