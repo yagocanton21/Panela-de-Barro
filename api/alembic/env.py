@@ -9,6 +9,7 @@ from sqlalchemy import pool
 from alembic import context
 from dotenv import load_dotenv
 
+load_dotenv(".env.local")
 load_dotenv()
 
 # Import all models so autogenerate can detect them
@@ -26,7 +27,7 @@ if config.config_file_name is not None:
 
 target_metadata = Base.metadata
 
-
+# Pegar as variáveis de ambiente
 def get_url() -> str:
     user = os.getenv("POSTGRES_USER")
     password = os.getenv("POSTGRES_PASSWORD")
@@ -35,7 +36,7 @@ def get_url() -> str:
     db = os.getenv("POSTGRES_DB")
     return f"postgresql+asyncpg://{user}:{password}@{host}:{port}/{db}"
 
-
+# conectar ao banco de dados
 def get_connect_args() -> dict:
     host = os.getenv("POSTGRES_HOST", "localhost")
     # RDS exige SSL por padrão; banco local (docker-compose/localhost) não tem SSL configurado
@@ -43,7 +44,7 @@ def get_connect_args() -> dict:
         return {}
     return {"ssl": ssl.create_default_context(cafile="/backend/rds-global-bundle.pem")}
 
-
+# Rodar as migrações
 def run_migrations_offline() -> None:
     url = get_url()
     context.configure(
@@ -55,7 +56,7 @@ def run_migrations_offline() -> None:
     with context.begin_transaction():
         context.run_migrations()
 
-
+# Rodar as migrações online
 def do_run_migrations(connection):
     context.configure(connection=connection, target_metadata=target_metadata)
     with context.begin_transaction():

@@ -15,7 +15,7 @@ uzcdkn9V7mhrokstbWC8M0m0z/72xBy2DuG3tSLSTeoye6VQ26Ktbi637B9FLQbl
 UwIDAQAB
 -----END PUBLIC KEY-----"""
 
-
+# Função para validar a licença
 def validate_license() -> None:
     """Valida LICENSE_KEY no startup. Levanta RuntimeError se inválida ou ausente."""
     token = os.getenv("LICENSE_KEY")
