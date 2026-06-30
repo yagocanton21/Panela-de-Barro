@@ -3,10 +3,10 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from sqlalchemy import select, text
+from sqlalchemy.exc import IntegrityError
 from api.database import engine, SessionLocal
 from api.routers import produto, categoria, movimentacao, usuario, lista_compras
 from api.models.usuario import Usuario, hash_password
-from api.license import validate_license
 import logging
 import os
 
@@ -16,7 +16,6 @@ logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    validate_license()
     # Criar usuário administrador inicial se não houver nenhum
     async with SessionLocal() as session:
         result = await session.execute(select(Usuario))
@@ -34,8 +33,14 @@ async def lifespan(app: FastAPI):
                 is_admin=True
             )
             session.add(admin_inicial)
-            await session.commit()
-            logger.info(f"Usuário '{admin_username}' criado com sucesso!")
+            try:
+                await session.commit()
+                logger.info(f"Usuário '{admin_username}' criado com sucesso!")
+            except IntegrityError:
+                # Outro worker já criou o admin nesse meio-tempo (múltiplos workers
+                # rodam o lifespan em paralelo no startup) — não é um erro real.
+                await session.rollback()
+                logger.info(f"Usuário '{admin_username}' já criado por outro worker, ignorando.")
 
     yield
     # Fecha a engine ao desligar
