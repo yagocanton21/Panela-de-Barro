@@ -6,10 +6,9 @@
 #
 # O .env precisa conter, no mínimo:
 #   ADMIN_PASSWORD=<senha-do-admin>
-#   LICENSE_KEY=<chave-de-licenca>
 #
 # Alternativa: passar via variável de ambiente na linha de comando:
-#   ADMIN_PASSWORD=minhasenha LICENSE_KEY=abc123 bash infra/setup-rds.sh
+#   ADMIN_PASSWORD=minhasenha bash infra/setup-rds.sh
 #
 # Variáveis opcionais:
 #   DB_PASSWORD    — senha do banco (gera automaticamente se omitida)
@@ -26,35 +25,32 @@ export AWS_PAGER=""
 ENV_FILE_PROD="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/.env.prod"
 ENV_FILE="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/.env"
 
+_load_env() {
+  local src="$1"
+  local tmp
+  tmp=$(mktemp)
+  tr -d '\r' < "$src" > "$tmp"
+  set -a
+  # shellcheck disable=SC1090
+  . "$tmp"
+  set +a
+  rm -f "$tmp"
+}
+
 if [ -f "$ENV_FILE_PROD" ]; then
   echo "==> Carregando variáveis de $ENV_FILE_PROD"
-  set -a
-  # Remove CRLF (\r) ao carregar: arquivos .env salvos no Windows deixam um
-  # \r no fim de cada valor, que corrompe o JSON do segredo no Secrets Manager.
-  # shellcheck disable=SC1090
-  . <(tr -d '\r' < "$ENV_FILE_PROD")
-  set +a
+  _load_env "$ENV_FILE_PROD"
 elif [ -f "$ENV_FILE" ]; then
   echo "==> Carregando variáveis de $ENV_FILE"
-  set -a
-  # shellcheck disable=SC1090
-  . <(tr -d '\r' < "$ENV_FILE")
-  set +a
+  _load_env "$ENV_FILE"
 fi
 
 # ---------- Validação ----------
 ADMIN_PASSWORD="${ADMIN_PASSWORD:-}"
-LICENSE_KEY="${LICENSE_KEY:-}"
 
 if [ -z "$ADMIN_PASSWORD" ] || [ "$ADMIN_PASSWORD" = "defina-uma-senha" ]; then
   ADMIN_PASSWORD=$(openssl rand -hex 8)
   echo "Aviso: ADMIN_PASSWORD não configurada ou usando placeholder. Gerada aleatoriamente: $ADMIN_PASSWORD"
-fi
-
-if [ -z "$LICENSE_KEY" ] || [ "$LICENSE_KEY" = "cole-aqui-a-chave-de-licenca" ]; then
-  echo "ERRO: LICENSE_KEY inválida ou usando placeholder."
-  echo "Por favor, cole a chave de licença válida no arquivo .env antes de rodar este script."
-  exit 1
 fi
 
 if [ -z "$ADMIN_PASSWORD" ]; then
@@ -285,8 +281,7 @@ SECRET_VALUE=$(cat <<JSON
   "host": "${RDS_ENDPOINT}",
   "dbname": "${DB_NAME}",
   "port": "5432",
-  "admin_password": "${ADMIN_PASSWORD}",
-  "license_key": "${LICENSE_KEY}"
+  "admin_password": "${ADMIN_PASSWORD}"
 }
 JSON
 )
@@ -417,7 +412,6 @@ DB_PASSWORD=\$(echo "\$SECRET_JSON" | python3 -c "import json,sys; print(json.lo
 DB_USER=\$(echo "\$SECRET_JSON" | python3 -c "import json,sys; print(json.load(sys.stdin)['username'])")
 DB_NAME=\$(echo "\$SECRET_JSON" | python3 -c "import json,sys; print(json.load(sys.stdin)['dbname'])")
 ADMIN_PASSWORD=\$(echo "\$SECRET_JSON" | python3 -c "import json,sys; print(json.load(sys.stdin)['admin_password'])")
-LICENSE_KEY=\$(echo "\$SECRET_JSON" | python3 -c "import json,sys; print(json.load(sys.stdin)['license_key'])")
 
 APP_DIR="/home/ubuntu/app"
 git clone "${REPO_URL}" "\$APP_DIR"
@@ -435,7 +429,6 @@ SECRET_KEY=\${SECRET_KEY}
 ADMIN_USERNAME=admin
 ADMIN_PASSWORD=\${ADMIN_PASSWORD}
 ADMIN_DISPLAY_NAME=Admin
-LICENSE_KEY=\${LICENSE_KEY}
 ENV
 
 cd "\$APP_DIR"
