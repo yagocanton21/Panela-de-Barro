@@ -5,6 +5,9 @@ from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, Asyn
 from sqlalchemy.orm import declarative_base
 from dotenv import load_dotenv
 
+# Overrides locais (rodar nativo); ignorado dentro do Docker pois o compose já
+# injeta POSTGRES_HOST/PORT no ambiente e load_dotenv não sobrescreve var existente
+load_dotenv(".env.local")
 # Puxa as informações escondidas no arquivo .env
 load_dotenv()
 

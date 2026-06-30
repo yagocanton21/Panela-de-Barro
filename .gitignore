@@ -20,6 +20,7 @@ htmlcov/
 # Docker
 docker_data/
 .docker/
+docker-compose.override.yml
 
 # IDE e Editores
 .vscode/
@@ -39,3 +40,5 @@ MANUTENCAO.md
 # Licença — NUNCA comitar
 infra/license_private.pem
 infra/generate-license.py
+
+api/.venv/

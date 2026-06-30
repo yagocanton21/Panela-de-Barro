@@ -12,6 +12,14 @@ export default defineConfig({
     },
     hmr: {
       clientPort: 80
-    }
+    },
+    // Dev nativo (sem nginx): espelha o proxy /api -> backend. Ignorado no build de prod.
+    proxy: {
+      '/api': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api/, ''),
+      },
+    },
   },
 })

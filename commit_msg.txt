@@ -1,0 +1,6 @@
+feat: melhorias para o ambiente de desenvolvimento local
+
+- Suporte a `.env.local` no backend (database e alembic)
+- Roteamento de API local via proxy no vite.config.js
+- Correção do tokenUrl de login para /api/login
+- Comentários adicionais e atualização do .gitignore
