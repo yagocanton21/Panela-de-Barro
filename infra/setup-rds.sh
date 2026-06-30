@@ -25,20 +25,24 @@ export AWS_PAGER=""
 ENV_FILE_PROD="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/.env.prod"
 ENV_FILE="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/.env"
 
+_load_env() {
+  local src="$1"
+  local tmp
+  tmp=$(mktemp)
+  tr -d '\r' < "$src" > "$tmp"
+  set -a
+  # shellcheck disable=SC1090
+  . "$tmp"
+  set +a
+  rm -f "$tmp"
+}
+
 if [ -f "$ENV_FILE_PROD" ]; then
   echo "==> Carregando variáveis de $ENV_FILE_PROD"
-  set -a
-  # Remove CRLF (\r) ao carregar: arquivos .env salvos no Windows deixam um
-  # \r no fim de cada valor, que corrompe o JSON do segredo no Secrets Manager.
-  # shellcheck disable=SC1090
-  . <(tr -d '\r' < "$ENV_FILE_PROD")
-  set +a
+  _load_env "$ENV_FILE_PROD"
 elif [ -f "$ENV_FILE" ]; then
   echo "==> Carregando variáveis de $ENV_FILE"
-  set -a
-  # shellcheck disable=SC1090
-  . <(tr -d '\r' < "$ENV_FILE")
-  set +a
+  _load_env "$ENV_FILE"
 fi
 
 # ---------- Validação ----------
