@@ -14,6 +14,7 @@ function Categorias() {
     const [editandoId, setEditandoId] = useState(null);
     const [editandoNome, setEditandoNome] = useState("");
     const [paginaAtual, setPaginaAtual] = useState(1);
+    const [salvando, setSalvando] = useState(false);
 
     const carregarCategorias = () => {
         apiRequest("/categorias")
@@ -33,6 +34,7 @@ function Categorias() {
 
     const handleSalvar = async (e) => {
         e.preventDefault();
+        setSalvando(true);
         try {
             const response = await apiRequest("/categorias", {
                 method: "POST",
@@ -48,6 +50,8 @@ function Categorias() {
         } catch (err) {
             console.error("Erro ao salvar", err);
             alert("Erro de conexão com o servidor.");
+        } finally {
+            setSalvando(false);
         }
     };
 
@@ -132,8 +136,13 @@ function Categorias() {
                         />
                     </div>
                     <div>
-                        <button type="submit" className={styles.submitButton}>
-                            <Plus size={18} /> Cadastrar
+                        <button
+                            type="submit"
+                            disabled={salvando}
+                            className={styles.submitButton}
+                            style={{ opacity: salvando ? 0.6 : 1, cursor: salvando ? 'not-allowed' : 'pointer' }}
+                        >
+                            <Plus size={18} /> {salvando ? "Cadastrando..." : "Cadastrar"}
                         </button>
                     </div>
                 </form>

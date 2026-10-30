@@ -9,6 +9,8 @@ function Ajustes() {
     const [editandoId, setEditandoId] = useState(null);
     const [erro, setErro] = useState("");
     const [sucesso, setSucesso] = useState("");
+    const [salvando, setSalvando] = useState(false);
+    const [deletandoId, setDeletandoId] = useState(null);
 
     const carregarUsuarios = async () => {
         const res = await apiRequest("/usuarios");
@@ -32,6 +34,7 @@ function Ajustes() {
     const salvarUsuario = async (e) => {
         e.preventDefault();
         setErro(""); setSucesso("");
+        setSalvando(true);
 
         const editando = editandoId !== null;
         const url = editando ? `/usuarios/${editandoId}` : "/usuarios";
@@ -40,26 +43,44 @@ function Ajustes() {
         const payload = { ...formUsuario };
         if (editando && !payload.senha) delete payload.senha;
 
-        const res = await apiRequest(url, {
-            method,
-            body: JSON.stringify(payload)
-        });
+        try {
+            const res = await apiRequest(url, {
+                method,
+                body: JSON.stringify(payload)
+            });
 
-        if (res && res.ok) {
-            setSucesso(editando ? "Usuário editado com sucesso!" : "Usuário criado com sucesso!");
-            limparForm();
-            carregarUsuarios();
-        } else {
-            const data = await res.json();
-            setErro(data.detail || (editando ? "Erro ao editar usuário" : "Erro ao criar usuário"));
+            if (res && res.ok) {
+                setSucesso(editando ? "Usuário editado com sucesso!" : "Usuário criado com sucesso!");
+                limparForm();
+                carregarUsuarios();
+            } else {
+                const data = await res.json();
+                setErro(data.detail || (editando ? "Erro ao editar usuário" : "Erro ao criar usuário"));
+            }
+        } catch {
+            setErro("Falha na conexão com o servidor.");
+        } finally {
+            setSalvando(false);
         }
     };
 
     const deletarUsuario = async (id) => {
         if (!confirm("Tem certeza que deseja deletar este usuário?")) return;
-        await apiRequest(`/usuarios/${id}`, { method: "DELETE" });
-        if (editandoId === id) limparForm();
-        carregarUsuarios();
+        setDeletandoId(id);
+        try {
+            const res = await apiRequest(`/usuarios/${id}`, { method: "DELETE" });
+            if (res && !res.ok) {
+                const data = await res.json();
+                setErro(data.detail || "Erro ao deletar usuário.");
+            } else {
+                if (editandoId === id) limparForm();
+                carregarUsuarios();
+            }
+        } catch {
+            setErro("Falha ao comunicar com o servidor.");
+        } finally {
+            setDeletandoId(null);
+        }
     };
 
     const editando = editandoId !== null;
@@ -92,11 +113,18 @@ function Ajustes() {
                         }}>
                             Editar
                         </button>
-                        <button onClick={() => deletarUsuario(u.id)} style={{
-                            flex: 1, background: "none", border: "1px solid #e74c3c", color: "#e74c3c",
-                            borderRadius: "6px", padding: "10px 12px", cursor: "pointer", fontSize: "14px"
-                        }}>
-                            Deletar
+                        <button
+                            onClick={() => deletarUsuario(u.id)}
+                            disabled={deletandoId === u.id}
+                            style={{
+                                flex: 1, background: "none", border: "1px solid #e74c3c", color: "#e74c3c",
+                                borderRadius: "6px", padding: "10px 12px",
+                                cursor: deletandoId === u.id ? "not-allowed" : "pointer",
+                                opacity: deletandoId === u.id ? 0.6 : 1,
+                                fontSize: "14px"
+                            }}
+                        >
+                            {deletandoId === u.id ? "Deletando..." : "Deletar"}
                         </button>
                     </div>
                 </div>
@@ -141,11 +169,18 @@ function Ajustes() {
                     Administrador
                 </label>
                 <div style={{ display: "flex", gap: "8px" }}>
-                    <button type="submit" style={{
-                        flex: 1, padding: "12px", background: "var(--terracota)", color: "white",
-                        border: "none", borderRadius: "8px", fontSize: "16px", cursor: "pointer", fontWeight: "600"
-                    }}>
-                        {editando ? "Salvar Alterações" : "Criar Usuário"}
+                    <button
+                        type="submit"
+                        disabled={salvando}
+                        style={{
+                            flex: 1, padding: "12px", background: "var(--terracota)", color: "white",
+                            border: "none", borderRadius: "8px", fontSize: "16px",
+                            cursor: salvando ? "not-allowed" : "pointer",
+                            opacity: salvando ? 0.6 : 1,
+                            fontWeight: "600"
+                        }}
+                    >
+                        {salvando ? "Salvando..." : (editando ? "Salvar Alterações" : "Criar Usuário")}
                     </button>
                     {editando && (
                         <button type="button" onClick={limparForm} style={{

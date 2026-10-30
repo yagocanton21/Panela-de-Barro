@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Body
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, delete
+from sqlalchemy import select, delete, update
+from sqlalchemy.exc import IntegrityError
 from api.database import get_connection
 from api.auth import obter_usuario_atual
 from api.models.lista_compras import ItemListaCompras
@@ -41,10 +42,14 @@ async def listar_itens(db: AsyncSession = Depends(get_connection)):
 @router.post("/", response_model=ItemListaResponse, summary="Adicionar item à lista")
 async def adicionar_item(dados: CriarItemLista, db: AsyncSession = Depends(get_connection)):
     """Adiciona um novo item à lista de compras (manual ou vinculado a um produto)."""
-    novo_item = ItemListaCompras(**dados.model_dump())
-    db.add(novo_item)
-    await db.commit()
-    await db.refresh(novo_item)
+    try:
+        novo_item = ItemListaCompras(**dados.model_dump())
+        db.add(novo_item)
+        await db.commit()
+        await db.refresh(novo_item)
+    except IntegrityError:
+        await db.rollback()
+        raise HTTPException(status_code=400, detail="Este produto já está pendente na lista de compras.")
 
     resultado = await db.execute(
         _item_lista_query().where(ItemListaCompras.id == novo_item.id)
@@ -70,7 +75,12 @@ async def sincronizar_com_estoque(db: AsyncSession = Depends(get_connection)):
     for prod in produtos_faltando:
         db.add(ItemListaCompras(produto_id=prod.id, quantidade=max(1, prod.quantidade_minima - prod.quantidade)))
 
-    await db.commit()
+    try:
+        await db.commit()
+    except IntegrityError:
+        await db.rollback()
+        return {"message": "Sincronização já realizada por outra requisição simultânea."}
+
     return {"message": f"Sincronização concluída. {len(produtos_faltando)} novos itens adicionados."}
 
 # Rota para marcar item como comprado
@@ -94,41 +104,38 @@ async def atualizar_status_item(
 # Rota para finalizar compras
 @router.post("/finalizar", response_model=MessageResponse, summary="Finalizar compras")
 async def finalizar_compras(db: AsyncSession = Depends(get_connection)):
-    """Dá entrada no estoque de todos os itens marcados como comprados e os remove da lista.
-
-    Usa SELECT ... FOR UPDATE em lote nos produtos afetados para serializar com outras
-    movimentações concorrentes e evitar race condition no saldo do estoque.
-    """
+    """Dá entrada no estoque de todos os itens marcados como comprados e os remove da lista de forma atômica."""
     try:
-        resultado = await db.execute(select(ItemListaCompras).where(ItemListaCompras.comprado == True))
-        itens_comprados = resultado.scalars().all()
+        # Operação atômica no banco (Regra 3b):
+        # Remove os itens comprados e retorna as linhas afetadas.
+        # Qualquer execução concorrente encontrará 0 linhas e será barrada.
+        stmt_delete = (
+            delete(ItemListaCompras)
+            .where(ItemListaCompras.comprado == True)
+            .returning(ItemListaCompras.id, ItemListaCompras.produto_id, ItemListaCompras.quantidade)
+        )
+        resultado = await db.execute(stmt_delete)
+        itens_comprados = resultado.all()
 
         if not itens_comprados:
             raise HTTPException(status_code=400, detail="Nenhum item comprado para finalizar.")
 
-        produto_ids = {item.produto_id for item in itens_comprados if item.produto_id}
-        produtos_por_id: dict[int, Produto] = {}
-        if produto_ids:
-            res_prods = await db.execute(
-                select(Produto).where(Produto.id.in_(produto_ids)).with_for_update()
-            )
-            produtos_por_id = {p.id: p for p in res_prods.scalars().all()}
-
         count_entrada = 0
         for item in itens_comprados:
             if item.produto_id:
-                produto = produtos_por_id.get(item.produto_id)
-                if produto:
-                    produto.quantidade += item.quantidade
-                    db.add(Movimentacao(
-                        produto_id=produto.id,
-                        tipo="entrada",
-                        quantidade=item.quantidade,
-                        motivo="Entrada via Finalização da Lista de Compras"
-                    ))
-                    count_entrada += 1
-
-            await db.delete(item)
+                # Atualização atômica do saldo do produto
+                await db.execute(
+                    update(Produto)
+                    .where(Produto.id == item.produto_id)
+                    .values(quantidade=Produto.quantidade + item.quantidade)
+                )
+                db.add(Movimentacao(
+                    produto_id=item.produto_id,
+                    tipo="entrada",
+                    quantidade=item.quantidade,
+                    motivo="Entrada via Finalização da Lista de Compras"
+                ))
+                count_entrada += 1
 
         await db.commit()
     except HTTPException:
@@ -139,6 +146,7 @@ async def finalizar_compras(db: AsyncSession = Depends(get_connection)):
         raise
 
     return {"message": f"Compras finalizadas! {len(itens_comprados)} item(ns) removido(s) da lista ({count_entrada} entraram no estoque)."}
+
 
 # Rota para remover item da lista
 @router.delete("/{id}", response_model=MessageResponse, summary="Remover item da lista")

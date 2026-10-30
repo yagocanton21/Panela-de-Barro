@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, update
+from sqlalchemy.exc import IntegrityError
 from datetime import datetime
 from api.database import get_connection
 from api.auth import obter_usuario_atual
@@ -65,26 +66,39 @@ async def listar_movimentacoes(
 # Rota para criar movimentação
 @router.post("/movimentacoes", response_model=MovimentacaoMessageResponse, status_code=status.HTTP_201_CREATED, summary="Registrar movimentação")
 async def criar_movimentacao(dados: CriarMovimentacao, db: AsyncSession = Depends(get_connection), usuario_atual: dict = Depends(obter_usuario_atual)):
-    """Cria uma nova movimentação e atualiza o saldo do produto no estoque.
-
-    Usa SELECT ... FOR UPDATE para serializar atualizações concorrentes do estoque
-    e evitar race condition entre saídas simultâneas (over-depletion do saldo).
-    """
+    """Cria uma nova movimentação e atualiza o saldo do produto no estoque de forma atômica no banco."""
     try:
-        resultado = await db.execute(
-            select(Produto).where(Produto.id == dados.produto_id).with_for_update()
-        )
-        produto = resultado.scalars().first()
+        if dados.tipo == "saida":
+            # Operação atômica no banco (Regra 3b): só debita se houver saldo suficiente no banco
+            stmt = (
+                update(Produto)
+                .where(Produto.id == dados.produto_id, Produto.quantidade >= dados.quantidade)
+                .values(quantidade=Produto.quantidade - dados.quantidade)
+                .returning(Produto.quantidade)
+            )
+            res_update = await db.execute(stmt)
+            nova_qtd = res_update.scalar_one_or_none()
 
-        if not produto:
-            raise HTTPException(status_code=404, detail="Produto não encontrado.")
-
-        if dados.tipo == "entrada":
-            produto.quantidade += dados.quantidade
-        else:  # saida
-            if produto.quantidade < dados.quantidade:
+            if nova_qtd is None:
+                # Verifica se produto não existe ou saldo insuficiente
+                prod_check = await db.scalar(select(Produto.id).where(Produto.id == dados.produto_id))
+                if not prod_check:
+                    raise HTTPException(status_code=404, detail="Produto não encontrado.")
                 raise HTTPException(status_code=400, detail="Estoque insuficiente para esta saída.")
-            produto.quantidade -= dados.quantidade
+            estoque_atual = nova_qtd
+        else:
+            # Entrada de estoque
+            stmt = (
+                update(Produto)
+                .where(Produto.id == dados.produto_id)
+                .values(quantidade=Produto.quantidade + dados.quantidade)
+                .returning(Produto.quantidade)
+            )
+            res_update = await db.execute(stmt)
+            nova_qtd = res_update.scalar_one_or_none()
+            if nova_qtd is None:
+                raise HTTPException(status_code=404, detail="Produto não encontrado.")
+            estoque_atual = nova_qtd
 
         nova = Movimentacao(**dados.model_dump(), usuario_id=usuario_atual.get("id"))
         db.add(nova)
@@ -92,11 +106,14 @@ async def criar_movimentacao(dados: CriarMovimentacao, db: AsyncSession = Depend
     except HTTPException:
         await db.rollback()
         raise
+    except IntegrityError:
+        await db.rollback()
+        raise HTTPException(status_code=400, detail="Estoque insuficiente para esta saída.")
     except Exception:
         await db.rollback()
         raise
 
-    return {"mensagem": f"Movimentação de {dados.tipo} realizada. Estoque atual: {produto.quantidade}"}
+    return {"mensagem": f"Movimentação de {dados.tipo} realizada. Estoque atual: {estoque_atual}"}
 
 # Rota para consultar movimentação por ID
 @router.get("/movimentacoes/{id}", response_model=MovimentacaoResponse, summary="Consultar movimentação por ID")
@@ -108,11 +125,3 @@ async def buscar_movimentacao(id: int, db: AsyncSession = Depends(get_connection
         raise HTTPException(status_code=404, detail="Movimentação não encontrada.")
     return movimentacao._mapping
 
-# Rota para deletar movimentação
-@router.delete("/movimentacoes/{id}", response_model=MessageResponse, summary="Deletar movimentação")
-async def deletar_movimentacao(id: int, db: AsyncSession = Depends(get_connection)):
-    """Deleta permanentemente um registro de movimentação."""
-    movimentacao = await get_or_404(db, Movimentacao, id, "Movimentação não encontrada.")
-    await db.delete(movimentacao)
-    await db.commit()
-    return {"message": "Registro de movimentação deletado com sucesso!"}

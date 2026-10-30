@@ -9,9 +9,18 @@ class ProdutoBase(BaseModel):
     categoria_id: int
     unidade_medida: Optional[str] = Field("", max_length=50)
 
-# Schema para Criar/Atualizar Produto
+# Schema para Criar Produto
 class CriarProduto(ProdutoBase):
     pass
+
+# Schema para Atualizar Produto (dados de catálogo; ajuste de quantidade gera movimentação auditada)
+class AtualizarProduto(BaseModel):
+    nome: str = Field(..., min_length=1, max_length=255)
+    categoria_id: int
+    quantidade_minima: int = Field(0, ge=0)
+    unidade_medida: Optional[str] = Field("", max_length=50)
+    quantidade: Optional[int] = Field(None, ge=0)
+
 
 # Schema para Retornar Produto (Diferencia Saída de Entrada)
 class ProdutoResponse(ProdutoBase):

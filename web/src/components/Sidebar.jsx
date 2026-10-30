@@ -1,9 +1,10 @@
 import { LayoutGrid, Package, Settings, LogOut, Tag, ArrowUpDown, ClipboardList, Plus, ShoppingCart } from "lucide-react";
 import { NavLink, useNavigate } from "react-router-dom";
-import { clearAuth } from "../utils/auth";
+import { clearAuth, isAdmin } from "../utils/auth";
 
 function Sidebar({ aberta, onClose }) {
     const navigate = useNavigate();
+    const usuarioAdmin = isAdmin();
 
     const handleLogout = () => {
         clearAuth();
@@ -13,8 +14,10 @@ function Sidebar({ aberta, onClose }) {
     const menuItems = [
         { to: "/admin", icon: LayoutGrid, label: "Dashboard" },
         { to: "/estoque", icon: Package, label: "Estoque" },
-        { to: "/cadastrar", icon: Plus, label: "Cadastrar" },
-        { to: "/categorias", icon: Tag, label: "Categorias" },
+        ...(usuarioAdmin ? [
+            { to: "/cadastrar", icon: Plus, label: "Cadastrar" },
+            { to: "/categorias", icon: Tag, label: "Categorias" },
+        ] : []),
         { to: "/movimentacoes", icon: ArrowUpDown, label: "Movimentações" },
         { to: "/historico", icon: ClipboardList, label: "Histórico" },
         { to: "/lista-compras", icon: ShoppingCart, label: "Lista de Compras" },
@@ -63,10 +66,13 @@ function Sidebar({ aberta, onClose }) {
 
             {/* Rodapé */}
             <div style={{ marginTop: "auto", borderTop: "1px solid rgba(255,255,255,0.1)", paddingTop: "1rem" }}>
-                <NavLink to="/ajustes" className="sidebar-nav-item" style={navStyle} onClick={() => onClose && onClose()}>
-                    <Settings size={20} />
-                    <span>Ajustes</span>
-                </NavLink>
+                {usuarioAdmin && (
+                    <NavLink to="/ajustes" className="sidebar-nav-item" style={navStyle} onClick={() => onClose && onClose()}>
+                        <Settings size={20} />
+                        <span>Ajustes</span>
+                    </NavLink>
+                )}
+
 
                 <div
                     onClick={() => { handleLogout(); onClose && onClose(); }}

@@ -42,3 +42,25 @@ export const isAuthenticated = () => {
 
     return true;
 };
+
+// Retorna os dados do usuário autenticado a partir do storage ou JWT
+export const getUsuarioLogado = () => {
+    try {
+        const raw = localStorage.getItem("usuarioLogado");
+        if (raw) return JSON.parse(raw);
+    } catch {}
+
+    const token = localStorage.getItem("access_token");
+    if (token) {
+        return decodeJwtPayload(token);
+    }
+    return null;
+};
+
+// Retorna se o usuário logado possui perfil de administrador
+export const isAdmin = () => {
+    if (!isAuthenticated()) return false;
+    const user = getUsuarioLogado();
+    return Boolean(user && user.is_admin);
+};
+

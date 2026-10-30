@@ -2,10 +2,12 @@ import { useState, useEffect } from "react";
 import { Package, Search, Filter, AlertTriangle, Edit2, Trash2, Plus, ChevronLeft, ChevronRight, X } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { apiRequest } from "../api";
+import { isAdmin } from "../utils/auth";
 
 // --- Subcomponentes para limpar o código principal ---
 
-const ProductCard = ({ p, status, onEdit, onDelete, onMove }) => (
+const ProductCard = ({ p, status, onEdit, onDelete, onMove, userIsAdmin }) => (
+
     <div className="inventory-card" style={{
         backgroundColor: 'white', borderRadius: '20px', padding: '1.2rem',
         display: 'flex', flexDirection: 'column', border: '1px solid #f0ece6',
@@ -42,8 +44,12 @@ const ProductCard = ({ p, status, onEdit, onDelete, onMove }) => (
 
         <div className="card-footer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #f5f0e6', paddingTop: '0.8rem', zIndex: 1 }}>
             <div style={{ display: 'flex', gap: '8px' }}>
-                <button onClick={() => onEdit(p.id)} className="action-btn" title="Editar Produto"><Edit2 size={16} /></button>
-                <button onClick={() => onDelete(p.id)} className="action-btn delete" title="Excluir Produto"><Trash2 size={16} /></button>
+                {userIsAdmin && (
+                    <>
+                        <button onClick={() => onEdit(p.id)} className="action-btn" title="Editar Produto"><Edit2 size={16} /></button>
+                        <button onClick={() => onDelete(p.id)} className="action-btn delete" title="Excluir Produto"><Trash2 size={16} /></button>
+                    </>
+                )}
             </div>
             <button onClick={onMove} className="move-btn">Movimentar →</button>
         </div>
@@ -77,7 +83,9 @@ const Pagination = ({ current, total, onPrev, onNext }) => (
 function Estoque() {
     const navigate = useNavigate();
     const location = useLocation();
+    const userIsAdmin = isAdmin();
     const [produtos, setProdutos] = useState([]);
+
     const [busca, setBusca] = useState("");
     const [categoriaFiltro, setCategoriaFiltro] = useState("todas");
     const [somenteBaixoEstoque, setSomenteBaixoEstoque] = useState(false);
@@ -227,6 +235,7 @@ function Estoque() {
                                 onEdit={id => navigate(`/editar/${id}`)}
                                 onDelete={handleExcluir}
                                 onMove={() => navigate("/movimentacoes")}
+                                userIsAdmin={userIsAdmin}
                             />
                         ))}
                     </div>

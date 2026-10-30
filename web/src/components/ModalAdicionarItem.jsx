@@ -2,7 +2,7 @@ import { useState } from "react";
 import { X } from "lucide-react";
 
 // Modal para adicionar item à lista de compras (avulso ou do estoque)
-const ModalAdicionarItem = ({ aberto, onClose, onSubmit, produtos }) => {
+const ModalAdicionarItem = ({ aberto, onClose, onSubmit, produtos, salvando = false }) => {
     const [tipo, setTipo] = useState("avulso"); // "avulso" ou "produto"
     const [nomeAvulso, setNomeAvulso] = useState("");
     const [produtoId, setProdutoId] = useState("");
@@ -131,13 +131,18 @@ const ModalAdicionarItem = ({ aberto, onClose, onSubmit, produtos }) => {
                         />
                     </div>
 
-                    <button type="submit" style={{
-                        width: '100%', padding: '14px', borderRadius: '16px', border: 'none',
-                        backgroundColor: 'var(--terracota)', color: 'white', fontWeight: 'bold',
-                        fontSize: '1rem', cursor: 'pointer', transition: 'all 0.2s',
-                        boxShadow: '0 8px 15px rgba(131, 62, 32, 0.2)',
-                    }}>
-                        Adicionar à Lista
+                    <button
+                        type="submit"
+                        disabled={salvando}
+                        style={{
+                            width: '100%', padding: '14px', borderRadius: '16px', border: 'none',
+                            backgroundColor: 'var(--terracota)', color: 'white', fontWeight: 'bold',
+                            fontSize: '1rem', cursor: salvando ? 'not-allowed' : 'pointer', transition: 'all 0.2s',
+                            boxShadow: '0 8px 15px rgba(131, 62, 32, 0.2)',
+                            opacity: salvando ? 0.6 : 1,
+                        }}
+                    >
+                        {salvando ? "Adicionando..." : "Adicionar à Lista"}
                     </button>
                 </form>
             </div>
