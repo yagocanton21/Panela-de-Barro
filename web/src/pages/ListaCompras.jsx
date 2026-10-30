@@ -10,6 +10,8 @@ function ListaCompras() {
     const [produtos, setProdutos] = useState([]);
     const [loading, setLoading] = useState(true);
     const [sincronizando, setSincronizando] = useState(false);
+    const [finalizando, setFinalizando] = useState(false);
+    const [adicionando, setAdicionando] = useState(false);
     const [modalAberto, setModalAberto] = useState(false);
     const [filtro, setFiltro] = useState("todos"); // "todos", "pendentes", "comprados"
     const [mensagem, setMensagem] = useState(null);
@@ -71,6 +73,7 @@ function ListaCompras() {
     };
 
     const handleAdicionarItem = async (dados) => {
+        setAdicionando(true);
         try {
             const res = await apiRequest("/lista-compras/", {
                 method: "POST",
@@ -86,6 +89,8 @@ function ListaCompras() {
             }
         } catch {
             setMensagem({ tipo: "erro", texto: "Falha na conexão com o servidor." });
+        } finally {
+            setAdicionando(false);
         }
     };
 
@@ -107,8 +112,8 @@ function ListaCompras() {
 
     const handleFinalizarCompras = async () => {
         if (!window.confirm("Deseja dar entrada no estoque e remover os itens comprados?")) return;
+        setFinalizando(true);
         try {
-            setLoading(true);
             const res = await apiRequest("/lista-compras/finalizar", { method: "POST" });
             if (res && res.ok) {
                 const data = await res.json();
@@ -117,11 +122,11 @@ function ListaCompras() {
             } else {
                 const err = await res?.json();
                 setMensagem({ tipo: "erro", texto: err?.detail || "Erro ao finalizar." });
-                setLoading(false);
             }
         } catch {
             setMensagem({ tipo: "erro", texto: "Falha na conexão com o servidor." });
-            setLoading(false);
+        } finally {
+            setFinalizando(false);
         }
     };
 
@@ -167,14 +172,17 @@ function ListaCompras() {
                     {totalComprados > 0 && (
                         <button
                             onClick={handleFinalizarCompras}
+                            disabled={finalizando || loading}
                             style={{
                                 backgroundColor: '#27ae60', color: 'white', border: 'none',
-                                padding: '10px 20px', borderRadius: '16px', fontWeight: 'bold', cursor: 'pointer',
+                                padding: '10px 20px', borderRadius: '16px', fontWeight: 'bold',
+                                cursor: (finalizando || loading) ? 'not-allowed' : 'pointer',
                                 display: 'flex', alignItems: 'center', gap: '8px', transition: 'all 0.2s',
-                                boxShadow: '0 8px 15px rgba(39, 174, 96, 0.2)'
+                                boxShadow: '0 8px 15px rgba(39, 174, 96, 0.2)',
+                                opacity: (finalizando || loading) ? 0.6 : 1,
                             }}
                         >
-                            <Check size={18} /> Finalizar Compras
+                            <Check size={18} /> {finalizando ? "Finalizando..." : "Finalizar Compras"}
                         </button>
                     )}
                     <button
@@ -336,6 +344,7 @@ function ListaCompras() {
                 onClose={() => setModalAberto(false)}
                 onSubmit={handleAdicionarItem}
                 produtos={produtos}
+                salvando={adicionando}
             />
 
             {/* Animação de spin para o botão de sincronizar */}

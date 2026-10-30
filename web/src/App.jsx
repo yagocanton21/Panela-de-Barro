@@ -12,6 +12,7 @@ import Ajustes from "./pages/Ajustes";
 import Login from "./pages/Login";
 import Landing from "./pages/Landing";
 import PrivateRoute from "./components/PrivateRoute";
+import AdminRoute from "./components/AdminRoute";
 
 // Rotas protegidas - só quem está logado pode acessar
 function App() {
@@ -28,23 +29,24 @@ function App() {
           <PrivateRoute>
             <Layout>
               <Routes>
-                {/* Página inicial do admin - Dashboard com resumo do sistema */}
+                {/* Página inicial do painel - Dashboard com resumo do sistema */}
                 <Route path="/admin" element={<Dashboard />} />
-                {/* Cadastrar novo produto no estoque */}
-                <Route path="/cadastrar" element={<CadastroProduto />} />
-                {/* Gerenciar categorias de produtos */}
-                <Route path="/categorias" element={<Categorias />} />
+                {/* Cadastrar novo produto no estoque (Exclusivo Admin) */}
+                <Route path="/cadastrar" element={<AdminRoute><CadastroProduto /></AdminRoute>} />
+                {/* Gerenciar categorias de produtos (Exclusivo Admin) */}
+                <Route path="/categorias" element={<AdminRoute><Categorias /></AdminRoute>} />
                 {/* Registrar entradas e saídas de produtos */}
                 <Route path="/movimentacoes" element={<Movimentacoes />} />
                 {/* Ver histórico de todas as movimentações */}
                 <Route path="/historico" element={<Historico />} />
                 {/* Visualizar estoque atual */}
                 <Route path="/estoque" element={<Estoque />} />
-                {/* Editar dados de um produto específico */}
-                <Route path="/editar/:id" element={<EditarProduto />} />
+                {/* Editar dados de um produto específico (Exclusivo Admin) */}
+                <Route path="/editar/:id" element={<AdminRoute><EditarProduto /></AdminRoute>} />
                 {/* Lista de compras com sincronização de estoque */}
                 <Route path="/lista-compras" element={<ListaCompras />} />
-                <Route path="/ajustes" element={<Ajustes />} />
+                {/* Painel de gestão de usuários (Exclusivo Admin) */}
+                <Route path="/ajustes" element={<AdminRoute><Ajustes /></AdminRoute>} />
               </Routes>
             </Layout>
           </PrivateRoute>
@@ -53,5 +55,6 @@ function App() {
     </BrowserRouter>
   );
 }
+
 
 export default App;

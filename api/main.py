@@ -53,6 +53,11 @@ tags_metadata = [
     {"name": "Usuários", "description": "Controle de acesso e autenticação."},
 ]
 
+# Configuração condicional de documentação Swagger/OpenAPI (oculta em produção)
+ENVIRONMENT = os.getenv("ENVIRONMENT", "development").lower()
+ENABLE_DOCS = os.getenv("ENABLE_DOCS", "true").lower() in ("true", "1", "yes")
+is_docs_enabled = ENABLE_DOCS and ENVIRONMENT != "production"
+
 app = FastAPI(
     title="Panela de Barro - API Elite",
     description="""
@@ -69,10 +74,12 @@ app = FastAPI(
     version="2.0.0",
     openapi_tags=tags_metadata,
     lifespan=lifespan,
-    docs_url="/docs",
-    redoc_url="/redoc",
+    docs_url="/docs" if is_docs_enabled else None,
+    redoc_url="/redoc" if is_docs_enabled else None,
+    openapi_url="/openapi.json" if is_docs_enabled else None,
     root_path="/api"
 )
+
 
 # Middlewares de Segurança
 # allowed_hosts=["*"] aceita qualquer Host header — necessário pois a aplicação

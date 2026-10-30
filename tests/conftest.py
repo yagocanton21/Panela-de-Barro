@@ -95,9 +95,11 @@ async def setup_database(_test_engine, _test_session_factory):
 
     yield
 
-    # Limpeza final
-    async with _test_engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
+    # Limpeza final (apenas para SQLite em memória)
+    if DATABASE_URL.startswith("sqlite"):
+        async with _test_engine.begin() as conn:
+            await conn.run_sync(Base.metadata.drop_all)
+
 
 
 @pytest_asyncio.fixture(autouse=True)

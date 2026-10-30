@@ -1,10 +1,13 @@
 import os
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from jose import JWTError, jwt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from dotenv import load_dotenv
-from datetime import timezone
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
+from api.database import get_connection
+from api.models.usuario import Usuario
 
 load_dotenv()
 
@@ -25,8 +28,8 @@ def criar_token_acesso(dados: dict):
     a_copiar.update({"exp": expira})
     return jwt.encode(a_copiar, SECRET_KEY, algorithm=ALGORITHM)
 
-def obter_usuario_atual(token: str = Depends(oauth2_scheme)):
-    """Valida o token e retorna os dados do usuário logado."""
+async def obter_usuario_atual(token: str = Depends(oauth2_scheme), db: AsyncSession = Depends(get_connection)):
+    """Valida o token JWT e verifica a existência e o status do usuário no banco de dados."""
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Token inválido ou expirado. Faça login novamente.",
@@ -34,9 +37,37 @@ def obter_usuario_atual(token: str = Depends(oauth2_scheme)):
     )
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        usuario: str = payload.get("sub") # 'sub' é o padrão para o identificador do usuário
-        if usuario is None:
+        user_id = payload.get("id")
+        username: str = payload.get("sub")
+        if user_id is None and username is None:
             raise credentials_exception
-        return payload
     except JWTError:
         raise credentials_exception
+
+    # Validação ativa no banco de dados (previne uso de token após exclusão/alteração de usuário)
+    if user_id is not None:
+        stmt = select(Usuario).where(Usuario.id == user_id)
+    else:
+        stmt = select(Usuario).where(Usuario.usuario == username)
+
+    resultado = await db.execute(stmt)
+    db_user = resultado.scalars().first()
+    if not db_user:
+        raise credentials_exception
+
+    return {
+        "id": db_user.id,
+        "sub": db_user.usuario,
+        "nome_exibicao": db_user.nome_exibicao,
+        "is_admin": bool(db_user.is_admin)
+    }
+
+def verificar_admin(user: dict = Depends(obter_usuario_atual)):
+    """Verifica se o usuário logado possui privilégios de administrador."""
+    if not user.get("is_admin"):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Acesso negado. Apenas administradores podem realizar esta operação."
+        )
+    return user
+
